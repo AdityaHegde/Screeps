@@ -1,6 +1,4 @@
-var MAX_WORKERS = 9;
-
-var spawnWorkers = {
+module.exports = {
     initSpawn : function(spawn) {
         spawn.memory.spawner = {
             workers : {},
@@ -11,15 +9,15 @@ var spawnWorkers = {
     tick : function(spawn) {
         var spawner = spawn.memory.spawner;
 
-        if (spawner.workerCount.length < MAX_WORKERS) {
-            var parts = spawn.memory.partManager.parts.slice();
+        //check if worker count is less than twice the available space for source collecction
+        //twice the spaces is just arbitrary, assuming that half will be collecting source and half will be working
+        if (spawner.workerCount < spawn.memory.sourceManager.totalAvailableSpaces * 3 / 2) {
+            var parts = spawn.memory.partsManager.parts.slice();
             if(spawn.canCreateCreep(parts, undefined) == OK) {
                 var creepName = spawn.createCreep(parts, undefined, {role: "worker"});
-                if (creepName > 0) {
-                    spawner.workers[creepName] = 1;
-                    spawner.workerCount++;
-                    console.log('Creating a worker : ' + creepName);
-                }
+                spawner.workers[creepName] = 1;
+                spawner.workerCount++;
+                console.log('Creating a worker : ' + creepName);
             }
         }
     },
@@ -29,5 +27,3 @@ var spawnWorkers = {
         spawn.memory.spawner.workerCount--;
     },
 };
-
-module.exports = spawnWorkers;
