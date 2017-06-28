@@ -1,0 +1,38 @@
+{
+  "name": "screeps",
+  "version": "0.0.3",
+  "description": "Screeps AI",
+  "main": "default/main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdityaHegde/Screeps.git"
+  },
+  "keywords": [
+    "Screep",
+    "AI"
+  ],
+  "author": "adityahegderocks@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AdityaHegde/Screeps/issues"
+  },
+  "homepage": "https://github.com/AdityaHegde/Screeps#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-istanbul": "^1.1.2",
+    "gulp-jshint": "^2.0.4",
+    "gulp-mocha": "^4.3.1",
+    "isparta": "^4.0.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.4.2",
+    "mocha-junit-reporter": "^1.13.0",
+    "should": "^11.2.1",
+    "sinon": "^2.3.5"
+  }
+}

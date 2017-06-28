@@ -11,7 +11,7 @@ module.exports = {
 
         //check if worker count is less than twice the available space for source collecction
         //twice the spaces is just arbitrary, assuming that half will be collecting source and half will be working
-        if (spawner.workerCount < spawn.memory.sourceManager.totalAvailableSpaces * 3 / 2) {
+        if (spawner.workerCount < spawn.memory.sourceManager.totalAvailableSpaces) {
             var parts = spawn.memory.partsManager.parts.slice();
             if(spawn.canCreateCreep(parts, undefined) == OK) {
                 var creepName = spawn.createCreep(parts, undefined, {role: "worker"});

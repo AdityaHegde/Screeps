@@ -1,21 +1,30 @@
-var build = {
+module.exports = {
     initSpawn : function(spawn, taskInfo) {
     },
 
     tick : function(spawn, taskInfo) {
-        if (taskInfo.targets.length == 0 ||
-            (taskInfo.currentTarget && !this.isTargetValid(Game.getObjectById(taskInfo.currentTarget)))) {
-            taskInfo.targets = this.getTargets(spawn, taskInfo);
-            taskInfo.currentTarget = null;
-        }
-
-        if (!taskInfo.currentTarget) {
-            taskInfo.currentTarget = taskInfo.targets[0];
+        taskInfo.hasUpdatedTargets = false;
+        if (taskInfo.targets.length == 0) {
+            this.updateTargets(spawn, taskInfo);
         }
     },
 
-    getTarget : function(spawn, taskInfo) {
-        return Game.getObjectById(taskInfo.currentTarget);
+    getTarget : function(spawn, worker, taskInfo) {
+        var target = Game.getObjectById(worker.memory.task.target);
+        if (!target || !this.isTargetValid(target)) {
+            this.updateTargets(spawn, taskInfo);
+            target = taskInfo.targets[0];
+            worker.memory.task.target = target && target.id;
+        }
+        return target;
+    },
+
+    updateTargets : function(spawn, taskInfo) {
+        if (!taskInfo.hasUpdatedTargets) {
+            taskInfo.targets = this.getTargets(spawn, taskInfo);
+            taskInfo.hasTarget = taskInfo.targets.length > 0;
+            taskInfo.hasUpdatedTargets = true;
+        }
     },
 
     getTargets : function(spawn, taskInfo) {
@@ -24,10 +33,18 @@ var build = {
 
     execute : function(spawn, worker, taskInfo) {
         var target = this.getTarget(spawn, taskInfo);
-        //if the target is not in range, move the worker to it
-        if (this.doTask(worker, target) == ERR_NOT_IN_RANGE) {
-            worker.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
+        //if there was no target found for this task
+        if (!target) {
+            return ERR_INVALID_TARGET;
         }
+        var returnValue = this.doTask(worker, target);
+        //if the target is not in range, move the worker to it
+        if (returnValue == ERR_NOT_IN_RANGE) {
+            return worker.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
+        //return false if there is no enough resources,
+        //returning false will make the manager assign to next task in queue
+        return returnValue;
     },
 
     doTask : function(worker, target) {
@@ -35,8 +52,8 @@ var build = {
     },
 
     isTargetValid : function(target) {
-        return !!target;
+        return true;
     },
-};
 
-module.exports = build;
+    workerHasDied : function() {},
+};
