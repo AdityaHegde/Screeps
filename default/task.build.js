@@ -1,38 +1,40 @@
+var constants = require("constants");
+
 module.exports = {
-    initSpawn : function(spawn, taskInfo) {
+    init : function(room, taskInfo) {
     },
 
-    tick : function(spawn, taskInfo) {
+    tick : function(room, taskInfo) {
         taskInfo.hasUpdatedTargets = false;
-        if (taskInfo.targets.length == 0) {
-            this.updateTargets(spawn, taskInfo);
+        if (room.memory.listenEvents[constants.CONSTRUCTION_SITE_ADDED]) {
+            this.updateTargets(room, taskInfo);
         }
     },
 
-    getTarget : function(spawn, worker, taskInfo) {
+    getTarget : function(room, worker, taskInfo) {
         var target = Game.getObjectById(worker.memory.task.target);
         if (!target || !this.isTargetValid(target)) {
-            this.updateTargets(spawn, taskInfo);
+            this.updateTargets(room, taskInfo);
             target = taskInfo.targets[0];
             worker.memory.task.target = target && target.id;
         }
         return target;
     },
 
-    updateTargets : function(spawn, taskInfo) {
+    updateTargets : function(room, taskInfo) {
         if (!taskInfo.hasUpdatedTargets) {
-            taskInfo.targets = this.getTargets(spawn, taskInfo);
+            taskInfo.targets = this.getTargets(room, taskInfo);
             taskInfo.hasTarget = taskInfo.targets.length > 0;
             taskInfo.hasUpdatedTargets = true;
         }
     },
 
-    getTargets : function(spawn, taskInfo) {
-        return spawn.room.find(FIND_CONSTRUCTION_SITES).map((target) => target.id);
+    getTargets : function(room, taskInfo) {
+        return room.room.find(FIND_CONSTRUCTION_SITES).map((target) => target.id);
     },
 
-    execute : function(spawn, worker, taskInfo) {
-        var target = this.getTarget(spawn, taskInfo);
+    execute : function(room, worker, taskInfo) {
+        var target = this.getTarget(room, taskInfo);
         //if there was no target found for this task
         if (!target) {
             return ERR_INVALID_TARGET;

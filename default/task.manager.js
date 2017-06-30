@@ -5,40 +5,35 @@ var TASKS = {
     "harvest" : require("task.harvest"),
     "repair" : require("task.repair"),
 };
+var utils = require("utils");
+var constants = require("constants");
 
-var taskManager = {
-    TASKS : TASKS,
+utils.definePropertyInMemory(Room.prototype, "tasksInfo", function() {
+    let tasksInfo = {};
 
-    initSpawn : function(spawn) {
-        spawn.memory.taskManager = {
-            tasksInfo : {},
+    for (let taskName in TASKS) {
+        tasksInfo[taskName] = {
+            targets : [],
+            hasTarget : false,
         };
+        TASKS[taskName].init(this, tasksInfo[taskName]);
+    });
 
+    return tasksInfo;
+});
+
+Object.defineProperties(Room.prototype, {
+    tickTaskManager : function() {
         for (let taskName in TASKS) {
-            spawn.memory.taskManager.tasksInfo[taskName] = {
-                targets : [],
-                hasTarget : false,
-            };
-            TASKS[taskName].initSpawn(spawn, spawn.memory.taskManager.tasksInfo[taskName]);
-        });
-    },
+            TASKS[taskName].tick(this, this.memory.tasksInfo[taskName]);
+        }
 
-    tick : function(spawn) {
-        spawn.memory.taskManager.validTasks = [];
-        spawn.memory.taskManager.freeTasks = {};
-        spawn.memory.taskManager.hasFreeTasks = false;
-
-        TASKS.forEach(function(task) {
-            var taskInfo = spawn.memory.taskManager.tasksInfo[task.name];
-            task.api.tick(spawn, taskInfo);
-        }.bind(this));
-
-        for (var workerName in spawn.memory.spawner.workers) {
+        for (var workerName in this.memory.workers) {
             var worker = Game.creeps[workerName];
 
             if (worker) {
                 if (worker.memory.task) {
-                    var roleInfo = spawn.memory.roleManager[worker.memory.role.name];
+                    var roleInfo = spawn.memory.rolesInfo[worker.memory.role.name];
                     var currentTask = roleInfo.tasks[worker.memory.task.current];
                     var returnValue = TASKS[worker.memory.task.current].execute(spawn, worker, spawn.memory.taskManager.tasksInfo[worker.memory.task.current]);
                     switch (returnValue) {
@@ -65,8 +60,54 @@ var taskManager = {
             }
         }
     },
+});
 
-    postTick : function(spawn) {
+Object.defineProperties(Creep.prototype, {
+    executeTask : function(room) {
+        if (worker.memory.task) {
+            var roleInfo = spawn.memory.roleManager[worker.memory.role.name];
+            var currentTask = roleInfo.tasks[worker.memory.task.current];
+            var returnValue = TASKS[worker.memory.task.current].execute(spawn, worker, spawn.memory.taskManager.tasksInfo[worker.memory.task.current]);
+            switch (returnValue) {
+                case ERR_INVALID_TARGET:
+                case ERR_NO_BODYPART:
+                case ERR_RCL_NOT_ENOUGH:
+                    room.reassignTask(worker);
+                    break;
+
+                case ERR_NOT_ENOUGH_RESOURCES:
+                    room.switchTask(worker);
+                    break;
+
+                case OK:
+                case ERR_BUSY:
+                default:
+                    break;
+            }
+            else if (returnValue != OK)
+        }
+        else {
+            room.assignTask(worker);
+        }
+    },
+});
+
+var taskManager = {
+    TASKS : TASKS,
+
+    initSpawn : function(spawn) {
+        spawn.memory.taskManager = {
+            tasksInfo : {},
+        };
+
+        for (let taskName in TASKS) {
+            spawn.memory.taskManager.tasksInfo[taskName] = {
+                targets : [],
+                hasTarget : false,
+            };
+            TASKS[taskName].initSpawn(spawn, spawn.memory.taskManager.tasksInfo[taskName]);
+        });
+
     },
 
     workerHasDied : function(spawn, workerMemory, workerName) {

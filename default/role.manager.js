@@ -1,11 +1,27 @@
 var ROLES = {
-    "worker" : {
-        tasks : [
-            ["harvest"],
-            ["dropoff", "build", "upgrade", "repair"],
-        ],
-    },
+    "worker" : require("role.worker"),
 };
+var constants = require("constants");
+var utils = require("utils");
+
+utils.definePropertyInMemory(Room.prototype, "rolesInfo", function() {
+    var rolesInfo = {};
+    for (let role in ROLES) {
+        rolesInfo[role] = {
+            tasks : [],
+        };
+        ROLES[role].init(this, rolesInfo[role]);
+    }
+    return rolesInfo;
+});
+
+Object.defineProperties(Room.prototype, {
+    tickRoleManager : function() {
+        for (let role in ROLES) {
+            ROLES[role].tick(this, this.memory.rolesInfo[role]);
+        }
+    },
+});
 
 var taskManager = {
     initSpawn : function(spawn) {
