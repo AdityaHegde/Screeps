@@ -7,10 +7,10 @@ module.exports = _.merge({}, baseTask, {
     },
 
     getTarget : function(room, creep, taskInfo) {
-        if (!creep.assignedSource) {
+        if (!creep.source) {
             room.findSource().claim(creep);
         }
-        return Game.getObjectById(creep.assignedSource);
+        return Game.getObjectById(creep.source);
     },
 
     updateTargets : function(room, taskInfo) {
@@ -25,8 +25,12 @@ module.exports = _.merge({}, baseTask, {
         return creep.harvest(target);
     },
 
+    isTaskValid : function(creep, target) {
+        return creep.carry.energy < creep.carryCapacity;
+    },
+
     creepHasDied : function(room, creep) {
-        var source = Game.getObjectById(creep.assignedSource);
+        var source = Game.getObjectById(creep.source);
         source && source.release(creep);
     },
 });

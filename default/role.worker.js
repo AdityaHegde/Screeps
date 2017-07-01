@@ -21,8 +21,8 @@ module.exports = {
 
     init : function(room, roleInfo) {
         roleInfo.tasks = _.cloneDeep(this.TASKS);
-        roleInfo.parts = this.parts.slice();
-        roleInfo.partsCost = this.parts.reduce(function(partsCost, part) {
+        roleInfo.parts = this.PARTS.slice();
+        roleInfo.partsCost = this.PARTS.reduce(function(partsCost, part) {
             return partsCost + BODYPART_COST[part];
         });
         roleInfo.i = 0;
@@ -52,5 +52,8 @@ module.exports = {
 
     getMaxCount : function(room, roleInfo) {
         return room.sourceManager.totalAvailableSpaces;
+    },
+
+    creepHasDied : function(room, creep) {
     },
 };

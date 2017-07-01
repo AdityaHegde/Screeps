@@ -1,7 +1,7 @@
 var _ = require("lodash");
-var taskBuild = require("task.build");
+var baseTask = require("task.base");
 
-var upgrade = _.merge({}, taskBuild, {
+var upgrade = _.merge({}, baseTask, {
     getTarget : function(room) {
         return room.controller;
     },

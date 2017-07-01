@@ -10,10 +10,10 @@ module.exports = _.merge({}, baseTask, {
     },
 
     getTargets : function(room, taskInfo) {
-        return room.room.find(FIND_CONSTRUCTION_SITES).map((target) => target.id);
+        return room.find(FIND_CONSTRUCTION_SITES).map((target) => target.id);
     },
 
     doTask : function(creep, target) {
         return creep.build(target);
     },
-};
+});

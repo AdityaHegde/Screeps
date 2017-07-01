@@ -1,3 +1,5 @@
+var constants = require("constants");
+
 module.exports = {
     type : STRUCTURE_ROAD,
 
@@ -6,12 +8,10 @@ module.exports = {
             paths : [],
             roadCursor : 0,
             pathCursor : 0,
-            pathPartCurosr : 0,
         };
 
         PathFinder.use();
 
-        let visual = new RoomVisual(room.name);
         let spawn = Game.spawns[room.spawns[0]];
         let structures = [];
         structures.push(room.controller, ...room.find(FIND_SOURCES));
@@ -26,10 +26,6 @@ module.exports = {
             });
             room.tempRoadPaths.push(roadPath);
             plannerInfo.paths.push(Room.serializePath(roadPath));
-            visual.poly(roadPath, {
-                lineStyle : "dotted",
-                color : "white",
-            });
         });
 
         return plannerInfo;
@@ -39,26 +35,26 @@ module.exports = {
     //returns true if all structures are built for the current RCL, false if max sites has been reached
     build : function(room, plannerInfo) {
         //store the last built road block to resume later when max construction site has been reached
-        var i, j;
-        for (i = plannerInfo.roadCursor; i < plannerInfo.roadPaths.length; i++) {
-            var path = Room.deserializePath(plannerInfo.roadPaths[i]);
+        var c = 0;
+        for (; plannerInfo.roadCursor < plannerInfo.paths.length; plannerInfo.roadCursor++) {
+            var path = Room.deserializePath(plannerInfo.paths[plannerInfo.roadCursor]);
 
-            for (j = plannerInfo.pathCursor; j < path.length - 1; j++) {
-                for (var k = plannerInfo.pathPartCurosr; path[j].x < path[j+1].x || path[j].y < path[j+1].y; k++) {
-                    var returnValue = room.createConstructionSite(path[j].x * path[j+1].dx * k, path[j].y * path[j+1].dy * k, this.type);
-                    //if max sites has been reached or if RCL is not high enough, return
-                    if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
-                        plannerInfo.roadCursor = i;
-                        //return true if RCL is not high enough, used to skip building a type for the current RCL
-                        return returnValue == ERR_RCL_NOT_ENOUGH;
-                    }
+            for (; plannerInfo.pathCursor < path.length; plannerInfo.pathCursor++) {
+                var returnValue = room.createConstructionSite(path[plannerInfo.pathCursor].x, path[plannerInfo.pathCursor].y, this.type);
+                room.fireEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
+                c++;
+                //if max sites has been reached or if RCL is not high enough, return
+                if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
+                    //return true if RCL is not high enough, used to skip building a type for the current RCL
+                    return returnValue == ERR_RCL_NOT_ENOUGH;
                 }
-                plannerInfo.pathPartCurosr = 0;
+                //limit the operations
+                else if (c >= 5) {
+                    return false;
+                }
             }
-
             plannerInfo.pathCursor = 0;
         }
-        plannerInfo.roadCursor = i;
 
         return true;
     },

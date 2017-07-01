@@ -19,13 +19,17 @@ utils.definePropertyInMemory(Source.prototype, "occupiedSpaces", function() {
     return 0;
 });
 
+utils.definePropertyInMemory(Creep.prototype, "source", function() {
+    return null;
+});
+
 Source.prototype.claim = function(creep) {
-    creep.assignedSource = this.id;
+    creep.source = this.id;
     this.occupiedSpaces++;
 };
 
 Source.prototype.release = function(creep) {
-    delete creep.assignedSource;
+    delete creep.source;
     this.occupiedSpaces--;
 };
 

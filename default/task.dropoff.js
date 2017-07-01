@@ -17,7 +17,7 @@ module.exports = _.merge({}, baseTask, {
 
     tick : function(room, taskInfo) {
         //targets for harvest drop might have changed
-        if (taskInfo.energyCapacityAvailable < room.room.energyCapacityAvailable) {
+        if (taskInfo.energyCapacityAvailable < room.energyCapacityAvailable) {
             this.initroom(room, taskInfo);
         }
 
@@ -25,7 +25,7 @@ module.exports = _.merge({}, baseTask, {
         taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
-    getTarget : function(spawn, taskInfo) {
+    getTarget : function(spawn, creep, taskInfo) {
         //TODO return a different target each time
         return Game.getObjectById(taskInfo.targets[0]);
     },
@@ -38,10 +38,6 @@ module.exports = _.merge({}, baseTask, {
 
     doTask : function(creep, target) {
         return creep.transfer(target, RESOURCE_ENERGY);
-    },
-
-    isTaskValid : function(creep, target) {
-        return creep.carry.energy < creep.carryCapacity;
     },
 
     isTargetValid : function(target) {

@@ -4,7 +4,7 @@ var ROLES = require("role.list");
 var TASKS = require("task.list");
 var BUILD_TYPES = require("build.list");
 let sourceManager = require("source.manager");
-let creepManager = require("creepManager");
+let creepManager = require("creep.manager");
 
 utils.definePropertyInMemory(Room.prototype, "spawns", function() {
     return [];
@@ -19,7 +19,7 @@ utils.definePropertyInMemory(Room.prototype, "rolesInfo", function() {
     for (let role in ROLES) {
         rolesInfo[role] = {
             tasks : [],
-            creep : {},
+            validTasksCount : {},
             creepsCount : 0,
         };
         ROLES[role].init(this, rolesInfo[role]);
@@ -29,16 +29,15 @@ utils.definePropertyInMemory(Room.prototype, "rolesInfo", function() {
 
 utils.definePropertyInMemory(Room.prototype, "tasksInfo", function() {
     let tasksInfo = {};
-
     for (let taskName in TASKS) {
         tasksInfo[taskName] = {
             targets : [],
             hasTarget : false,
+            creeps : {},
             creepsCount : 0,
         };
         TASKS[taskName].init(this, tasksInfo[taskName]);
     }
-
     return tasksInfo;
 });
 
@@ -47,6 +46,7 @@ utils.definePropertyInMemory(Room.prototype, "spawns", function() {
 });
 
 utils.definePropertyInMemory(Room.prototype, "creeps", function() {
+    console.log("Init creeps");
     return {};
 });
 
@@ -78,23 +78,6 @@ Room.prototype.tick = function() {
 
     this.listenEvents = this.fireEvents;
 
-    for (let taskName in TASKS) {
-        TASKS[taskName].tick(this, this.tasksInfo[taskName]);
-    }
-
-    for (let creepName in this.creeps) {
-        let creep = Game.creeps[creepName];
-
-        if (creep) {
-            creep.executeTask(this);
-        }
-        else if (Memory.creeps[creepName]) {
-            Memory.creeps[creepName].name = creepName;
-            this.creepHasDied(Memory.creeps[creepName]);
-            delete Memory.creeps[creepName];
-        }
-    }
-
     for (let roleName in ROLES) {
         var roleInfo = this.rolesInfo[roleName];
         ROLES[roleName].tick(this, this.rolesInfo[roleName]);
@@ -110,6 +93,30 @@ Room.prototype.tick = function() {
                 console.log("Creating a", roleName, ":", creepName);
             }
         }
+
+        roleInfo.tasks.forEach((taskTiers, i) => {
+            roleInfo.validTasksCount = roleInfo.validTasksCount || {};
+            roleInfo.validTasksCount[i] = 0;
+
+            taskTiers.forEach((taskName) => {
+                TASKS[taskName].tick(this, this.tasksInfo[taskName]);
+                roleInfo.validTasksCount[i] += this.tasksInfo[taskName].hasTarget ? 1 : 0;
+            });
+        });
+    }
+
+    for (let creepName in this.creeps) {
+        let creep = Game.creeps[creepName];
+
+        if (creep) {
+            creep.executeTask(this);
+        }
+        else if (Memory.creeps[creepName]) {
+            console.log("Creep", creepName, "died");
+            Memory.creeps[creepName].name = creepName;
+            this.creepHasDied(Memory.creeps[creepName]);
+            delete Memory.creeps[creepName];
+        }
     }
 
     //check if RCL changed or some structures are yet to be built for current RCL
@@ -121,7 +128,8 @@ Room.prototype.tick = function() {
 
         for (; this.basePlanner.cursor < BUILD_TYPES.length; this.basePlanner.cursor++) {
             //if the structure is yet to be finished, break
-            if (!BUILD_TYPES[this.basePlanner.cursor].api.build(this)) {
+            if (!BUILD_TYPES[this.basePlanner.cursor].api.build(this,
+                   this.basePlanner.plannerInfo[BUILD_TYPES[this.basePlanner.cursor].name])) {
                 break;
             }
         }
@@ -131,36 +139,46 @@ Room.prototype.tick = function() {
 
 Room.prototype.assignTask = function(creep, isNew) {
     let roleInfo = this.rolesInfo[creep.role.name];
-    let tasks = roleInfo.tasks[(isNew ? 0 : creep.task.tier)];
+    let tier = (isNew ? 0 : creep.task.tier);
+    let tasks = roleInfo.tasks[tier];
     let lastCurrent = isNew ? 0 : ((creep.task.current + 1) % tasks.length);
     let i = lastCurrent;
 
-    do {
-        let taskInfo = this.tasksInfo[tasks[i]];
-        if (taskInfo.hasTarget && taskInfo.creepsCount < Math.round(roleInfo.creepsCount / tasks.length)) {
-            creep.task = creep.task || {
-                tier : 0,
-                tasks : {},
-            };
-            creep.task.current = i;
-            creep.task.tasks[creep.task.tier] = i;
-            taskInfo.creepsCount++;
-            console.log("Assigning", creep.name, "to", tasks[i]);
-            break;
-        }
-        i = (i + 1) % tasks.length;
-    } while(i != lastCurrent);
+    if (roleInfo.validTasksCount[tier] > 0) {
+        do {
+            let taskInfo = this.tasksInfo[tasks[i]];
+            console.log(creep.name, tasks[i], taskInfo.hasTarget, taskInfo.creepsCount, roleInfo.creepsCount, roleInfo.validTasksCount[tier]);
+            if (taskInfo.hasTarget && taskInfo.creepsCount < Math.round(roleInfo.creepsCount / roleInfo.validTasksCount[tier])) {
+                creep.task = creep.task || {
+                    tier : 0,
+                    tasks : {},
+                };
+                creep.task.current = i;
+                creep.task.tasks[creep.task.tier] = i;
+                taskInfo.creeps[creep.name] = 1;
+                taskInfo.creepsCount++;
+                console.log("Assigning", creep.name, "to", tasks[i]);
+                break;
+            }
+            i = (i + 1) % tasks.length;
+        } while(i != lastCurrent);
+    }
 };
 
 Room.prototype.clearTask = function(creep) {
     let roleInfo = this.rolesInfo[creep.role.name];
     let taskInfo = this.tasksInfo[roleInfo.tasks[creep.task.tier][creep.task.current]];
-    console.log("Clearing", creep.name, "from", roleInfo.tasks[creep.task.tier][creep.task.current]);
-    taskInfo.creepsCount--;
+    if (taskInfo.creeps[creep.name]) {
+        console.log("Clearing", creep.name, "from", roleInfo.tasks[creep.task.tier][creep.task.current]);
+        taskInfo.creepsCount--;
+        delete taskInfo.creeps[creep.name];
+    }
+    else {
+        console.log("Trying to clear", creep.name, "of unassigned task");
+    }
 };
 
 Room.prototype.switchTask = function(creep) {
-    this.clearTask(creep);
     var roleInfo = this.rolesInfo[creep.role.name];
     creep.task.tier = (creep.task.tier + 1) % roleInfo.tasks.length;
     creep.task.current = creep.task.tasks[creep.task.tier];
@@ -177,6 +195,12 @@ Room.prototype.reassignTask = function(creep) {
 };
 
 Room.prototype.creepHasDied = function(creep) {
+    for (let roleName in ROLES) {
+        ROLES[roleName].creepHasDied(this, creep);
+    }
+    for (let taskName in TASKS) {
+        TASKS[taskName].creepHasDied(this, creep);
+    }
     if (creep.task) {
         this.clearTask(creep);
     }

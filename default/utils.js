@@ -3,8 +3,8 @@ module.exports = {
         let _property = "_" + property;
         Object.defineProperty(prototype, property, {
             get : function() {
-                if (!(_property in this)) {
-                    if (!(_property in this.memory)) {
+                if (!_.has(this, _property)) {
+                    if (!_.has(this.memory, property)) {
                         this.memory[property] = getter.call(this, ...arguments);
                     }
                     this[_property] = this.memory[property];
@@ -15,7 +15,7 @@ module.exports = {
                 this.memory[property] = value;
                 this[_property] = value;
             },
-            enumerable: false,
+            enumerable: true,
             configurable: true,
         });
     },
@@ -34,6 +34,7 @@ module.exports = {
                 }
                 Memory[memoryName][this.id] = value;
             },
+            enumerable: true,
             configurable: true,
         });
     },

@@ -9,5 +9,7 @@ module.exports.loop = function () {
             brain.memory.isInitialized = true;
             console.log(Game.cpu.getUsed(), "cpu used during init");
         }
+
+        brain.tick();
     }
 }

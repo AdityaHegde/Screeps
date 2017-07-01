@@ -1,6 +1,6 @@
-var build = require("task.build")
+var baseTask = require("task.base")
 
-var repair = _.merge({}, build, {
+var repair = _.merge({}, baseTask, {
     getTargets : function(room, taskInfo) {
         return room.find(FIND_STRUCTURES, {
             filter : structure => structure.hits < structure.hitsMax / 2

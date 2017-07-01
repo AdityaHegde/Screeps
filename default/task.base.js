@@ -5,6 +5,9 @@ module.exports = {
     },
 
     tick : function(room, taskInfo) {
+        if (taskInfo.targets.length == 0) {
+            this.updateTargets(room, taskInfo);
+        }
         taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
@@ -31,7 +34,7 @@ module.exports = {
     },
 
     execute : function(room, creep, taskInfo) {
-        var target = this.getTarget(room, taskInfo);
+        var target = this.getTarget(room, creep, taskInfo);
         //if there was no target found for this task
         if (!target) {
             return ERR_INVALID_TARGET;
