@@ -1,42 +1,47 @@
 var _ = require("lodash");
-var taskBuild = require("task.build");
+var baseTask = require("task.base");
 
-module.exports = _.merge({}, taskBuild, {
-    initSpawn : function(spawn, taskInfo) {
-        taskInfo.energyCapacityAvailable = spawn.room.energyCapacityAvailable;
-        taskInfo.potentialTargets = this.getPotentialTargets(spawn);
+module.exports = _.merge({}, baseTask, {
+    init : function(room, taskInfo) {
+        taskInfo.energyCapacityAvailable = room.energyCapacityAvailable;
+        taskInfo.potentialTargets = this.getPotentialTargets(room);
     },
 
-    getPotentialTargets : function(spawn) {
-        return spawn.room.find(FIND_STRUCTURES, {
+    getPotentialTargets : function(room) {
+        return room.find(FIND_STRUCTURES, {
             filter: (structure) => {
-                return structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN;
+                return structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_TOWER;
             },
         }).map((structure) => structure.id);
     },
 
-    tick : function(spawn, taskInfo) {
+    tick : function(room, taskInfo) {
         //targets for harvest drop might have changed
-        if (taskInfo.energyCapacityAvailable < spawn.room.energyCapacityAvailable) {
-            this.initSpawn(spawn, taskInfo);
+        if (taskInfo.energyCapacityAvailable < room.room.energyCapacityAvailable) {
+            this.initroom(room, taskInfo);
         }
 
-        taskInfo.targets = this.getTargets(spawn, taskInfo);
+        taskInfo.targets = this.getTargets(room, taskInfo);
+        taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
-    getTarget : function(spaw, taskInfo) {
+    getTarget : function(spawn, taskInfo) {
         //TODO return a different target each time
         return Game.getObjectById(taskInfo.targets[0]);
     },
 
-    getTargets : function(spawn, taskInfo) {
+    getTargets : function(room, taskInfo) {
         return taskInfo.potentialTargets.filter(function(potentialTarget) {
             return this.isTargetValid(Game.getObjectById(potentialTarget));
         }.bind(this));
     },
 
-    doTask : function(worker, target) {
-        return worker.transfer(target, RESOURCE_ENERGY);
+    doTask : function(creep, target) {
+        return creep.transfer(target, RESOURCE_ENERGY);
+    },
+
+    isTaskValid : function(creep, target) {
+        return creep.carry.energy < creep.carryCapacity;
     },
 
     isTargetValid : function(target) {

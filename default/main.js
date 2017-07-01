@@ -1,17 +1,13 @@
-var workerManager = require("worker.manager");
-var basePlanner = require("base.planner");
+var brainManager = require("brain.manager");
 
 module.exports.loop = function () {
-    for (var spawnName in Game.spawns) {
-        var spawn = Game.spawns[spawnName];
-        if (!spawn.memory.isInitialized) {
-            basePlanner.initSpawn(spawn);
-            workerManager.initSpawn(spawn);
+    var brain = Game.flags["brain"];
 
-            console.log(Game.cpu.getUsed(), "cpu used during init of spawn", spawnName);
+    if (brain) {
+        if (!brain.memory.isInitialized) {
+            brain.init();
+            brain.memory.isInitialized = true;
+            console.log(Game.cpu.getUsed(), "cpu used during init");
         }
-
-        basePlanner.tick(spawn);
-        workerManager.tick(spawn);
     }
 }

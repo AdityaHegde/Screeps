@@ -2,16 +2,16 @@ var _ = require("lodash");
 var taskBuild = require("task.build");
 
 var upgrade = _.merge({}, taskBuild, {
-    getTarget : function(spawn) {
-        return spawn.room.controller;
+    getTarget : function(room) {
+        return room.controller;
     },
 
-    getTargets : function(spawn) {
-        return [spawn.room.controller.id];
+    getTargets : function(room) {
+        return [room.controller.id];
     },
 
-    doTask : function(worker, target) {
-        return worker.upgradeController(target);
+    doTask : function(creep, target) {
+        return creep.upgradeController(target);
     },
 
     isTargetValid : function(target) {

@@ -3,8 +3,8 @@ module.exports = {
         let _property = "_" + property;
         Object.defineProperty(prototype, property, {
             get : function() {
-                if (!this[_property]) {
-                    if (!this.memory[property]) {
+                if (!(_property in this)) {
+                    if (!(_property in this.memory)) {
                         this.memory[property] = getter.call(this, ...arguments);
                     }
                     this[_property] = this.memory[property];

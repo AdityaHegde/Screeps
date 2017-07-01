@@ -1,14 +1,14 @@
 var build = require("task.build")
 
 var repair = _.merge({}, build, {
-    getTargets : function(spawn, taskInfo) {
-        return spawn.room.find(FIND_STRUCTURES, {
+    getTargets : function(room, taskInfo) {
+        return room.find(FIND_STRUCTURES, {
             filter : structure => structure.hits < structure.hitsMax / 2
         }).map((target) => target.id);
     },
 
-    doTask : function(worker, target) {
-        return worker.repair(target);
+    doTask : function(creep, target) {
+        return creep.repair(target);
     },
 
     isTargetValid : function(target) {

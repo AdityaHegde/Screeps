@@ -1,24 +1,23 @@
-var roadBuilder = require("base.build.road");
+var roadBuilder = require("build.road");
 var _ = require("lodash");
 var SIN45 = Math.sin(-Math.PI / 4), COS45 = Math.cos(-Math.PI / 4);
 
 module.exports = _.merge({}, roadBuilder, {
     type : STRUCTURE_EXTENSION,
-    dependant : STRUCTURE_ROAD,
 
-    initSpawn : function(spawn) {
-        spawn.memory.basePlanner.extension = {
+    init : function(room) {
+        let plannerInfo = {
             paths : [],
             roadCursor : 0,
             pathCursor : 0,
+            pathPartCurosr : 0,
         };
 
         //road builder has already calculated paths to sources, add positions for extensions beside that path
-        let sourceCount = spawn.memory.basePlanner.road.paths.length - 1;
         let allocatedCount = 0;
-        let visual = new RoomVisual(spawn.room.name);
-        for (let i = 0; i < sourceCount; i++) {
-            let path = spawn.memory.basePlanner.road.paths[i];
+        let visual = new RoomVisual(room.name);
+        for (let i = 1; i < room.tempRoadPaths.length; i++) {
+            let path = room.tempRoadPaths[i];
             let path1 = [], path2 = [];
 
             //have a buffer of 2 slots for creating extensions
@@ -41,7 +40,7 @@ module.exports = _.merge({}, roadBuilder, {
                 this.addPathEntry(path1, path2, path[j], dx, dy);
             }
 
-            spawn.memory.basePlanner.extension.paths.push(path1, path2);
+            plannerInfo.paths.push(Room.serializePath(path1), Room.serializePath(path2));
             visual.poly(path1, {
                 lineStyle : "dotted",
                 color : "yellow",
@@ -50,6 +49,8 @@ module.exports = _.merge({}, roadBuilder, {
                 lineStyle : "dotted",
                 color : "yellow",
             });
+
+            return plannerInfo;
         }
     },
 
@@ -67,4 +68,4 @@ module.exports = _.merge({}, roadBuilder, {
             dy : pathEntry.dy,
         });
     },
-};
+});
