@@ -35,10 +35,10 @@ Creep.prototype.executeTask = function(room) {
             }
         }
         else {
-            room.assignTask(this, true);
+            room.assignNewTask(this);
         }
     }
     else {
-        room.assignTask(this, true);
+        room.assignNewTask(this, true);
     }
 };

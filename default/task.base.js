@@ -12,11 +12,14 @@ module.exports = {
     },
 
     getTarget : function(room, creep, taskInfo) {
+        if (!creep.task.target) {
+            creep.task.target = taskInfo.targets[0];
+        }
         var target = Game.getObjectById(creep.task.target);
         if (!target || !this.isTargetValid(target)) {
             this.updateTargets(room, taskInfo);
             target = taskInfo.targets[0];
-            creep.memory.task.target = target && target.id;
+            creep.task.target = Game.getObjectById(target && target.id);
         }
         return target;
     },
@@ -35,6 +38,7 @@ module.exports = {
 
     execute : function(room, creep, taskInfo) {
         var target = this.getTarget(room, creep, taskInfo);
+        //console.log(creep.name, target);
         //if there was no target found for this task
         if (!target) {
             return ERR_INVALID_TARGET;

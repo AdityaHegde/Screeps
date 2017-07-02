@@ -24,7 +24,7 @@ module.exports = {
         roleInfo.parts = this.PARTS.slice();
         roleInfo.partsCost = this.PARTS.reduce(function(partsCost, part) {
             return partsCost + BODYPART_COST[part];
-        });
+        }, 0);
         roleInfo.i = 0;
     },
 
@@ -39,8 +39,8 @@ module.exports = {
 
         var newPart = this.PARTS[roleInfo.i];
 
-        //if the available energy capacity can accommodate the new part
-        if (room.energyCapacityAvailable >= roleInfo.partsCost + BODYPART_COST[newPart] + BODYPART_COST[MOVE]) {
+        //if the available energy capacity can accommodate the new part or if the parts has reached max parts count (50)
+        if (room.energyCapacityAvailable >= roleInfo.partsCost + BODYPART_COST[newPart] + BODYPART_COST[MOVE] && roleInfo.parts.length <= 48) {
             roleInfo.parts.push(newPart, MOVE);
             roleInfo.parts = roleInfo.parts.sort();
             roleInfo.partsCost += BODYPART_COST[newPart] + BODYPART_COST[MOVE];
@@ -51,7 +51,7 @@ module.exports = {
     },
 
     getMaxCount : function(room, roleInfo) {
-        return room.sourceManager.totalAvailableSpaces;
+        return room.sourceManager.totalAvailableSpaces * 3 / 2;
     },
 
     creepHasDied : function(room, creep) {

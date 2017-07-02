@@ -18,7 +18,7 @@ module.exports = _.merge({}, baseTask, {
     tick : function(room, taskInfo) {
         //targets for harvest drop might have changed
         if (taskInfo.energyCapacityAvailable < room.energyCapacityAvailable) {
-            this.initroom(room, taskInfo);
+            this.init(room, taskInfo);
         }
 
         taskInfo.targets = this.getTargets(room, taskInfo);
