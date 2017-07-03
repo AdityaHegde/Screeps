@@ -1,5 +1,5 @@
 let baseTask = require("task.base");
-let utils = require("utils")
+let utils = require("utils");
 
 /**
  * Task to harvest source
@@ -39,6 +39,8 @@ module.exports = _.merge({}, baseTask, {
 
     creepHasDied : function(room, creep) {
         var source = Game.getObjectById(creep.source);
-        source && source.release(creep);
+        if (source) {
+            source.release(creep);
+        }
     },
 });

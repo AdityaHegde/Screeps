@@ -31,6 +31,25 @@ module.exports = {
     tick : function(room, roleInfo) {
         this.upgradeParts(room, roleInfo);
 
+        roleInfo.tasks.forEach((taskTiers, i) => {
+            roleInfo.freeTasks[i] = {};
+            roleInfo.hasFreeTasks[i] = false;
+            roleInfo.validTasksCount[i] = 0;
+
+            taskTiers.forEach((taskName) => {
+                var taskInfo = room.tasksInfo[taskName];
+                TASKS[taskName].tick(room, taskInfo);
+                if (roleInfo.validTasksCount) {
+                    roleInfo.validTasksCount[i] += taskInfo.hasTarget ? 1 : 0;
+                    if (this.isTaskFree(taskInfo, roleInfo, i)) {
+                        roleInfo.hasFreeTasks[i] = true;
+                        roleInfo.freeTasks[i][taskName] = 1;
+                    }
+                }
+            });
+        });
+
+        //spawn creeps
         for (var creepName in roleInfo.creeps) {
             var creep = Game.creeps[creepName];
 
@@ -62,6 +81,16 @@ module.exports = {
         }
     },
 
+    addCreep : function(room, creep, roleInfo, roleName) {
+        creep.task = null;
+        creep.role = {
+            name : roleName,
+        };
+        roleInfo.creeps[creep.name] = 1;
+        roleInfo.creepsCount++;
+        this.assignNewTask(room, creep, true);
+    },
+
     executeTask : function(room, creep) {
         if (creep.task) {
             var roleInfo = room.rolesInfo[creep.role.name];
@@ -82,6 +111,8 @@ module.exports = {
 
                     case OK:
                     case ERR_BUSY:
+                        break;
+
                     default:
                         break;
                 }

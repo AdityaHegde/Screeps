@@ -1,7 +1,7 @@
 var brainManager = require("brain.manager");
 
 module.exports.loop = function () {
-    var brain = Game.flags["brain"];
+    var brain = Game.flags.brain;
 
     if (brain) {
         if (!brain.memory.isInitialized) {
@@ -12,4 +12,4 @@ module.exports.loop = function () {
 
         brain.tick();
     }
-}
+};

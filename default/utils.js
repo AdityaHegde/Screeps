@@ -26,7 +26,8 @@ module.exports = {
                 if (!Memory[memoryName]) {
                     Memory[memoryName] = {};
                 }
-                return Memory[memoryName][this.id] = Memory[memoryName][this.id] || {};
+                Memory[memoryName][this.id] = Memory[memoryName][this.id] || {};
+                return Memory[memoryName][this.id];
             },
             set : function(value) {
                 if (!Memory[memoryName]) {

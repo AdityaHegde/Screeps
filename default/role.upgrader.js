@@ -8,8 +8,8 @@ var baseRole = require("role.base");
  */
 
 module.exports = _.merge({}, baseRole, {
-    PARTS : [CARRY, MOVE],
-    MAIN_PARTS : [CARRY],
+    PARTS : [WORK, CARRY, CARRY, MOVE],
+    MAIN_PARTS : [WORK],
     TASKS : [
         ["withdraw"],
         ["upgrade"],

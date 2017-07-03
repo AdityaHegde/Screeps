@@ -30,7 +30,7 @@ module.exports = _.merge({}, roadBuilder, {
             }
             //console.log(exit);
 
-            let path = [], lastWall = undefined;
+            let path = [], lastWall;
             for (let i = 0; i < 50; i++, x += dx, y += dy) {
                 //console.log(i, lastWall, path.length);
                 if (Game.map.getTerrainAt(x, y, room.name) != "wall") {

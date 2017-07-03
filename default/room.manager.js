@@ -6,6 +6,7 @@ var BUILD_TYPES = require("build.list").types;
 var BUILD_INIT_ORDER = require("build.list").initOrder;
 let sourceManager = require("source.manager");
 let creepManager = require("creep.manager");
+var enemyArmy = require("army.enemy");
 
 utils.definePropertyInMemory(Room.prototype, "spawns", function() {
     return [];
@@ -19,10 +20,18 @@ utils.definePropertyInMemory(Room.prototype, "listenEvents", function() {
     return {};
 });
 
+utils.definePropertyInMemory(Room.prototype, "containerCount", function() {
+    return 0;
+});
+
+utils.definePropertyInMemory(Room.prototype, "roleSuite", function() {
+    return 0;
+});
+
 utils.definePropertyInMemory(Room.prototype, "rolesInfo", function() {
     var rolesInfo = {};
-    for (let role in ROLES) {
-        rolesInfo[role] = ROLES[role].init(this, rolesInfo[role]);
+    for (let role in ROLES[this.roleSuite].roles) {
+        rolesInfo[role] = ROLES[this.roleSuite].roles[role].init(this, rolesInfo[role]);
     }
     return rolesInfo;
 });
@@ -62,6 +71,13 @@ utils.definePropertyInMemory(Room.prototype, "basePlanner", function() {
     return basePlanner;
 });
 
+utils.definePropertyInMemory(Room.prototype, "defence", function() {
+    return {
+        enemyArmy : null,
+        defenders : [],
+    };
+});
+
 Room.prototype.init = function() {
     this.spawns;
     this.tasksInfo;
@@ -78,42 +94,48 @@ Room.prototype.tick = function() {
     this.listenEvents = this.fireEvents;
     this.fireEvents = {};
 
-    for (let roleName in ROLES) {
-        var roleInfo = this.rolesInfo[roleName];
-        ROLES[roleName].tick(this, this.rolesInfo[roleName]);
+    this.roleManager();
+    this.planBuilding();
+    this.defendRoom();
+};
 
-        if (roleInfo.creepsCount < ROLES[roleName].getMaxCount(this, roleInfo)) {
-            let parts = roleInfo.parts.slice();
-            //TODO select a free spawn
-            let spawn = Game.spawns[this.spawns[0]];
-            if(spawn.canCreateCreep(parts, undefined) == OK) {
-                var creepName = spawn.createCreep(parts, undefined, {role: { name : roleName }});
-                this.creeps[creepName] = 1;
-                roleInfo.creepsCount++;
-                console.log("Creating a", roleName, ":", creepName);
-            }
+Room.prototype.roleManager = function() {
+    var roleSuite = ROLES[this.roleSuite];
+
+    //if its time to switch to next role
+    if (roleSuite.switchRole(this)) {
+        this.roleSuite++;
+        roleSuite = roleSuite;
+        //initialize new roles
+        for (let role in roleSuite.roles) {
+            this.rolesInfo[role] = roleSuite.roles[role].init(this, this.rolesInfo[role]);
         }
 
-        roleInfo.tasks.forEach((taskTiers, i) => {
-            roleInfo.freeTasks[i] = {};
-            roleInfo.hasFreeTasks[i] = false;
-            roleInfo.validTasksCount[i] = 0;
-
-            taskTiers.forEach((taskName) => {
-                var taskInfo = this.tasksInfo[taskName];
-                TASKS[taskName].tick(this, taskInfo);
-                roleInfo.validTasksCount[i] += taskInfo.hasTarget ? 1 : 0;
-                if (this.isTaskFree(taskInfo, roleInfo, i)) {
-                    roleInfo.hasFreeTasks[i] = true;
-                    roleInfo.freeTasks[i][taskName] = 1;
-                }
-            });
-        });
+        //distribute creeps from older roles to new ones
+        for (let role in roleSuite.creepDistribution) {
+            let i = 0;
+            for (let creepName in rolesInfo[role].creeps) {
+                var creep = Game.creeps[creepName];
+                var targetRoleName = roleSuite.creepDistribution[role][i];
+                roleSuite.roles[targetRoleName].addCreep(this, creep, this.rolesInfo[targetRoleName], targetRoleName);
+                i = (i + 1) % roleSuite.creepDistribution[role].length;
+            }
+            delete this.rolesInfo[role];
+        }
     }
 
+    //execute in specified order to give some roles priority
+    roleSuite.order.forEach((roleName) => {
+        var roleInfo = this.rolesInfo[roleName];
+        var roleApi = ROLES[this.roleSuite].roles[roleName];
+        roleApi.tick(this, this.rolesInfo[roleName]);
+    });
+};
+
+Room.prototype.planBuilding = function() {
     //check if RCL changed or some structures are yet to be built for current RCL
     //or there are some structures are being built
-    if (!this.tasksInfo["build"].hasTarget && (this.controller.level > this.basePlanner.lastLevel || this.basePlanner.cursor < BUILD_TYPES.length)) {
+    if (!this.tasksInfo.build.hasTarget && (this.controller.level > this.basePlanner.lastLevel || this.basePlanner.cursor < BUILD_TYPES.length)) {
         //reset the cursor when executed for the 1st time RCL changed
         if (this.basePlanner.cursor == BUILD_TYPES.length) {
             this.basePlanner.cursor = 0;
@@ -132,31 +154,28 @@ Room.prototype.tick = function() {
             this.basePlanner.lastLevel = this.controller.level;
         }
     }
-
-    /*let visual = new RoomVisual(this.name);
-    BUILD_TYPES.forEach((buildType) => {
-        this.basePlanner.plannerInfo[buildType.name].paths.forEach((path) => {
-            if (buildType.name == "container" || buildType.name == "tower") {
-                visual.circle(path[0], path[1], {
-                    radius : 0.15,
-                    stroke : "red",
-                });
-            }
-            else {
-                visual.poly(Room.deserializePath(path), {
-                    lineType : "dotted",
-                    stroke : (buildType.name == "road" ? "yellow" : "white"),
-                });
-            }
-        });
-    });*/
 };
 
 Room.prototype.creepHasDied = function(creep) {
-    for (let roleName in ROLES) {
-        ROLES[roleName].creepHasDied(this, creep);
+    for (let roleName in ROLES[this.roleSuite].roles) {
+        ROLES[this.roleSuite].roles[roleName].creepHasDied(this, creep);
+        var roleInfo = this.rolesInfo[roleName];
+
+        roleInfo.tasks.forEach((taskTiers, i) => {
+            taskTiers.forEach((taskName) => {
+                TASKS[taskName].creepHasDied(this, creep);
+            });
+        });
     }
-    for (let taskName in TASKS) {
-        TASKS[taskName].creepHasDied(this, creep);
+};
+
+Room.prototype.defendRoom = function() {
+    if (this.defence.enemyArmy) {
+    }
+    else {
+        var hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
+        if (hostiles.length > 0) {
+            this.defence.enemyArmy = enemyArmy.init(room, hostiles);
+        }
     }
 };

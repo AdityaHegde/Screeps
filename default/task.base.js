@@ -28,8 +28,9 @@ module.exports = {
         }
         var target = Game.getObjectById(creep.task.target);
         if (!target || !this.isTargetValid(target)) {
+            this.targetIsInvalid(room, creep, target, taskInfo);
             //if target is invalid, remove it from targets of the task and get a new closest target
-            _.pull(taskInfo.targets, creep.task.target);
+            taskInfo.targets = _.pull(taskInfo.targets, creep.task.target);
             creep.task.target = utils.getClosestObject(creep, taskInfo.targets);
             target = Game.getObjectById(creep.task.target);
         }
@@ -37,7 +38,7 @@ module.exports = {
     },
 
     updateTargets : function(room, taskInfo) {
-        //add new targets from
+        //add new targets from event
         taskInfo.targets.push(...room.listenEvents[this.LISTEN_EVENT]);
         taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
@@ -77,6 +78,9 @@ module.exports = {
 
     isTargetValid : function(target) {
         return true;
+    },
+
+    targetIsInvalid : function(room, creep, target, taskInfo) {
     },
 
     creepHasDied : function() {},
