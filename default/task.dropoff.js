@@ -1,18 +1,19 @@
 var _ = require("lodash");
 var baseTask = require("task.base");
 
+/**
+ * Task to drop off energy to spawn, extension or other structures that take energy (TODO)
+ *
+ * @module task
+ * @Class DropOff
+ * @extends BaseTask
+ */
+
 module.exports = _.merge({}, baseTask, {
     init : function(room, taskInfo) {
         taskInfo.energyCapacityAvailable = room.energyCapacityAvailable;
         taskInfo.potentialTargets = this.getPotentialTargets(room);
-    },
-
-    getPotentialTargets : function(room) {
-        return room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_TOWER;
-            },
-        }).map((structure) => structure.id);
+        taskInfo.updateTargets();
     },
 
     tick : function(room, taskInfo) {
@@ -20,14 +21,19 @@ module.exports = _.merge({}, baseTask, {
         if (taskInfo.energyCapacityAvailable < room.energyCapacityAvailable) {
             this.init(room, taskInfo);
         }
-
-        taskInfo.targets = this.getTargets(room, taskInfo);
-        taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
-    getTarget : function(spawn, creep, taskInfo) {
-        //TODO return a different target each time
-        return Game.getObjectById(taskInfo.targets[0]);
+    getPotentialTargets : function(room) {
+        return room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+                return structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN;
+            },
+        }).map((structure) => structure.id);
+    },
+
+    updateTargets : function(room, taskInfo) {
+        taskInfo.targets = this.getTargets(room, taskInfo);
+        taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
     getTargets : function(room, taskInfo) {

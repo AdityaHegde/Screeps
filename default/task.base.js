@@ -1,35 +1,45 @@
-var constants = require("constants");
+var utils = require("utils");
+
+/**
+ * Base task class
+ *
+ * @module task
+ * @Class BaseTask
+ */
 
 module.exports = {
+    LISTEN_EVENT : "",
+
     init : function(room, taskInfo) {
+        room.listenEvents[this.LISTEN_EVENT] = this.getTargets(room, taskInfo);
+        this.updateTargets(room, taskInfo);
     },
 
     tick : function(room, taskInfo) {
-        if (taskInfo.targets.length == 0) {
+        if (room.listenEvents[this.LISTEN_EVENT]) {
             this.updateTargets(room, taskInfo);
         }
-        taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
     getTarget : function(room, creep, taskInfo) {
         if (!creep.task.target) {
-            creep.task.target = taskInfo.targets[0];
+            //if there is no current target, get one closest
+            creep.task.target = utils.getClosestObject(creep, taskInfo.targets);
         }
         var target = Game.getObjectById(creep.task.target);
         if (!target || !this.isTargetValid(target)) {
-            this.updateTargets(room, taskInfo);
-            target = taskInfo.targets[0];
-            creep.task.target = Game.getObjectById(target && target.id);
+            //if target is invalid, remove it from targets of the task and get a new closest target
+            _.pull(taskInfo.targets, creep.task.target);
+            creep.task.target = utils.getClosestObject(creep, taskInfo.targets);
+            target = Game.getObjectById(creep.task.target);
         }
         return target;
     },
 
     updateTargets : function(room, taskInfo) {
-        if (!taskInfo.hasUpdatedTargets) {
-            taskInfo.targets = this.getTargets(room, taskInfo);
-            taskInfo.hasTarget = taskInfo.targets.length > 0;
-            taskInfo.hasUpdatedTargets = true;
-        }
+        //add new targets from
+        taskInfo.targets.push(...room.listenEvents[this.LISTEN_EVENT]);
+        taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
     getTargets : function(room, taskInfo) {

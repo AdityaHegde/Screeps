@@ -13,6 +13,8 @@ module.exports = _.merge({}, roadBuilder, {
             pathCursor : 0,
         };
 
+        room.tempExtensionsPath = [];
+
         //road builder has already calculated paths to sources, add positions for extensions beside that path
         let allocatedCount = 0;
         for (let i = 1; i < room.tempRoadPaths.length; i++) {
@@ -21,45 +23,55 @@ module.exports = _.merge({}, roadBuilder, {
 
             //have a buffer of 2 slots for creating extensions
             for (var j = 1; j < path.length - 1; j++) {
-                var dx, dy;
+                let dxdy = this.getDxDy(path[j-1], path[j]);
 
-                if (path[j].dx == path[j-1].dx && path[j].dy == path[j-1].dy) {
-                    dx = Math.round(COS90 * path[j].dx - SIN90 * path[j].dy);
-                    dy = Math.round(SIN90 * path[j].dx + COS90 * path[j].dy);
-                }
-                else if ((path[j].dx * path[j].dy == 0 && path[j-1].dx * path[j-1].dy == 0) ||
-                    (path[j].dx * path[j].dy != 0 && path[j-1].dx * path[j-1].dy != 0)) {
-                    dx = Math.round(COS45 * path[j-1].dx - SIN45 * path[j-1].dy);
-                    dy = Math.round(SIN45 * path[j-1].dx + COS45 * path[j-1].dy);
-                }
-                else if (path[j].dx * path[j].dy == 0) {
-                    dx = path[j].dy;
-                    dy = path[j].dx;
-                }
-                else if (path[j-1].dx * path[j-1].dy == 0) {
-                    dx = path[j-1].dy;
-                    dy = path[j-1].dx;
-                }
-
-                this.addPathEntry(path1, path2, path[j], dx, dy);
+                this.addPathEntry(path1, path2, path[j], dxdy[0], dxdy[1]);
             }
 
             plannerInfo.paths.push(Room.serializePath(path1), Room.serializePath(path2));
+            room.tempExtensionsPath.push(path1, path2);
         }
 
         return plannerInfo;
     },
 
+    getDxDy : function(pos0, pos1) {
+        let dx, dy;
+
+        if (pos1.dx == pos0.dx && pos1.dy == pos0.dy) {
+            return this.getPerpendicularDxDy(pos1.dx, pos1.dy);
+        }
+        else if ((pos1.dx * pos1.dy == 0 && pos0.dx * pos0.dy == 0) ||
+            (pos1.dx * pos1.dy != 0 && pos0.dx * pos0.dy != 0)) {
+            dx = Math.round(COS45 * pos0.dx - SIN45 * pos0.dy);
+            dy = Math.round(SIN45 * pos0.dx + COS45 * pos0.dy);
+        }
+        else if (pos1.dx * pos1.dy == 0) {
+            dx = pos1.dy;
+            dy = pos1.dx;
+        }
+        else if (pos0.dx * pos0.dy == 0) {
+            dx = pos0.dy;
+            dy = pos0.dx;
+        }
+
+        return [dx, dy];
+    },
+
+    getPerpendicularDxDy : function(dx, dy) {
+        return [Math.round(COS90 * dx - SIN90 * dy), Math.round(SIN90 * dx + COS90 * dy)];
+    },
+
     addPathEntry : function(path1, path2, pathEntry, dx, dy) {
         path1.push({
-            x : pathEntry.x + dx,
+            x : pathEntry.x - dx,
             y : pathEntry.y + dy,
             dx : pathEntry.dx,
             dy : pathEntry.dy,
             direction : pathEntry.direction,
         });
         path2.push({
-            x : pathEntry.x - dx,
+            x : pathEntry.x + dx,
             y : pathEntry.y - dy,
             dx : pathEntry.dx,
             dy : pathEntry.dy,

@@ -38,4 +38,21 @@ module.exports = {
             configurable: true,
         });
     },
+
+    getClosestObject : function(creep, targets) {
+        var distanceObj = targets.reduce((curDistanceObj, targetId) => {
+            var target = Game.getObjectById(targetId);
+            let distanceFromCreep = Math.sqrt((creep.pos.x - target.pos.x) ^ 2 + (creep.pos.y - target.pos.y) ^ 2);
+            if (distanceFromCreep < curDistanceObj.distance) {
+                return {
+                    distance : distanceFromCreep,
+                    targetId : targetId,
+                };
+            }
+            return curDistanceObj;
+        }, {
+            distance : 99999,
+        });
+        return distanceObj.targetId;
+    },
 };

@@ -1,6 +1,23 @@
-var baseTask = require("task.base")
+var baseTask = require("task.base");
+var constants = require("constants");
+
+/**
+ * Task to repair structures
+ *
+ * @module task
+ * @Class RepairTask
+ * @extends BaseTask
+ */
 
 var repair = _.merge({}, baseTask, {
+    LISTEN_EVENT : constants.STRUCURE_BUILT,
+
+    updateTargets : function(room, taskInfo) {
+        //add new targets from
+        taskInfo.targets = this.getTargets(room, taskInfo);
+        taskInfo.hasTarget = taskInfo.targets.length > 0;
+    },
+
     getTargets : function(room, taskInfo) {
         return room.find(FIND_STRUCTURES, {
             filter : structure => structure.hits < structure.hitsMax / 2

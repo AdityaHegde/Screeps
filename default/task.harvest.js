@@ -1,6 +1,14 @@
 let baseTask = require("task.base");
 let utils = require("utils")
 
+/**
+ * Task to harvest source
+ *
+ * @module task
+ * @Class DropOff
+ * @extends BaseTask
+ */
+
 module.exports = _.merge({}, baseTask, {
     tick : function(room, taskInfo) {
         taskInfo.hasTarget = true;

@@ -1,6 +1,14 @@
 var _ = require("lodash");
 var baseTask = require("task.base");
 
+/**
+ * Upgrade and maintain the controller
+ *
+ * @module task
+ * @Class StoreTask
+ * @extends BaseTask
+ */
+
 var upgrade = _.merge({}, baseTask, {
     getTarget : function(room) {
         return room.controller;

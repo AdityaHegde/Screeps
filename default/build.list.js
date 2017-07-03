@@ -5,6 +5,15 @@ module.exports = {
     }, {
         name : "road",
         api : require("build.road"),
+    }, {
+        name : "wall",
+        api : require("build.wall"),
+    }, {
+        name : "container",
+        api : require("build.container"),
+    }, {
+        name : "tower",
+        api : require("build.tower"),
     }],
-    initOrder : [1, 0],
+    initOrder : [1, 0, 2, 3, 4],
 };
