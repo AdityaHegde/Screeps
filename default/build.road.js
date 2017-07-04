@@ -56,6 +56,9 @@ module.exports = {
             plannerInfo.pathCursor = 0;
         }
 
-        return true;
+        room.fireEvents[constants.CONSTRUCTION_COMPLETED] = this.type;
+
+        //build only one type at a time
+        return false;
     },
 };

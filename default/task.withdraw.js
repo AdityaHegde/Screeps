@@ -12,4 +12,8 @@ module.exports = _.merge({}, storeTask, {
     doTask : function(creep, target) {
         return creep.withdraw(target, RESOURCE_ENERGY);
     },
+
+    isTaskValid : function(creep, target) {
+        return creep.carry.energy == creep.carryCapacity;
+    },
 });

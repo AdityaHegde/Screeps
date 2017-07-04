@@ -1,12 +1,16 @@
+var constants = require("constants");
+
 module.exports = [{
     roles : {
         worker : require("role.worker"),
     },
     switchRole : function(room) {
         if (room.listenEvents[constants.CONTAINER_BUILT]) {
+            console.log(room.containerCount, room.listenEvents[constants.CONTAINER_BUILT].length);
             room.containerCount += room.listenEvents[constants.CONTAINER_BUILT].length;
+            console.log(room.containerCount, room.basePlanner.plannerInfo.container.paths.length);
         }
-        return room.containerCount >= room.buildPlanner.plannerInfo.container.paths.length;
+        return room.containerCount >= room.basePlanner.plannerInfo.container.paths.length;
     },
     order : ["worker"],
 }, {

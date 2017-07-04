@@ -1,4 +1,4 @@
-var _ = require("lodash");
+var constants = require("constants");
 var baseTask = require("task.base");
 
 /**
@@ -13,13 +13,16 @@ module.exports = _.merge({}, baseTask, {
     init : function(room, taskInfo) {
         taskInfo.energyCapacityAvailable = room.energyCapacityAvailable;
         taskInfo.potentialTargets = this.getPotentialTargets(room);
-        taskInfo.updateTargets();
+        this.updateTargets(room, taskInfo);
     },
 
     tick : function(room, taskInfo) {
         //targets for harvest drop might have changed
         if (taskInfo.energyCapacityAvailable < room.energyCapacityAvailable) {
             this.init(room, taskInfo);
+        }
+        if (room.listenEvents[constants.CREEP_CREATED]) {
+            this.updateTargets(room, taskInfo);
         }
     },
 
@@ -44,6 +47,10 @@ module.exports = _.merge({}, baseTask, {
 
     doTask : function(creep, target) {
         return creep.transfer(target, RESOURCE_ENERGY);
+    },
+
+    isTaskValid : function(creep, target) {
+        return creep.carry.energy > 0;
     },
 
     isTargetValid : function(target) {

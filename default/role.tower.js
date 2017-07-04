@@ -13,8 +13,10 @@ module.exports = _.merge({}, baseRole, {
     TASKS : [
         ["repair", "shoot"],
     ],
+    ROLE_NAME : "tower",
 
     getMaxCount : function(room, roleInfo) {
-        return 2;
+        //tower is built seperately
+        return 0;
     },
 });

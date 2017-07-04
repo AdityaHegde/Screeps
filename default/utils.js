@@ -43,7 +43,7 @@ module.exports = {
     getClosestObject : function(creep, targets) {
         var distanceObj = targets.reduce((curDistanceObj, targetId) => {
             var target = Game.getObjectById(targetId);
-            let distanceFromCreep = Math.sqrt((creep.pos.x - target.pos.x) ^ 2 + (creep.pos.y - target.pos.y) ^ 2);
+            let distanceFromCreep = Math.sqrt((creep.pos.x - target.pos.x) * (creep.pos.x - target.pos.x) + (creep.pos.y - target.pos.y) * (creep.pos.y - target.pos.y));
             if (distanceFromCreep < curDistanceObj.distance) {
                 return {
                     distance : distanceFromCreep,

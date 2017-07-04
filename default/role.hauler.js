@@ -14,6 +14,7 @@ module.exports = _.merge({}, baseRole, {
         ["withdraw"],
         ["dropoff"],
     ],
+    ROLE_NAME : "hauler",
 
     getMaxCount : function(room, roleInfo) {
         //have a container for each source and one more for controller

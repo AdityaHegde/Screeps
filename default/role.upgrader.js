@@ -14,10 +14,9 @@ module.exports = _.merge({}, baseRole, {
         ["withdraw"],
         ["upgrade"],
     ],
+    ROLE_NAME : "upgrader",
 
     getMaxCount : function(room, roleInfo) {
-        //have a container for each source and one more for controller
-        //hauler will haul from each container to other sources
         return 1;
     },
 });

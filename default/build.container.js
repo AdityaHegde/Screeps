@@ -1,3 +1,4 @@
+var constants = require("constants");
 var extensionBuilder = require("build.extension");
 
 module.exports = _.merge({}, extensionBuilder, {
@@ -38,8 +39,7 @@ module.exports = _.merge({}, extensionBuilder, {
         //store the last built road block to resume later when max construction site has been reached
         var c = 0;
         for (; plannerInfo.roadCursor < plannerInfo.paths.length; plannerInfo.roadCursor++) {
-
-            var returnValue = room.createConstructionSite(path[plannerInfo.pathCursor][0], path[plannerInfo.pathCursor][1], this.type);
+            var returnValue = room.createConstructionSite(plannerInfo.paths[plannerInfo.roadCursor][0], plannerInfo.paths[plannerInfo.roadCursor][1], this.type);
             room.fireEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
             c++;
             //if max sites has been reached or if RCL is not high enough, return
@@ -53,6 +53,7 @@ module.exports = _.merge({}, extensionBuilder, {
             }
         }
 
-        return true;
+        //build only one type at a time
+        return false;
     },
 });

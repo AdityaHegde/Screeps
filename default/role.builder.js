@@ -14,6 +14,7 @@ module.exports = _.merge({}, baseRole, {
         ["withdraw"],
         ["build"],
     ],
+    ROLE_NAME : "builder",
 
     getMaxCount : function(room, roleInfo) {
         return 2;

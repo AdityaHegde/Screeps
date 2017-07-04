@@ -1,4 +1,5 @@
 var utils = require("utils");
+var constants = require("constants");
 
 /**
  * Base task class
@@ -12,7 +13,8 @@ module.exports = {
 
     init : function(room, taskInfo) {
         room.listenEvents[this.LISTEN_EVENT] = this.getTargets(room, taskInfo);
-        this.updateTargets(room, taskInfo);
+        taskInfo.targets = this.getTargets(room, taskInfo);
+        taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
     tick : function(room, taskInfo) {
@@ -31,6 +33,7 @@ module.exports = {
             this.targetIsInvalid(room, creep, target, taskInfo);
             //if target is invalid, remove it from targets of the task and get a new closest target
             taskInfo.targets = _.pull(taskInfo.targets, creep.task.target);
+            taskInfo.hasTarget = taskInfo.targets.length > 0;
             creep.task.target = utils.getClosestObject(creep, taskInfo.targets);
             target = Game.getObjectById(creep.task.target);
         }
@@ -38,9 +41,11 @@ module.exports = {
     },
 
     updateTargets : function(room, taskInfo) {
+        console.log(room.listenEvents[this.LISTEN_EVENT].join(","));
         //add new targets from event
         taskInfo.targets.push(...room.listenEvents[this.LISTEN_EVENT]);
         taskInfo.hasTarget = taskInfo.targets.length > 0;
+        console.log(taskInfo.hasTarget);
     },
 
     getTargets : function(room, taskInfo) {

@@ -1,11 +1,12 @@
 let constants = require("constants");
+let TASKS = require("task.list");
 let MAX_PARTS = 50;
 
 /**
- * Base role with static workers.
- * @module role
- * @Class BaseRole
- */
+* Base role with static workers.
+* @module role
+* @Class BaseRole
+*/
 
 module.exports = {
     PARTS : [WORK, CARRY, MOVE, MOVE],
@@ -14,6 +15,7 @@ module.exports = {
         ["harvest"],
         ["dropoff", "build", "upgrade", "repair"],
     ],
+    ROLE_NAME : "base",
 
     init : function(room, roleInfo) {
         return {
@@ -31,14 +33,31 @@ module.exports = {
     tick : function(room, roleInfo) {
         this.upgradeParts(room, roleInfo);
 
+        //spawn creeps
+        //console.log(roleInfo.creepsCount, this.getMaxCount(room, roleInfo));
+        if (roleInfo.creepsCount < this.getMaxCount(room, roleInfo)) {
+            let parts = roleInfo.parts.slice();
+            //TODO select a free spawn
+            let spawn = Game.spawns[room.spawns[0]];
+            if(spawn.canCreateCreep(parts, undefined) == OK) {
+                let creepName = spawn.createCreep(parts, undefined, {role: { name : this.ROLE_NAME }});
+                roleInfo.creeps[creepName] = 1;
+                roleInfo.creepsCount++;
+                room.fireEvents[constants.CREEP_CREATED] = 1;
+                console.log("Creating a", this.ROLE_NAME, ":", creepName);
+            }
+        }
+
         roleInfo.tasks.forEach((taskTiers, i) => {
-            roleInfo.freeTasks[i] = {};
-            roleInfo.hasFreeTasks[i] = false;
-            roleInfo.validTasksCount[i] = 0;
+            if (roleInfo.validTasksCount) {
+                roleInfo.freeTasks[i] = {};
+                roleInfo.hasFreeTasks[i] = false;
+                roleInfo.validTasksCount[i] = 0;
+            }
 
             taskTiers.forEach((taskName) => {
                 var taskInfo = room.tasksInfo[taskName];
-                TASKS[taskName].tick(room, taskInfo);
+                //console.log(taskName, ":", taskInfo.creepsCount, "/", roleInfo.creepsCount);
                 if (roleInfo.validTasksCount) {
                     roleInfo.validTasksCount[i] += taskInfo.hasTarget ? 1 : 0;
                     if (this.isTaskFree(taskInfo, roleInfo, i)) {
@@ -49,42 +68,45 @@ module.exports = {
             });
         });
 
-        //spawn creeps
-        for (var creepName in roleInfo.creeps) {
+        //execute creeps' tasks
+        for (let creepName in roleInfo.creeps) {
             var creep = Game.creeps[creepName];
 
             if (creep) {
-                this.executeTask(room, creep);
+                if (!creep.spawning) {
+                    this.executeTask(room, creep);
+                }
             }
             else if (Memory.creeps[creepName]) {
                 console.log("Creep", creepName, "died");
                 Memory.creeps[creepName].name = creepName;
-                this.creepHasDied(room, Memory.creeps[creepName]);
+                this.creepHasDied(room, Memory.creeps[creepName], roleInfo);
                 delete Memory.creeps[creepName];
             }
         }
     },
 
     upgradeParts : function(room, roleInfo) {
-        var newPart = this.MAIN_PARTS[roleInfo.i];
+        let newPart = this.MAIN_PARTS[roleInfo.i];
 
         //if the available energy capacity can accommodate the new part or if the parts has reached max parts count (50)
         while (room.energyCapacityAvailable >= roleInfo.partsCost + BODYPART_COST[newPart] + BODYPART_COST[MOVE] && roleInfo.parts.length <= MAX_PARTS - 2) {
             //have the new part at the beginig and move at the end, so that when the creep is damaged movement is the last thing to be damaged
             roleInfo.parts.unshift(newPart);
             roleInfo.parts.push(MOVE);
-            roleInfo.parts = roleInfo.parts.sort();
             roleInfo.partsCost += BODYPART_COST[newPart] + BODYPART_COST[MOVE];
             roleInfo.i = (roleInfo.i + 1) % this.MAIN_PARTS.length;
 
-            console.log("Upgraded the creeps parts to", roleInfo.parts.join(","));
+            //console.log("Upgraded the creeps parts to", roleInfo.parts.join(","));
+
+            newPart = this.MAIN_PARTS[roleInfo.i];
         }
     },
 
-    addCreep : function(room, creep, roleInfo, roleName) {
+    addCreep : function(room, creep, roleInfo) {
         creep.task = null;
         creep.role = {
-            name : roleName,
+            name : this.ROLE_NAME,
         };
         roleInfo.creeps[creep.name] = 1;
         roleInfo.creepsCount++;
@@ -95,8 +117,9 @@ module.exports = {
         if (creep.task) {
             var roleInfo = room.rolesInfo[creep.role.name];
             var currentTask = roleInfo.tasks[creep.task.tier][creep.task.current];
+            //console.log(creep.name, currentTask);
             if (currentTask) {
-                var returnValue = TASKS[currentTask].execute(room, creep, room.tasksInfo[currentTask]);
+                let returnValue = TASKS[currentTask].execute(room, creep, room.tasksInfo[currentTask]);
                 switch (returnValue) {
                     case ERR_INVALID_TARGET:
                     case ERR_NO_BODYPART:
@@ -142,7 +165,7 @@ module.exports = {
         creep.task.current = taskIdx;
         creep.task.tasks[creep.task.tier] = taskIdx;
 
-        console.log("Assigning", creep.name, "to", taskName);
+        console.log("Assigning", creep.name, "to", roleInfo.tasks[creep.task.tier][taskIdx]);
     },
 
     assignNewTask : function(room, creep, isNew) {
@@ -161,21 +184,23 @@ module.exports = {
             }
         }
 
-        if (minTask >= 0) {
+        if (minTaskIdx >= 0) {
             this.assignTask(creep, roleInfo, minTaskInfo, minTaskIdx);
         }
     },
 
     clearTask : function(room, creep) {
-        let roleInfo = room.rolesInfo[creep.role.name];
-        let taskInfo = room.tasksInfo[roleInfo.tasks[creep.task.tier][creep.task.current]];
-        if (taskInfo.creeps[creep.name]) {
-            console.log("Clearing", creep.name, "from", roleInfo.tasks[creep.task.tier][creep.task.current]);
-            taskInfo.creepsCount--;
-            delete taskInfo.creeps[creep.name];
-        }
-        else {
-            console.log("Trying to clear", creep.name, "of unassigned task");
+        if (creep.task) {
+            let roleInfo = room.rolesInfo[creep.role.name];
+            let taskInfo = room.tasksInfo[roleInfo.tasks[creep.task.tier][creep.task.current]];
+            if (taskInfo && taskInfo.creeps[creep.name]) {
+                console.log("Clearing", creep.name, "from", roleInfo.tasks[creep.task.tier][creep.task.current]);
+                taskInfo.creepsCount--;
+                delete taskInfo.creeps[creep.name];
+            }
+            else {
+                console.log("Trying to clear", creep.name, "of unassigned task");
+            }
         }
     },
 
@@ -193,7 +218,16 @@ module.exports = {
         //TODO
     },
 
-    creepHasDied : function(room, creep) {
+    creepHasDied : function(room, creep, roleInfo) {
         this.clearTask(room, creep);
+        if (roleInfo.creeps[creep.name]) {
+            delete roleInfo.creeps[creep.name];
+            roleInfo.creepsCount--;
+        }
+        roleInfo.tasks.forEach((taskTiers, i) => {
+            taskTiers.forEach((taskName) => {
+                TASKS[taskName].creepHasDied(room, creep);
+            });
+        });
     },
 };

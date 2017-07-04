@@ -2,10 +2,10 @@ var constants = require("constants");
 var baseTask = require("task.base");
 
 var TYPE_TO_EVENT = {
-    [STRUCURE_CONTAINER] : constants.CONTAINER_BUILT,
-    [STRUCURE_EXTENSION] : constants.EXTENSION_BUILT,
-    [STRUCURE_WALL] : constants.WALL_BUILT,
-    [STRUCURE_TOWER] : constants.TOWER_BUILT,
+    [STRUCTURE_CONTAINER] : constants.CONTAINER_BUILT,
+    [STRUCTURE_EXTENSION] : constants.EXTENSION_BUILT,
+    [STRUCTURE_WALL] : constants.WALL_BUILT,
+    [STRUCTURE_TOWER] : constants.TOWER_BUILT,
 };
 
 /**
@@ -42,11 +42,11 @@ module.exports = _.merge({}, baseTask, {
         if (creep.task.targetType) {
             var newTarget = target || room.lookForAt(LOOK_STRUCTURES, creep.task.targetPos.x, creep.task.targetPos.y)[0];
             if (creep.task.targetType && TYPE_TO_EVENT[creep.task.targetType]) {
-                this.fireEvents[TYPE_TO_EVENT[creep.task.targetType]] = this.fireEvents[TYPE_TO_EVENT[creep.task.targetType]] || [];
-                this.fireEvents[TYPE_TO_EVENT[creep.task.targetType]].push(target.id);
+                room.fireEvents[TYPE_TO_EVENT[creep.task.targetType]] = room.fireEvents[TYPE_TO_EVENT[creep.task.targetType]] || [];
+                room.fireEvents[TYPE_TO_EVENT[creep.task.targetType]].push(newTarget.id);
             }
-            this.fireEvents[constants.STRUCURE_BUILT] = this.fireEvents[constants.STRUCURE_BUILT] || [];
-            this.fireEvents[constants.STRUCURE_BUILT].push(target.id);
+            room.fireEvents[constants.STRUCURE_BUILT] = room.fireEvents[constants.STRUCURE_BUILT] || [];
+            room.fireEvents[constants.STRUCURE_BUILT].push(newTarget.id);
         }
     },
 });

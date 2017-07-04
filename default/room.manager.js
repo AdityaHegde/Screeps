@@ -80,10 +80,10 @@ utils.definePropertyInMemory(Room.prototype, "defence", function() {
 
 Room.prototype.init = function() {
     this.spawns;
-    this.tasksInfo;
-    this.rolesInfo;
     this.basePlanner;
     this.addSources();
+    this.rolesInfo;
+    this.tasksInfo;
 };
 
 Room.prototype.tick = function() {
@@ -104,24 +104,33 @@ Room.prototype.roleManager = function() {
 
     //if its time to switch to next role
     if (roleSuite.switchRole(this)) {
+        console.log("Switching role suite");
+        var oldSuite = ROLES[this.roleSuite];
         this.roleSuite++;
-        roleSuite = roleSuite;
+        roleSuite = ROLES[this.roleSuite];
         //initialize new roles
         for (let role in roleSuite.roles) {
+            console.log("New role", role);
             this.rolesInfo[role] = roleSuite.roles[role].init(this, this.rolesInfo[role]);
         }
 
         //distribute creeps from older roles to new ones
         for (let role in roleSuite.creepDistribution) {
             let i = 0;
-            for (let creepName in rolesInfo[role].creeps) {
+            for (let creepName in this.rolesInfo[role].creeps) {
                 var creep = Game.creeps[creepName];
                 var targetRoleName = roleSuite.creepDistribution[role][i];
+                oldSuite.roles[creep.role.name].clearTask(this, creep);
                 roleSuite.roles[targetRoleName].addCreep(this, creep, this.rolesInfo[targetRoleName], targetRoleName);
                 i = (i + 1) % roleSuite.creepDistribution[role].length;
             }
             delete this.rolesInfo[role];
         }
+    }
+
+    for (var taskName in TASKS) {
+        var taskInfo = this.tasksInfo[taskName];
+        TASKS[taskName].tick(this, taskInfo);
     }
 
     //execute in specified order to give some roles priority
@@ -158,8 +167,8 @@ Room.prototype.planBuilding = function() {
 
 Room.prototype.creepHasDied = function(creep) {
     for (let roleName in ROLES[this.roleSuite].roles) {
-        ROLES[this.roleSuite].roles[roleName].creepHasDied(this, creep);
         var roleInfo = this.rolesInfo[roleName];
+        ROLES[this.roleSuite].roles[roleName].creepHasDied(this, creep, roleInfo);
 
         roleInfo.tasks.forEach((taskTiers, i) => {
             taskTiers.forEach((taskName) => {
@@ -173,7 +182,7 @@ Room.prototype.defendRoom = function() {
     if (this.defence.enemyArmy) {
     }
     else {
-        var hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
+        var hostiles = this.find(FIND_HOSTILE_CREEPS);
         if (hostiles.length > 0) {
             this.defence.enemyArmy = enemyArmy.init(room, hostiles);
         }

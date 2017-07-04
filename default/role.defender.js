@@ -14,6 +14,7 @@ module.exports = _.merge({}, baseRole, {
         ["position"],
         ["shoot"],
     ],
+    ROLE_NAME : "defender",
 
     getMaxCount : function(room, roleInfo) {
         //spawn only if there is an enemy army

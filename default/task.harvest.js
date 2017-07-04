@@ -26,7 +26,7 @@ module.exports = _.merge({}, baseTask, {
     },
 
     getTargets : function(room, taskInfo) {
-        //dummy
+        return [];
     },
 
     doTask : function(creep, target) {

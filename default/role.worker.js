@@ -16,6 +16,7 @@ module.exports = _.merge({}, baseRole, {
         ["harvest"],
         ["dropoff", "build", "upgrade", "repair"],
     ],
+    ROLE_NAME : "worker",
 
     init : function(room, roleInfo) {
         return {
@@ -26,6 +27,7 @@ module.exports = _.merge({}, baseRole, {
             }, 0),
             i : 0,
             validTasksCount : {},
+            hasFreeTasks : {},
             freeTasks : {},
             creeps : {},
             creepsCount : 0,
@@ -39,7 +41,7 @@ module.exports = _.merge({}, baseRole, {
     isTaskFree : function(taskInfo, roleInfo, tier, offset) {
         offset = offset || 0;
         //console.log(taskInfo.hasTarget, taskInfo.creepsCount, Math.round(roleInfo.creepsCount, roleInfo.validTasksCount[tier]));
-        return taskInfo.hasTarget && taskInfo.creepsCount < Math.round(roleInfo.creepsCount / roleInfo.validTasksCount[tier]);
+        return taskInfo.hasTarget && taskInfo.creepsCount < Math.round(roleInfo.creepsCount / roleInfo.validTasksCount[tier]) - offset;
     },
 
     assignTask : function(creep, roleInfo, taskInfo, taskIdx) {
@@ -76,7 +78,8 @@ module.exports = _.merge({}, baseRole, {
                 let taskInfo = room.tasksInfo[tasks[i]];
                 //console.log(creep.name, tasks[i]);
                 if (this.isTaskFree(taskInfo, roleInfo, tier)) {
-                    this.assignTask(room, creep, roleInfo, taskInfo, i);
+                    this.assignTask(creep, roleInfo, taskInfo, i);
+                    assigned = true;
                     break;
                 }
                 if (backup == null && taskInfo.hasTarget) {
@@ -87,7 +90,7 @@ module.exports = _.merge({}, baseRole, {
         }
 
         if (!assigned && backup != null) {
-            this.assignTask(room, creep, roleInfo, room.tasksInfo[tasks[i]], backup);
+            this.assignTask(creep, roleInfo, room.tasksInfo[tasks[i]], backup);
         }
     },
 
