@@ -1,22 +1,24 @@
-var baseRole = require("role.base");
+let workerRole = require("role.worker");
 
 /**
  * Builder role.
  * @module role
  * @Class BuilderRole
- * @extends BaseRole
+ * @extends WorkerRole
  */
 
-module.exports = _.merge({}, baseRole, {
+module.exports = _.assign({}, workerRole, {
     PARTS : [WORK, CARRY, MOVE, MOVE],
     MAIN_PARTS : [WORK, CARRY],
     TASKS : [
         ["withdraw"],
-        ["build"],
+        //let build and repair be managed by the same role,
+        //with auto balancing
+        ["build", "repair"],
     ],
     ROLE_NAME : "builder",
 
     getMaxCount : function(room, roleInfo) {
-        return 2;
+        return 4;
     },
 });

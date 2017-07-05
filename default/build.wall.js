@@ -1,6 +1,6 @@
 var roadBuilder = require("build.road");
 
-module.exports = _.merge({}, roadBuilder, {
+module.exports = _.assign({}, roadBuilder, {
     type : STRUCTURE_RAMPART,
 
     init : function(room) {

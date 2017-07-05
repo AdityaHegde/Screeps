@@ -1,6 +1,12 @@
 var baseTask = require("task.base");
 
-module.exports = _.merge({}, baseTask, {
+module.exports = _.assign({}, baseTask, {
+    tick : function(room, taskInfo) {
+        if (room.defence.enemyArmy && roleInfo.targets.length == 0) {
+            this.updateTargets(rome, taskInfo);
+        }
+    },
+
     getTargets : function(room, taskInfo) {
         if (room.defence.enemyArmy) {
             return room.lookForAtArea(LOOK_STRUCTURES, room.defence.enemyArmy.area.top, room.defence.enemyArmy.area.left,

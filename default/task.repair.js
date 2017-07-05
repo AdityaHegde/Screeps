@@ -9,8 +9,8 @@ var constants = require("constants");
  * @extends BaseTask
  */
 
-var repair = _.merge({}, baseTask, {
-    LISTEN_EVENT : constants.STRUCURE_BUILT,
+var repair = _.assign({}, baseTask, {
+    TARGETS_EVENT : constants.STRUCURE_BUILT,
 
     updateTargets : function(room, taskInfo) {
         //add new targets from

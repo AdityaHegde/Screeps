@@ -24,12 +24,12 @@ utils.definePropertyInMemory(Creep.prototype, "source", function() {
 });
 
 Source.prototype.claim = function(creep) {
-    creep.source = this.id;
+    creep.task.source = this.id;
     this.occupiedSpaces++;
 };
 
 Source.prototype.release = function(creep) {
-    delete creep.source;
+    delete creep.task.source;
     this.occupiedSpaces--;
 };
 

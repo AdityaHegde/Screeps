@@ -6,6 +6,7 @@ var BUILD_TYPES = require("build.list").types;
 var BUILD_INIT_ORDER = require("build.list").initOrder;
 let sourceManager = require("source.manager");
 let creepManager = require("creep.manager");
+let structureManager = require("structure.manager");
 var enemyArmy = require("army.enemy");
 
 utils.definePropertyInMemory(Room.prototype, "spawns", function() {
@@ -100,12 +101,12 @@ Room.prototype.tick = function() {
 };
 
 Room.prototype.roleManager = function() {
-    var roleSuite = ROLES[this.roleSuite];
+    let roleSuite = ROLES[this.roleSuite];
 
     //if its time to switch to next role
     if (roleSuite.switchRole(this)) {
         console.log("Switching role suite");
-        var oldSuite = ROLES[this.roleSuite];
+        let oldSuite = ROLES[this.roleSuite];
         this.roleSuite++;
         roleSuite = ROLES[this.roleSuite];
         //initialize new roles
@@ -120,7 +121,7 @@ Room.prototype.roleManager = function() {
             for (let creepName in this.rolesInfo[role].creeps) {
                 var creep = Game.creeps[creepName];
                 var targetRoleName = roleSuite.creepDistribution[role][i];
-                oldSuite.roles[creep.role.name].clearTask(this, creep);
+                oldSuite.roles[creep.role.name].removeCreep(this, creep, this.rolesInfo[role]);
                 roleSuite.roles[targetRoleName].addCreep(this, creep, this.rolesInfo[targetRoleName], targetRoleName);
                 i = (i + 1) % roleSuite.creepDistribution[role].length;
             }
@@ -137,6 +138,10 @@ Room.prototype.roleManager = function() {
     roleSuite.order.forEach((roleName) => {
         var roleInfo = this.rolesInfo[roleName];
         var roleApi = ROLES[this.roleSuite].roles[roleName];
+        /*console.log(roleName, ":", Object.keys(roleInfo.creeps).map((creepName) => {
+            var creep = Game.creeps[creepName];
+            return creep.name + " (" + (creep.task ? roleInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
+        }).join("  "));*/
         roleApi.tick(this, this.rolesInfo[roleName]);
     });
 };

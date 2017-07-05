@@ -36,6 +36,11 @@ module.exports = {
     build : function(room, plannerInfo) {
         //store the last built road block to resume later when max construction site has been reached
         var c = 0;
+        if (plannerInfo.roadCursor == plannerInfo.paths.length) {
+            //return true if this type of structure was finished before
+            return true;
+        }
+
         for (; plannerInfo.roadCursor < plannerInfo.paths.length; plannerInfo.roadCursor++) {
             var path = Room.deserializePath(plannerInfo.paths[plannerInfo.roadCursor]);
 

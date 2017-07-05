@@ -7,7 +7,7 @@ var baseRole = require("role.base");
  * @extends BaseRole
  */
 
-module.exports = _.merge({}, baseRole, {
+module.exports = _.assign({}, baseRole, {
     PARTS : [RANGED_ATTACK, MOVE],
     MAIN_PARTS : [RANGED_ATTACK],
     TASKS : [

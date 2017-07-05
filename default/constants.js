@@ -12,4 +12,7 @@ module.exports = {
     TOWER_BUILT : "t_b",
     EXTENSION_BUILT : "e_b",
     STRUCURE_BUILT : "s_b",
+
+    HARVESTER_STORAGE : "h_s",
+    UPGRADER_STORAGE : "u_s",
 };

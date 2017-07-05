@@ -9,16 +9,16 @@ var constants = require("constants");
  */
 
 module.exports = {
-    LISTEN_EVENT : "",
+    TARGETS_EVENT : "",
 
     init : function(room, taskInfo) {
-        room.listenEvents[this.LISTEN_EVENT] = this.getTargets(room, taskInfo);
+        room.listenEvents[this.TARGETS_EVENT] = this.getTargets(room, taskInfo);
         taskInfo.targets = this.getTargets(room, taskInfo);
         taskInfo.hasTarget = taskInfo.targets.length > 0;
     },
 
     tick : function(room, taskInfo) {
-        if (room.listenEvents[this.LISTEN_EVENT]) {
+        if (room.listenEvents[this.TARGETS_EVENT]) {
             this.updateTargets(room, taskInfo);
         }
     },
@@ -41,11 +41,12 @@ module.exports = {
     },
 
     updateTargets : function(room, taskInfo) {
-        console.log(room.listenEvents[this.LISTEN_EVENT].join(","));
+        //console.log(room.listenEvents[this.TARGETS_EVENT].join(","));
         //add new targets from event
-        taskInfo.targets.push(...room.listenEvents[this.LISTEN_EVENT]);
+        taskInfo.targets.push(...room.listenEvents[this.TARGETS_EVENT]);
+        taskInfo.targets = _.uniq(taskInfo.targets);
         taskInfo.hasTarget = taskInfo.targets.length > 0;
-        console.log(taskInfo.hasTarget);
+        //console.log(taskInfo.hasTarget);
     },
 
     getTargets : function(room, taskInfo) {

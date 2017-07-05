@@ -1,6 +1,6 @@
 var extensionBuilder = require("build.container");
 
-module.exports = _.merge({}, extensionBuilder, {
+module.exports = _.assign({}, extensionBuilder, {
     type : STRUCTURE_TOWER,
 
     init : function(room) {

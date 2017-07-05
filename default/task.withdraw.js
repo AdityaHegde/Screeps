@@ -8,12 +8,16 @@ var storeTask = require("task.store");
  * @extends StoreTask
  */
 
-module.exports = _.merge({}, storeTask, {
+module.exports = _.assign({}, storeTask, {
     doTask : function(creep, target) {
         return creep.withdraw(target, RESOURCE_ENERGY);
     },
 
     isTaskValid : function(creep, target) {
         return creep.carry.energy == creep.carryCapacity;
+    },
+
+    isTargetValid : function(target) {
+        return target.store && target.store.energy > 0;
     },
 });

@@ -3,7 +3,7 @@ var _ = require("lodash");
 var SIN45 = Math.sin(-Math.PI / 4), COS45 = Math.cos(-Math.PI / 4);
 var SIN90 = Math.sin(-Math.PI / 2), COS90 = Math.cos(-Math.PI / 2);
 
-module.exports = _.merge({}, roadBuilder, {
+module.exports = _.assign({}, roadBuilder, {
     type : STRUCTURE_EXTENSION,
 
     init : function(room) {

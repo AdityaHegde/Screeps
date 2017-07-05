@@ -8,6 +8,10 @@ var TYPE_TO_EVENT = {
     [STRUCTURE_TOWER] : constants.TOWER_BUILT,
 };
 
+var STRUCURE_TYPE_TO_PLANNER = {
+    [STRUCTURE_CONTAINER] : "container",
+};
+
 /**
  * Task to drop off energy to spawn, extension or other structures that take energy (TODO)
  *
@@ -16,8 +20,8 @@ var TYPE_TO_EVENT = {
  * @extends BaseTask
  */
 
-module.exports = _.merge({}, baseTask, {
-    LISTEN_EVENT : constants.CONSTRUCTION_SITE_ADDED,
+module.exports = _.assign({}, baseTask, {
+    TARGETS_EVENT : constants.CONSTRUCTION_SITE_ADDED,
 
     getTargets : function(room, taskInfo) {
         return room.find(FIND_CONSTRUCTION_SITES).map((target) => target.id);
@@ -47,6 +51,13 @@ module.exports = _.merge({}, baseTask, {
             }
             room.fireEvents[constants.STRUCURE_BUILT] = room.fireEvents[constants.STRUCURE_BUILT] || [];
             room.fireEvents[constants.STRUCURE_BUILT].push(newTarget.id);
+
+            if (STRUCURE_TYPE_TO_PLANNER[newTarget.structureType]) {
+                var plannerInfo = room.basePlanner.plannerInfo[STRUCURE_TYPE_TO_PLANNER[newTarget.structureType]];
+                if (plannerInfo && plannerInfo.labelMap && plannerInfo.labelMap[newTarget.pos.x + "__" + newTarget.pos.y]) {
+                    newTarget.label = plannerInfo.labelMap[newTarget.pos.x + "__" + newTarget.pos.y];
+                }
+            }
         }
     },
 });

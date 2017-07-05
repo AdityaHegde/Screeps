@@ -9,7 +9,7 @@ let baseRole = require("role.base");
  * @extends BaseRole
  */
 
-module.exports = _.merge({}, baseRole, {
+module.exports = _.assign({}, baseRole, {
     PARTS : [WORK, CARRY, MOVE, MOVE],
     MAIN_PARTS : [WORK, CARRY],
     TASKS : [
@@ -19,6 +19,7 @@ module.exports = _.merge({}, baseRole, {
     ROLE_NAME : "worker",
 
     init : function(room, roleInfo) {
+        console.log(JSON.stringify(this.TASKS));
         return {
             tasks : _.cloneDeep(this.TASKS),
             parts : this.PARTS.slice(),
@@ -62,7 +63,7 @@ module.exports = _.merge({}, baseRole, {
             roleInfo.hasFreeTasks[creep.task.tier] = Object.keys(roleInfo.freeTasks[creep.task.tier]).length > 0;
         }
 
-        console.log("Assigning", creep.name, "to", taskName);
+        //console.log("Assigning", creep.name, "to", taskName);
     },
 
     assignNewTask : function(room, creep, isNew) {

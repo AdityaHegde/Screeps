@@ -1,30 +1,32 @@
 var constants = require("constants");
-var baseTask = require("task.base");
+var dropoffTask = require("task.dropoff");
 
 /**
  * Store in containers
  *
  * @module task
  * @Class StoreTask
- * @extends BaseTask
+ * @extends DropOffTask
  */
 
-module.exports = _.merge({}, baseTask, {
-    LISTEN_EVENT : constants.CONTAINER_BUILT,
+module.exports = _.assign({}, dropoffTask, {
+    POTENTIAL_TARGETS_EVENT : constants.CONTAINER_BUILT,
+    TARGETS_EVENT : constants.CONTAINER_BUILT,
 
-    getTargets : function(room, taskInfo) {
+    getPotentialTargets : function(room) {
         return room.find(FIND_STRUCTURES, {
             filter: (structure) => {
-                return structure.structureType == STRUCTURE_CONTAINER;
+                return structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.HARVESTER_STORAGE;
             },
         }).map((structure) => structure.id);
     },
 
-    doTask : function(creep, target) {
-        return creep.transfer(target, RESOURCE_ENERGY);
+    updatePotentialTargets : function(room, taskInfo) {
+        taskInfo.potentialTargets = this.getPotentialTargets(room);
+        taskInfo.potentialTargets = _.uniq(taskInfo.potentialTargets);
     },
 
-    isTaskValid : function(creep, target) {
-        return creep.carry.energy > 0;
+    isTargetValid : function(target) {
+        return target.store.energy < target.energyCapacity;
     },
 });

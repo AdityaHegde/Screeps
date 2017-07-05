@@ -9,21 +9,29 @@ var baseTask = require("task.base");
  * @extends BaseTask
  */
 
-module.exports = _.merge({}, baseTask, {
+module.exports = _.assign({}, baseTask, {
+    POTENTIAL_TARGETS_EVENT : constants.EXTENSION_BUILT,
+    TARGETS_EVENT : constants.CREEP_CREATED,
+
     init : function(room, taskInfo) {
-        taskInfo.energyCapacityAvailable = room.energyCapacityAvailable;
         taskInfo.potentialTargets = this.getPotentialTargets(room);
         this.updateTargets(room, taskInfo);
     },
 
     tick : function(room, taskInfo) {
         //targets for harvest drop might have changed
-        if (taskInfo.energyCapacityAvailable < room.energyCapacityAvailable) {
-            this.init(room, taskInfo);
+        if (room.listenEvents[this.POTENTIAL_TARGETS_EVENT]) {
+            this.updatePotentialTargets(room, taskInfo);
         }
-        if (room.listenEvents[constants.CREEP_CREATED]) {
+        if (room.listenEvents[this.TARGETS_EVENT]) {
             this.updateTargets(room, taskInfo);
         }
+    },
+
+    updatePotentialTargets : function(room, taskInfo) {
+        taskInfo.potentialTargets.push(...room.listenEvents[this.POTENTIAL_TARGETS_EVENT]);
+        taskInfo.potentialTargets = _.uniq(taskInfo.potentialTargets);
+        this.updateTargets(room, taskInfo);
     },
 
     getPotentialTargets : function(room) {

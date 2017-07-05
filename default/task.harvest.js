@@ -9,16 +9,16 @@ let utils = require("utils");
  * @extends BaseTask
  */
 
-module.exports = _.merge({}, baseTask, {
+module.exports = _.assign({}, baseTask, {
     tick : function(room, taskInfo) {
         taskInfo.hasTarget = true;
     },
 
     getTarget : function(room, creep, taskInfo) {
-        if (!creep.source) {
+        if (!creep.task.source) {
             room.findSource().claim(creep);
         }
-        return Game.getObjectById(creep.source);
+        return Game.getObjectById(creep.task.source);
     },
 
     updateTargets : function(room, taskInfo) {
@@ -38,7 +38,7 @@ module.exports = _.merge({}, baseTask, {
     },
 
     creepHasDied : function(room, creep) {
-        var source = Game.getObjectById(creep.source);
+        var source = Game.getObjectById(creep.task.source);
         if (source) {
             source.release(creep);
         }

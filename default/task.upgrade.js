@@ -9,7 +9,7 @@ var baseTask = require("task.base");
  * @extends BaseTask
  */
 
-var upgrade = _.merge({}, baseTask, {
+var upgrade = _.assign({}, baseTask, {
     getTarget : function(room) {
         return room.controller;
     },

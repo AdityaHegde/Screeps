@@ -1,12 +1,13 @@
 var constants = require("constants");
 var extensionBuilder = require("build.extension");
 
-module.exports = _.merge({}, extensionBuilder, {
+module.exports = _.assign({}, extensionBuilder, {
     type : STRUCTURE_CONTAINER,
 
     init : function(room) {
         let plannerInfo = {
             paths : [],
+            labelMap : {},
             roadCursor : 0,
             pathCursor : 0,
         };
@@ -18,6 +19,10 @@ module.exports = _.merge({}, extensionBuilder, {
                     this.checkAndAdd(room.tempRoadPaths[i][j].x + dxdy[0], room.tempRoadPaths[i][j].y + dxdy[1], room, plannerInfo.paths)) {
                     break;
                 }
+            }
+            //upgrader container
+            if (i == 0) {
+                plannerInfo.labelMap[plannerInfo.paths[i].join("__")] = constants.UPGRADER_STORAGE;
             }
         }
 
@@ -38,6 +43,11 @@ module.exports = _.merge({}, extensionBuilder, {
     build : function(room, plannerInfo) {
         //store the last built road block to resume later when max construction site has been reached
         var c = 0;
+        if (plannerInfo.roadCursor == plannerInfo.paths.length) {
+            //return true if this type of structure was finished before
+            return true;
+        }
+
         for (; plannerInfo.roadCursor < plannerInfo.paths.length; plannerInfo.roadCursor++) {
             var returnValue = room.createConstructionSite(plannerInfo.paths[plannerInfo.roadCursor][0], plannerInfo.paths[plannerInfo.roadCursor][1], this.type);
             room.fireEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
