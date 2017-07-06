@@ -1,18 +1,16 @@
-var constants = require("constants");
-var dropoffTask = require("task.dropoff");
+let constants = require("constants");
+let DropOffTask = require("task.dropoff");
 
 /**
  * Store in containers
  *
  * @module task
- * @Class StoreTask
+ * @class StoreTask
  * @extends DropOffTask
  */
 
-module.exports = _.assign({}, dropoffTask, {
-    POTENTIAL_TARGETS_EVENT : constants.CONTAINER_BUILT,
-    TARGETS_EVENT : constants.CONTAINER_BUILT,
-
+//TODO block target switching, so that harvesters store in containers assigned and wait until its empty
+module.exports = DropOffTask.extend({
     getPotentialTargets : function(room) {
         return room.find(FIND_STRUCTURES, {
             filter: (structure) => {
@@ -21,12 +19,11 @@ module.exports = _.assign({}, dropoffTask, {
         }).map((structure) => structure.id);
     },
 
-    updatePotentialTargets : function(room, taskInfo) {
-        taskInfo.potentialTargets = this.getPotentialTargets(room);
-        taskInfo.potentialTargets = _.uniq(taskInfo.potentialTargets);
-    },
-
     isTargetValid : function(target) {
         return target.store.energy < target.energyCapacity;
     },
+}, {
+    UPDATE_TARGET_EVENTS : [constants.ENERGY_WITHDRAWN],
+    UPDATE_POTENTIAL_TARGETS_EVENTS : [constants.CONTAINER_BUILT],
+    TASK_NAME : "store",
 });

@@ -1,15 +1,14 @@
-var _ = require("lodash");
-var baseTask = require("task.base");
+let BaseTask = require("task.base");
 
 /**
  * Upgrade and maintain the controller
  *
  * @module task
- * @Class StoreTask
+ * @class StoreTask
  * @extends BaseTask
  */
 
-var upgrade = _.assign({}, baseTask, {
+module.exports = BaseTask.extend({
     getTarget : function(room) {
         return room.controller;
     },
@@ -26,6 +25,6 @@ var upgrade = _.assign({}, baseTask, {
         //TODO
         return true;
     },
+}, {
+    TASK_NAME : "upgrade",
 });
-
-module.exports = upgrade;

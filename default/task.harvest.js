@@ -1,31 +1,31 @@
-let baseTask = require("task.base");
-let utils = require("utils");
+let constants = require("constants");
+let BaseTask = require("task.base");
 
 /**
  * Task to harvest source
  *
  * @module task
- * @Class DropOff
+ * @class HarvestTask
  * @extends BaseTask
  */
 
-module.exports = _.assign({}, baseTask, {
-    tick : function(room, taskInfo) {
-        taskInfo.hasTarget = true;
+module.exports = BaseTask.extend({
+    tick : function() {
+        this.hasTarget = true;
     },
 
-    getTarget : function(room, creep, taskInfo) {
+    getTarget : function(creep) {
         if (!creep.task.source) {
-            room.findSource().claim(creep);
+            this.room.findSource().claim(creep);
         }
         return Game.getObjectById(creep.task.source);
     },
 
-    updateTargets : function(room, taskInfo) {
+    updateTargets : function() {
         //dummy
     },
 
-    getTargets : function(room, taskInfo) {
+    getTargets : function() {
         return [];
     },
 
@@ -37,10 +37,14 @@ module.exports = _.assign({}, baseTask, {
         return creep.carry.energy < creep.carryCapacity;
     },
 
-    creepHasDied : function(room, creep) {
-        var source = Game.getObjectById(creep.task.source);
+    creepHasDied : function(creep) {
+        let source = Game.getObjectById(creep.task.source);
         if (source) {
             source.release(creep);
         }
     },
+}, {
+    EVENT_LISTENERS : [],
+    UPDATE_TARGET_EVENTS : [],
+    TASK_NAME : "harvest",
 });

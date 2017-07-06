@@ -1,5 +1,5 @@
-var utils = require("utils");
-var roomManager = require("room.manager");
+let utils = require("utils");
+let roomManager = require("room.manager");
 
 utils.definePropertyInMemory(Flag.prototype, "rooms", function() {
     return [this.room.name];

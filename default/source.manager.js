@@ -3,10 +3,10 @@ let utils = require("utils");
 utils.addMemorySupport(Source.prototype, "sources");
 
 utils.definePropertyInMemory(Source.prototype, "availableSpaces", function() {
-    var availableSpaces = 0;
+    let availableSpaces = 0;
     //check for available spaces around the source
-    for (var x = this.pos.x - 1; x <= this.pos.x + 1; x++) {
-        for (var y = this.pos.y - 1; y <= this.pos.y + 1; y++) {
+    for (let x = this.pos.x - 1; x <= this.pos.x + 1; x++) {
+        for (let y = this.pos.y - 1; y <= this.pos.y + 1; y++) {
             if (Game.map.getTerrainAt(x, y, this.room.name) != "wall") {
                 availableSpaces++;
             }
@@ -43,7 +43,7 @@ utils.definePropertyInMemory(Room.prototype, "sourceManager", function() {
 });
 
 Room.prototype.addSources = function() {
-    var sources = this.find(FIND_SOURCES);
+    let sources = this.find(FIND_SOURCES);
     this.sourceManager.sources = sources.map(source => source.id);
     this.sourceManager.totalAvailableSpaces = sources.reduce(function(totalAvailableSpaces, source) {
         return totalAvailableSpaces + source.availableSpaces;
@@ -53,10 +53,10 @@ Room.prototype.addSources = function() {
 //Return a source with a free space around it.
 //If no souce is found, return the source with least creeps waiting
 Room.prototype.findSource = function() {
-    var minDiff = 999, minSource, i = this.sourceManager.pointer;
+    let minDiff = 999, minSource, i = this.sourceManager.pointer;
 
     do {
-        var source = Game.getObjectById(this.sourceManager.sources[i]);
+        let source = Game.getObjectById(this.sourceManager.sources[i]);
         if (source.occupiedSpaces < source.availableSpaces) {
             this.sourceManager.pointer = (this.sourceManager.pointer + 1) % this.sourceManager.sources.length;
             //if there is a free space, just return it

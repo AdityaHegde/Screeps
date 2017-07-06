@@ -1,5 +1,5 @@
-var utils = require("utils");
-var constants = require("constants");
+let utils = require("utils");
+let constants = require("constants");
 
 utils.addMemorySupport(StructureContainer.prototype, "structures");
 //utils.addMemorySupport(StructureTower.prototype, "structures");

@@ -1,38 +1,37 @@
-var roadBuilder = require("build.road");
-var _ = require("lodash");
-var SIN45 = Math.sin(-Math.PI / 4), COS45 = Math.cos(-Math.PI / 4);
-var SIN90 = Math.sin(-Math.PI / 2), COS90 = Math.cos(-Math.PI / 2);
+let constants = require("constants");
+let BaseBuild = require("build.base");
+let SIN45 = Math.sin(-Math.PI / 4), COS45 = Math.cos(-Math.PI / 4);
+let SIN90 = Math.sin(-Math.PI / 2), COS90 = Math.cos(-Math.PI / 2);
 
-module.exports = _.assign({}, roadBuilder, {
-    type : STRUCTURE_EXTENSION,
+/**
+* Class to auto build extensions
+* @module build
+* @class ExtensionBuild
+* @extends BaseBuild
+*/
 
+module.exports = BaseBuild.extend({
     init : function(room) {
-        let plannerInfo = {
-            paths : [],
-            roadCursor : 0,
-            pathCursor : 0,
-        };
+        this.room = room;
 
-        room.tempExtensionsPath = [];
+        this.room.tempExtensionsPath = [];
 
         //road builder has already calculated paths to sources, add positions for extensions beside that path
         let allocatedCount = 0;
-        for (let i = 1; i < room.tempRoadPaths.length; i++) {
-            var path = room.tempRoadPaths[i];
-            var path1 = [], path2 = [];
+        for (let i = 1; i < this.room.tempRoadPaths.length; i++) {
+            let path = this.room.tempRoadPaths[i];
+            let path1 = [], path2 = [];
 
             //have a buffer of 2 slots for creating extensions
-            for (var j = 1; j < path.length - 1; j++) {
+            for (let j = 1; j < path.length - 1; j++) {
                 let dxdy = this.getDxDy(path[j-1], path[j]);
 
                 this.addPathEntry(path1, path2, path[j], dxdy[0], dxdy[1]);
             }
 
-            plannerInfo.paths.push(Room.serializePath(path1), Room.serializePath(path2));
-            room.tempExtensionsPath.push(path1, path2);
+            this.paths.push(Room.serializePath(path1), Room.serializePath(path2));
+            this.room.tempExtensionsPath.push(path1, path2);
         }
-
-        return plannerInfo;
     },
 
     getDxDy : function(pos0, pos1) {
@@ -78,4 +77,6 @@ module.exports = _.assign({}, roadBuilder, {
             direction : pathEntry.direction,
         });
     },
+}, {
+    TYPE : STRUCTURE_EXTENSION,
 });

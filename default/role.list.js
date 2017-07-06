@@ -1,4 +1,4 @@
-var constants = require("constants");
+let constants = require("constants");
 
 module.exports = [{
     roles : {

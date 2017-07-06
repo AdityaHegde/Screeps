@@ -1,19 +1,22 @@
 let utils = require("utils");
-let constatns = require("constants");
+let constants = require("constants");
 
 module.exports = {
     listeners : {},
 
-    subscribe : function(eventName, method, data, context) {
+    subscribe : function(eventName, method, contextPath) {
         this.listeners[eventName] = this.listeners[eventName] || [];
         this.listeners[eventName].push({
             method : method,
-            data : data,
-            context : context,
+            contextPath : contextPath,
         });
     },
 
-    fire : function(eventName, args) {
-        
+    fire : function(eventName, target, args) {
+        if (this.listeners[eventName]) {
+            this.listeners[eventName].forEach((listener) => {
+                listener.method.call(_.get(target, listener.contextPath), ...args);
+            });
+        }
     },
 };

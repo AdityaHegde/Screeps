@@ -1,18 +1,27 @@
 module.exports = {
-    SPAWN_CREATED : "s_c",
-    CREEP_CREATED : "c_c",
-    RCL_UPDATED : "rcl_u",
-    CONSTRUCTION_SITE_ADDED : "c_s_a",
-    ERR_INVALID_TASK : "i_t",
+    SPAWN_CREATED : "spawnCreated",
+    CREEP_CREATED : "creepCreated",
+    RCL_UPDATED : "rclUpdated",
+    CONSTRUCTION_SITE_ADDED : "constructionSiteAdded",
+    ERR_INVALID_TASK : "invalidTask",
 
-    CONSTRUCTION_COMPLETED : "co_c",
+    CONSTRUCTION_COMPLETED : "constructionCompleted",
 
-    CONTAINER_BUILT : "c_b",
-    WALL_BUILT : "w_b",
-    TOWER_BUILT : "t_b",
-    EXTENSION_BUILT : "e_b",
-    STRUCURE_BUILT : "s_b",
+    CONTAINER_BUILT : "containerBuilt",
+    WALL_BUILT : "wallBuilt",
+    TOWER_BUILT : "towerBuilt",
+    EXTENSION_BUILT : "extensionBuilt",
+    STRUCURE_BUILT : "strucureBuilt",
 
-    HARVESTER_STORAGE : "h_s",
-    UPGRADER_STORAGE : "u_s",
+    ENERGY_WITHDRAWN : "energyWithdrawn",
+    TOWER_USED_ENERGY : "towerUsedEnergy",
+
+    HARVESTER_STORAGE : "harvesterStorage",
+    UPGRADER_STORAGE : "upgraderStorage",
+
+    ENEMY_AT_THE_GATE : "enemyAtTheGate",
+
+    PERIODIC_5_TICKS : "periodic5Ticks",
+    PERIODIC_10_TICKS : "periodic10Ticks",
+    PERIODIC_20_TICKS : "periodic20Ticks",
 };

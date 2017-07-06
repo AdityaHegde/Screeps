@@ -1,13 +1,19 @@
-var baseRole = require("role.base");
+let BaseRole = require("role.base");
 
 /**
  * Builder role.
  * @module role
- * @Class HarvesterRole
+ * @class HarvesterRole
  * @extends BaseRole
  */
 
-module.exports = _.assign({}, baseRole, {
+module.exports = BaseRole.extend({
+    getMaxCount : function(room, roleInfo) {
+        //have a container for each source and one more for controller
+        //hauler will haul from each container to other sources
+        return room.sourceManager.sources.length;
+    },
+}, {
     PARTS : [WORK, CARRY, CARRY, MOVE],
     MAIN_PARTS : [WORK],
     TASKS : [
@@ -15,10 +21,4 @@ module.exports = _.assign({}, baseRole, {
         ["store"],
     ],
     ROLE_NAME : "harvester",
-
-    getMaxCount : function(room, roleInfo) {
-        //have a container for each source and one more for controller
-        //hauler will haul from each container to other sources
-        return room.sourceManager.sources.length;
-    },
 });

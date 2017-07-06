@@ -1,13 +1,13 @@
-var constants = require("constants");
-var utils = require("utils");
-var ROLES = require("role.list");
-var TASKS = require("task.list");
-var BUILD_TYPES = require("build.list").types;
-var BUILD_INIT_ORDER = require("build.list").initOrder;
+let constants = require("constants");
+let utils = require("utils");
+let ROLES = require("role.list");
+let TASKS = require("task.list");
+let BUILD_TYPES = require("build.list").types;
+let BUILD_INIT_ORDER = require("build.list").initOrder;
 let sourceManager = require("source.manager");
 let creepManager = require("creep.manager");
 let structureManager = require("structure.manager");
-var enemyArmy = require("army.enemy");
+let enemyArmy = require("army.enemy");
 
 utils.definePropertyInMemory(Room.prototype, "spawns", function() {
     return [];
@@ -30,7 +30,7 @@ utils.definePropertyInMemory(Room.prototype, "roleSuite", function() {
 });
 
 utils.definePropertyInMemory(Room.prototype, "rolesInfo", function() {
-    var rolesInfo = {};
+    let rolesInfo = {};
     for (let role in ROLES[this.roleSuite].roles) {
         rolesInfo[role] = ROLES[this.roleSuite].roles[role].init(this, rolesInfo[role]);
     }
@@ -60,7 +60,7 @@ utils.definePropertyInMemory(Room.prototype, "creeps", function() {
 });
 
 utils.definePropertyInMemory(Room.prototype, "basePlanner", function() {
-    var basePlanner = {
+    let basePlanner = {
         lastLevel : this.controller.level,
         cursor : BUILD_TYPES.length,
         plannerInfo : {},
@@ -119,8 +119,8 @@ Room.prototype.roleManager = function() {
         for (let role in roleSuite.creepDistribution) {
             let i = 0;
             for (let creepName in this.rolesInfo[role].creeps) {
-                var creep = Game.creeps[creepName];
-                var targetRoleName = roleSuite.creepDistribution[role][i];
+                let creep = Game.creeps[creepName];
+                let targetRoleName = roleSuite.creepDistribution[role][i];
                 oldSuite.roles[creep.role.name].removeCreep(this, creep, this.rolesInfo[role]);
                 roleSuite.roles[targetRoleName].addCreep(this, creep, this.rolesInfo[targetRoleName], targetRoleName);
                 i = (i + 1) % roleSuite.creepDistribution[role].length;
@@ -129,17 +129,17 @@ Room.prototype.roleManager = function() {
         }
     }
 
-    for (var taskName in TASKS) {
-        var taskInfo = this.tasksInfo[taskName];
+    for (let taskName in TASKS) {
+        let taskInfo = this.tasksInfo[taskName];
         TASKS[taskName].tick(this, taskInfo);
     }
 
     //execute in specified order to give some roles priority
     roleSuite.order.forEach((roleName) => {
-        var roleInfo = this.rolesInfo[roleName];
-        var roleApi = ROLES[this.roleSuite].roles[roleName];
+        let roleInfo = this.rolesInfo[roleName];
+        let roleApi = ROLES[this.roleSuite].roles[roleName];
         /*console.log(roleName, ":", Object.keys(roleInfo.creeps).map((creepName) => {
-            var creep = Game.creeps[creepName];
+            let creep = Game.creeps[creepName];
             return creep.name + " (" + (creep.task ? roleInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
         }).join("  "));*/
         roleApi.tick(this, this.rolesInfo[roleName]);
@@ -172,7 +172,7 @@ Room.prototype.planBuilding = function() {
 
 Room.prototype.creepHasDied = function(creep) {
     for (let roleName in ROLES[this.roleSuite].roles) {
-        var roleInfo = this.rolesInfo[roleName];
+        let roleInfo = this.rolesInfo[roleName];
         ROLES[this.roleSuite].roles[roleName].creepHasDied(this, creep, roleInfo);
 
         roleInfo.tasks.forEach((taskTiers, i) => {
@@ -187,7 +187,7 @@ Room.prototype.defendRoom = function() {
     if (this.defence.enemyArmy) {
     }
     else {
-        var hostiles = this.find(FIND_HOSTILE_CREEPS);
+        let hostiles = this.find(FIND_HOSTILE_CREEPS);
         if (hostiles.length > 0) {
             this.defence.enemyArmy = enemyArmy.init(room, hostiles);
         }

@@ -1,7 +1,7 @@
-var brainManager = require("brain.manager");
+let brainManager = require("brain.manager");
 
 module.exports.loop = function () {
-    var brain = Game.flags.brain;
+    let brain = Game.flags.brain;
 
     if (brain) {
         if (!brain.memory.isInitialized) {

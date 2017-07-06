@@ -1,18 +1,20 @@
-var roadBuilder = require("build.road");
+let constants = require("constants");
+let BaseBuild = require("build.base");
 
-module.exports = _.assign({}, roadBuilder, {
-    type : STRUCTURE_RAMPART,
+/**
+* Class to auto build walls
+* @module build
+* @class WallBuild
+* @extends BaseBuild
+*/
 
+module.exports = BaseBuild.extend({
     init : function(room) {
-        let plannerInfo = {
-            paths : [],
-            roadCursor : 0,
-            pathCursor : 0,
-        };
+        this.room = room;
 
-        let exits = Game.map.describeExits(room.name);
+        let exits = Game.map.describeExits(this.room.name);
 
-        room.tempWallPaths = [];
+        this.room.tempWallPaths = [];
 
         for (let exit in exits) {
             //x, y - staring positions for check
@@ -33,7 +35,7 @@ module.exports = _.assign({}, roadBuilder, {
             let path = [], lastWall;
             for (let i = 0; i < 50; i++, x += dx, y += dy) {
                 //console.log(i, lastWall, path.length);
-                if (Game.map.getTerrainAt(x, y, room.name) != "wall") {
+                if (Game.map.getTerrainAt(x, y, this.room.name) != "wall") {
                     if (path.length == 0) {
                         if (lastWall == undefined || i - lastWall >= 3) {
                             path.push({
@@ -109,14 +111,14 @@ module.exports = _.assign({}, roadBuilder, {
                             dy : -dyp,
                             direction : _dirp,
                         });
-                        plannerInfo.paths.push(Room.serializePath(path));
-                        room.tempWallPaths.push(path);
+                        this.paths.push(Room.serializePath(path));
+                        this.room.tempWallPaths.push(path);
                         path = [];
                     }
                 }
             }
         }
-
-        return plannerInfo;
     },
+}, {
+    TYPE : STRUCTURE_RAMPART,
 });

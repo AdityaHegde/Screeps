@@ -1,89 +1,86 @@
 let constants = require("constants");
-let MAX_PARTS = 50;
-let baseRole = require("role.base");
+let utils = require("utils");
+let BaseRole = require("role.base");
 
 /**
- * Worker role with dynamic allocation. Used untill the containers are setup.
- * @module role
- * @Class WorkerRole
- * @extends BaseRole
- */
+* Worker role with dynamic allocation. Used untill the containers are setup.
+* @module role
+* @class WorkerRole
+* @extends BaseRole
+*/
 
-module.exports = _.assign({}, baseRole, {
-    PARTS : [WORK, CARRY, MOVE, MOVE],
-    MAIN_PARTS : [WORK, CARRY],
-    TASKS : [
-        ["harvest"],
-        ["dropoff", "build", "upgrade", "repair"],
-    ],
-    ROLE_NAME : "worker",
+let WorkerRole = BaseRole.extend({
+    tick : function() {
+        this.upgradeParts();
 
-    init : function(room, roleInfo) {
-        console.log(JSON.stringify(this.TASKS));
-        return {
-            tasks : _.cloneDeep(this.TASKS),
-            parts : this.PARTS.slice(),
-            partsCost : this.PARTS.reduce(function(partsCost, part) {
-                return partsCost + BODYPART_COST[part];
-            }, 0),
-            i : 0,
-            validTasksCount : {},
-            hasFreeTasks : {},
-            freeTasks : {},
-            creeps : {},
-            creepsCount : 0,
-        };
+        this.spawnCreeps();
+
+        this.tasks.forEach((taskTier, i) => {
+            this.freeTasks[i] = {};
+            this.hasFreeTasks[i] = false;
+            this.validTasksCount[i] = 0;
+
+            taskTier.forEach((taskName) => {
+                let task = this.room.tasksInfo[taskName];
+                this.validTasksCount[i] += task.hasTarget ? 1 : 0;
+                if (this.isTaskFree(task, this, i)) {
+                    this.hasFreeTasks[i] = true;
+                    this.freeTasks[i][taskName] = 1;
+                }
+            });
+        });
+
+        this.executeCreepsTasks();
     },
 
-    getMaxCount : function(room, roleInfo) {
-        return room.sourceManager.totalAvailableSpaces * 3 / 2;
+    getMaxCount : function() {
+        return this.room.sourceManager.totalAvailableSpaces * 3 / 2;
     },
 
-    isTaskFree : function(taskInfo, roleInfo, tier, offset) {
+    isTaskFree : function(task, tier, offset) {
         offset = offset || 0;
-        //console.log(taskInfo.hasTarget, taskInfo.creepsCount, Math.round(roleInfo.creepsCount, roleInfo.validTasksCount[tier]));
-        return taskInfo.hasTarget && taskInfo.creepsCount < Math.round(roleInfo.creepsCount / roleInfo.validTasksCount[tier]) - offset;
+        //console.log(task.hasTarget, task.creepsCount, Math.round(this.creepsCount, this.validTasksCount[tier]));
+        return task.hasTarget && task.creepsCount < Math.round(this.creepsCount / this.validTasksCount[tier]) - offset;
     },
 
-    assignTask : function(creep, roleInfo, taskInfo, taskIdx) {
+    assignTask : function(creep, task, taskIdx) {
         creep.task = creep.task || {
             tier : 0,
             tasks : {},
         };
         creep.task.current = taskIdx;
         creep.task.tasks[creep.task.tier] = taskIdx;
-        taskInfo.creeps[creep.name] = 1;
-        taskInfo.creepsCount++;
+        task.creeps[creep.name] = 1;
+        task.creepsCount++;
         assigned = true;
 
-        var taskName = roleInfo.tasks[creep.task.tier][taskIdx];
+        let taskName = this.tasks[creep.task.tier][taskIdx];
         //clear the task as free if it is not free anymore
-        if (roleInfo.freeTasks[creep.task.tier][taskName] && !this.isTaskFree(taskInfo, roleInfo, creep.task.tier)) {
-            delete roleInfo.freeTasks[creep.task.tier][taskName];
-            roleInfo.hasFreeTasks[creep.task.tier] = Object.keys(roleInfo.freeTasks[creep.task.tier]).length > 0;
+        if (this.freeTasks[creep.task.tier][taskName] && !this.isTaskFree(task, this, creep.task.tier)) {
+            delete this.freeTasks[creep.task.tier][taskName];
+            this.hasFreeTasks[creep.task.tier] = Object.keys(this.freeTasks[creep.task.tier]).length > 0;
         }
 
         //console.log("Assigning", creep.name, "to", taskName);
     },
 
-    assignNewTask : function(room, creep, isNew) {
-        let roleInfo = room.rolesInfo[creep.role.name];
+    assignNewTask : function(creep, isNew) {
         let tier = (isNew ? 0 : creep.task.tier);
-        let tasks = roleInfo.tasks[tier];
+        let tasks = this.tasks[tier];
         let lastCurrent = isNew || creep.task.current == undefined ? 0 : ((creep.task.current + 1) % tasks.length);
         let i = lastCurrent;
         let assigned = false, backup = null;
 
-        if (roleInfo.validTasksCount[tier] > 0) {
+        if (this.validTasksCount[tier] > 0) {
             do {
-                let taskInfo = room.tasksInfo[tasks[i]];
+                let task = this.room.tasksInfo[tasks[i]];
                 //console.log(creep.name, tasks[i]);
-                if (this.isTaskFree(taskInfo, roleInfo, tier)) {
-                    this.assignTask(creep, roleInfo, taskInfo, i);
+                if (this.isTaskFree(task, tier)) {
+                    this.assignTask(creep, task, i);
                     assigned = true;
                     break;
                 }
-                if (backup == null && taskInfo.hasTarget) {
+                if (backup == null && task.hasTarget) {
                     backup = i;
                 }
                 i = (i + 1) % tasks.length;
@@ -91,28 +88,49 @@ module.exports = _.assign({}, baseRole, {
         }
 
         if (!assigned && backup != null) {
-            this.assignTask(creep, roleInfo, room.tasksInfo[tasks[i]], backup);
+            this.assignTask(creep, this.room.tasksInfo[tasks[i]], backup);
         }
     },
 
-    switchTask : function(room, creep) {
-        var roleInfo = room.rolesInfo[creep.role.name];
-        creep.task.tier = (creep.task.tier + 1) % roleInfo.tasks.length;
+    switchTask : function(creep) {
+        creep.task.tier = (creep.task.tier + 1) % this.tasks.length;
         creep.task.current = creep.task.tasks[creep.task.tier];
         //console.log("Switching to tier", creep.task.tier, "for", creep.name);
         if (creep.task.current == undefined) {
-            this.assignNewTask(room, creep);
+            this.assignNewTask(creep);
         }
         //if there are free tasks and current task is not one of them and reassiging away from crrent task doesnt make it a free task
-        else if (roleInfo.hasFreeTasks[creep.task.tier] &&
-                 !roleInfo.freeTasks[creep.task.tier][roleInfo.tasks[creep.task.tier][creep.task.current]] &&
-                 !this.isTaskFree(room.tasksInfo[roleInfo.tasks[creep.task.tier][creep.task.current]], roleInfo, creep.task.tier, 1)) {
-            this.reassignTask(room, creep);
-        }
-    },
+        else if (this.hasFreeTasks[creep.task.tier] &&
+            !this.freeTasks[creep.task.tier][this.tasks[creep.task.tier][creep.task.current]] &&
+            !this.isTaskFree(this.room.tasksInfo[this.tasks[creep.task.tier][creep.task.current]], creep.task.tier, 1)) {
+                this.reassignTask(creep);
+            }
+        },
 
-    reassignTask : function(room, creep) {
-        this.clearTask(room, creep);
-        this.assignNewTask(room, creep);
-    },
-});
+        reassignTask : function(creep) {
+            this.clearTask(creep);
+            this.assignNewTask(creep);
+        },
+    }, {
+        PARTS : [WORK, CARRY, MOVE, MOVE],
+        MAIN_PARTS : [WORK, CARRY],
+        TASKS : [
+            ["harvest"],
+            ["dropoff", "build", "upgrade", "repair"],
+        ],
+        ROLE_NAME : "worker",
+    });
+
+    utils.definePropertyInMemory(WorkerRole.prototype, "validTasksCount", function() {
+        return {};
+    });
+
+    utils.definePropertyInMemory(WorkerRole.prototype, "hasFreeTasks", function() {
+        return {};
+    });
+
+    utils.definePropertyInMemory(WorkerRole.prototype, "freeTasks", function() {
+        return {};
+    });
+
+    module.exports = WorkerRole;

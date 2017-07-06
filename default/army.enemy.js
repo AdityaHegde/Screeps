@@ -1,6 +1,6 @@
-var constants = require("constants");
-var utils = require("utils");
-var TARGET_TYPE_ORDER = ["healers", "melee", "ranged"];
+let constants = require("constants");
+let utils = require("utils");
+let TARGET_TYPE_ORDER = ["healers", "melee", "ranged"];
 
 /**
  * Assembles enemy army and returns possbible targets in priority order
@@ -10,7 +10,7 @@ var TARGET_TYPE_ORDER = ["healers", "melee", "ranged"];
 
 module.exports = {
     init : function(room, creeps) {
-        var armyInfo = {
+        let armyInfo = {
             melee : [],
             ranged : [],
             healers : [],

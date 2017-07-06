@@ -1,56 +1,42 @@
-var constants = require("constants");
-var baseTask = require("task.base");
+let constants = require("constants");
+let BaseTask = require("task.base");
 
 /**
  * Task to drop off energy to spawn, extension or other structures that take energy (TODO)
  *
  * @module task
- * @Class DropOff
+ * @class DropOffTask
  * @extends BaseTask
  */
 
-module.exports = _.assign({}, baseTask, {
-    POTENTIAL_TARGETS_EVENT : constants.EXTENSION_BUILT,
-    TARGETS_EVENT : constants.CREEP_CREATED,
-
-    init : function(room, taskInfo) {
-        taskInfo.potentialTargets = this.getPotentialTargets(room);
-        this.updateTargets(room, taskInfo);
+let DropOffTask = BaseTask.extend({
+    init : function() {
+        this.potentialTargets = this.getPotentialTargets();
+        this.updateTargets();
     },
 
-    tick : function(room, taskInfo) {
-        //targets for harvest drop might have changed
-        if (room.listenEvents[this.POTENTIAL_TARGETS_EVENT]) {
-            this.updatePotentialTargets(room, taskInfo);
-        }
-        if (room.listenEvents[this.TARGETS_EVENT]) {
-            this.updateTargets(room, taskInfo);
-        }
+    updatePotentialTargets : function(newPotentialTargets) {
+        this.potentialTargets.push(...newPotentialTargets.map(newPotentialTarget => newPotentialTarget.id));
+        this.updateTargets();
     },
 
-    updatePotentialTargets : function(room, taskInfo) {
-        taskInfo.potentialTargets.push(...room.listenEvents[this.POTENTIAL_TARGETS_EVENT]);
-        taskInfo.potentialTargets = _.uniq(taskInfo.potentialTargets);
-        this.updateTargets(room, taskInfo);
-    },
-
-    getPotentialTargets : function(room) {
-        return room.find(FIND_STRUCTURES, {
+    getPotentialTargets : function() {
+        return this.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
                 return structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN;
             },
         }).map((structure) => structure.id);
     },
 
-    updateTargets : function(room, taskInfo) {
-        taskInfo.targets = this.getTargets(room, taskInfo);
-        taskInfo.hasTarget = taskInfo.targets.length > 0;
+    updateTargets : function() {
+        this.targets = this.getTargets();
+        this.hasTarget = this.targets.length > 0;
     },
 
-    getTargets : function(room, taskInfo) {
-        return taskInfo.potentialTargets.filter(function(potentialTarget) {
+    getTargets : function() {
+        return this.potentialTargets.filter((potentialTarget) => {
             return this.isTargetValid(Game.getObjectById(potentialTarget));
-        }.bind(this));
+        });
     },
 
     doTask : function(creep, target) {
@@ -64,4 +50,17 @@ module.exports = _.assign({}, baseTask, {
     isTargetValid : function(target) {
         return target.energy < target.energyCapacity;
     },
+}, {
+    UPDATE_TARGET_EVENTS : [constants.CREEP_CREATED],
+    UPDATE_POTENTIAL_TARGETS_EVENTS : [constants.EXTENSION_BUILT],
+    TASK_NAME : "dropoff",
+
+    init : function(room) {
+        BaseTask.init.call(this, room);
+        this.UPDATE_POTENTIAL_TARGETS_EVENTS.forEach((eventListener) => {
+            eventBus.subscribe(eventListener.eventName, this.prototype.updatePotentialTargets, "tasksInfo." + this.TASK_NAME);
+        });
+    },
 });
+
+module.exports = DropOffTask;

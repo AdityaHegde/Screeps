@@ -73,6 +73,36 @@ module.exports = {
         });
     },
 
+    defineInstancePropertyByNameInMemory : function(prototype, property, memoryName) {
+        let _property = "_" + property;
+        Object.defineProperty(prototype, property, {
+            get : function() {
+                //if the property is not defined in cache yet, get it from memory
+                if (!_.has(this, _property)) {
+                    //if the property is in memory, get the instance from memory by name
+                    if (_.has(this.memory, property) {
+                        this[_property] = Game[memoryName][this.memory[property]];
+                    }
+                }
+                return this[_property];
+            },
+            set : function(value) {
+                //if the value is already an id, store it in memory only
+                if (_.isString(value)) {
+                    this.memory[property] = value;
+                    this[_property] = Game[memoryName][value];
+                }
+                else {
+                    //store only the name in the memory
+                    //can be set to null
+                    this.memory[property] = value && value.name;
+                    //but the entire instance in the cache
+                    this[_property] = value;
+                }
+            },
+        });
+    },
+
     addMemorySupport : function(prototype, memoryName) {
         Object.defineProperty(prototype, "memory", {
             get : function() {
@@ -94,8 +124,8 @@ module.exports = {
     },
 
     getClosestObject : function(creep, targets) {
-        var distanceObj = targets.reduce((curDistanceObj, targetId) => {
-            var target = Game.getObjectById(targetId);
+        let distanceObj = targets.reduce((curDistanceObj, targetId) => {
+            let target = Game.getObjectById(targetId);
             let distanceFromCreep = Math.sqrt((creep.pos.x - target.pos.x) * (creep.pos.x - target.pos.x) + (creep.pos.y - target.pos.y) * (creep.pos.y - target.pos.y));
             if (distanceFromCreep < curDistanceObj.distance) {
                 return {

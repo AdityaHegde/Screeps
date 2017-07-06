@@ -1,18 +1,15 @@
-var constants = require("constants");
-var withdrawTask = require("task.withdraw");
+let constants = require("constants");
+let WithdrawTask = require("task.withdraw");
 
 /**
- * Store in containers
+ * Withdraw from container designated for upgrade
  *
  * @module task
- * @Class WithdrawUpgraderTask
+ * @class WithdrawUpgraderTask
  * @extends WithdrawTask
  */
 
-module.exports = _.assign({}, withdrawTask, {
-    POTENTIAL_TARGETS_EVENT : constants.CONTAINER_BUILT,
-    TARGETS_EVENT : "",
-
+module.exports = WithdrawTask.extend({
     getPotentialTargets : function(room) {
         return room.find(FIND_STRUCTURES, {
             filter: (structure) => {
@@ -20,4 +17,8 @@ module.exports = _.assign({}, withdrawTask, {
             },
         }).map((structure) => structure.id);
     },
+}, {
+    UPDATE_TARGET_EVENTS : [constants.ENERGY_STORED],
+    UPDATE_POTENTIAL_TARGETS_EVENTS : [constants.CONTAINER_BUILT],
+    TASK_NAME : "withdrawUpgrader",
 });

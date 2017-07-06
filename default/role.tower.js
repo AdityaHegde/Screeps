@@ -1,28 +1,16 @@
-var constants = require("constants");
-var baseRole = require("role.base");
+let constants = require("constants");
+let BaseRole = require("role.base");
 
 /**
  * Tower role.
  * @module role
- * @Class TowerRole
+ * @class TowerRole
  * @extends BaseRole
  */
 
-module.exports = _.assign({}, baseRole, {
-    PARTS : [WORK, CARRY, MOVE, MOVE],
-    MAIN_PARTS : [WORK, CARRY],
-    TASKS : [
-        ["repair", "shoot"],
-    ],
-    ROLE_NAME : "tower",
-
+module.exports = BaseRole.extend({
     spawnCreeps : function(room, roleInfo) {
-        if (room.listenEvents[constants.TOWER_BUILT]) {
-            room.listenEvents[constants.TOWER_BUILT].forEach((towerId) => {
-                let tower = Game.getObjectById(towerId);
-                this.addCreep(room, tower, roleInfo);
-            })
-        }
+        //dummy
     },
 
     upgradeParts : function() {
@@ -33,4 +21,14 @@ module.exports = _.assign({}, baseRole, {
         //tower is built seperately
         return 0;
     },
+}, {
+    EVENT_LISTENERS : [{
+        //add tower as a creep so that it gets executed in the role/task pipeline
+        eventName : constants.TOWER_BUILT,
+        method : "addCreep",
+    }],
+    TASKS : [
+        ["repair", "shoot"],
+    ],
+    ROLE_NAME : "tower",
 });

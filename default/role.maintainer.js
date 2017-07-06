@@ -1,13 +1,17 @@
-var baseRole = require("role.base");
+let BaseRole = require("role.base");
 
 /**
  * Builder role.
  * @module role
- * @Class BuilderRole
+ * @class MaintainerRole
  * @extends BaseRole
  */
 
-module.exports = _.assign({}, baseRole, {
+module.exports = BaseRole.extend({
+    getMaxCount : function(room, roleInfo) {
+        return 2;
+    },
+}, {
     PARTS : [WORK, CARRY, MOVE, MOVE],
     MAIN_PARTS : [WORK, CARRY],
     TASKS : [
@@ -15,8 +19,4 @@ module.exports = _.assign({}, baseRole, {
         ["repair"],
     ],
     ROLE_NAME : "maintainer",
-
-    getMaxCount : function(room, roleInfo) {
-        return 2;
-    },
 });

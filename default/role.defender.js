@@ -1,13 +1,18 @@
-var baseRole = require("role.base");
+let BaseRole = require("role.base");
 
 /**
  * Defender role.
  * @module role
- * @Class DefenderRole
+ * @class DefenderRole
  * @extends BaseRole
  */
 
-module.exports = _.assign({}, baseRole, {
+module.exports = BaseRole.extend({
+    getMaxCount : function(room, roleInfo) {
+        //spawn only if there is an enemy army
+        return room.defence.enemyArmy ? 3 : 0;
+    },
+},{
     PARTS : [RANGED_ATTACK, MOVE],
     MAIN_PARTS : [RANGED_ATTACK],
     TASKS : [
@@ -15,9 +20,4 @@ module.exports = _.assign({}, baseRole, {
         ["shoot"],
     ],
     ROLE_NAME : "defender",
-
-    getMaxCount : function(room, roleInfo) {
-        //spawn only if there is an enemy army
-        return room.defence.enemyArmy ? 3 : 0;
-    },
 });

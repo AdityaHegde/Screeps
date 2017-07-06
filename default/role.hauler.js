@@ -1,13 +1,19 @@
-let workerRole = require("role.worker");
+let WorkerRole = require("role.worker");
 
 /**
  * Builder role.
  * @module role
- * @Class HaulerRole
+ * @class HaulerRole
  * @extends WorkerRole
  */
 
-module.exports = _.assign({}, workerRole, {
+module.exports = WorkerRole.extend({
+    getMaxCount : function(room, roleInfo) {
+        //have a container for each source and one more for controller
+        //hauler will haul from each container to other sources
+        return 4;
+    },
+}, {
     PARTS : [CARRY, MOVE],
     MAIN_PARTS : [CARRY],
     TASKS : [
@@ -15,10 +21,4 @@ module.exports = _.assign({}, workerRole, {
         ["dropoff", "supply"],
     ],
     ROLE_NAME : "hauler",
-
-    getMaxCount : function(room, roleInfo) {
-        //have a container for each source and one more for controller
-        //hauler will haul from each container to other sources
-        return 4;
-    },
 });

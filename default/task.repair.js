@@ -1,25 +1,22 @@
-var baseTask = require("task.base");
-var constants = require("constants");
+let constants = require("constants");
+let BaseTask = require("task.base");
 
 /**
  * Task to repair structures
  *
  * @module task
- * @Class RepairTask
+ * @class RepairTask
  * @extends BaseTask
  */
 
-var repair = _.assign({}, baseTask, {
-    TARGETS_EVENT : constants.STRUCURE_BUILT,
-
-    updateTargets : function(room, taskInfo) {
-        //add new targets from
-        taskInfo.targets = this.getTargets(room, taskInfo);
-        taskInfo.hasTarget = taskInfo.targets.length > 0;
+module.exports = BaseTask.extend({
+    updateTargets : function() {
+        this.targets = this.getTargets();
+        this.hasTarget = this.targets.length > 0;
     },
 
-    getTargets : function(room, taskInfo) {
-        return room.find(FIND_STRUCTURES, {
+    getTargets : function() {
+        return this.room.find(FIND_STRUCTURES, {
             filter : structure => structure.hits < structure.hitsMax / 2
         }).map((target) => target.id);
     },
@@ -31,6 +28,7 @@ var repair = _.assign({}, baseTask, {
     isTargetValid : function(target) {
         return target && target.hits >= target.hitsMax;
     },
+}, {
+    UPDATE_TARGET_EVENTS : [constants.PERIODIC_10_TICKS],
+    TASK_NAME : "repair",
 });
-
-module.exports = repair;

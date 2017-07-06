@@ -1,5 +1,5 @@
-var constants = require("constants");
-var utils = require("utils");
+let constants = require("constants");
+let utils = require("utils");
 
 //make the tower look lika a creep so that it can be added to role-task pipeline
 utils.addMemorySupport(StructureTower.prototype, "creeps");
