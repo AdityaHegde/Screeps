@@ -1,15 +1,13 @@
 let brainManager = require("brain.manager");
 
 module.exports.loop = function () {
-    let brain = Game.flags.brain;
+    let brain = new Brain("brain");
 
-    if (brain) {
-        if (!brain.memory.isInitialized) {
-            brain.init();
-            brain.memory.isInitialized = true;
-            console.log(Game.cpu.getUsed(), "cpu used during init");
-        }
-
-        brain.tick();
+    if (!brain.isInitialized) {
+        brain.init();
+        brain.isInitialized = true;
+        console.log(Game.cpu.getUsed(), "cpu used during init");
     }
+
+    brain.tick();
 };

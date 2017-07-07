@@ -26,6 +26,10 @@ BaseRole.init = function() {
 
 BaseTask.__staticMembers = ["PARTS", "MAIN_PARTS", "TASKS", "EVENT_LISTENERS", "ROLE_NAME", "init"];
 
+utils.definePropertyInMemory(BaseRole.prototype, "isActive", function() {
+    return false;
+});
+
 utils.definePropertyInMemory(BaseRole.prototype, "tasks", function() {
     return _.cloneDeep(this.constructor.TASKS);
 });
@@ -89,16 +93,17 @@ BaseRole.prototype.upgradeParts = function() {
 BaseRole.prototype.spawnCreeps = function() {
     //spawn creeps
     //console.log(this.creepsCount, this.getMaxCount(this.room, this));
-    if (this.creepsCount < this.getMaxCount()) {
+    if (this.creepsCount < this.getMaxCount() && this.partsCost < this.room.energyAvailable) {
         let parts = this.parts.slice();
-        //TODO select a free spawn
-        let spawn = Game.spawns[this.room.spawns[0]];
-        if(spawn.canCreateCreep(parts, undefined) == OK) {
-            let creepName = spawn.createCreep(parts, undefined, {role: { name : this.ROLE_NAME }});
+        let spawn = _.find(Game.spawns, (spawn) => {
+            return !spawn.spawning;
+        });
+
+        let creepName = spawn.createCreep(parts, undefined, {role: { name : this.ROLE_NAME }});
+        if (creepName > 0) {
             this.creeps[creepName] = 1;
             this.creepsCount++;
             this.room.fireEvents[constants.CREEP_CREATED] = 1;
-            //console.log("Creating a", this.ROLE_NAME, ":", creepName);
         }
     }
 };
@@ -151,7 +156,7 @@ BaseRole.prototype.removeCreep = function(creep) {
 BaseRole.prototype.executeTask = function(creep) {
     //console.log(creep.name, creep.role.name, creep.task);
     if (creep.task) {
-        let currentTask = this.tasks[creep.task.tier][creep.task.current];
+        let currentTask = this.constructor.TASKS[creep.task.tier][creep.task.current];
         if (currentTask) {
             let returnValue = this.tasksInfo[currentTask].execute(creep);
             switch (returnValue) {
@@ -187,6 +192,10 @@ BaseRole.prototype.getMaxCount = function() {
     return this.room.sourceManager.totalAvailableSpaces * 3 / 2;
 };
 
+BaseRole.prototype.getMaxParts = function() {
+    return this.MAX_PARTS;
+};
+
 BaseRole.prototype.isTaskFree = function(task, tier, offset) {
     return task.hasTarget;
 };
@@ -199,13 +208,13 @@ BaseRole.prototype.assignTask = function(creep, task, taskIdx) {
     creep.task.current = taskIdx;
     creep.task.tasks[creep.task.tier] = taskIdx;
 
-    //console.log("Assigning", creep.name, "to", this.tasks[creep.task.tier][taskIdx]);
+    //console.log("Assigning", creep.name, "to", this.constructor.TASKS[creep.task.tier][taskIdx]);
 };
 
 BaseRole.prototype.assignNewTask = function(this.room, creep, isNew) {
     let this = this.room.rolesInfo[creep.role.name];
     let tier = (isNew ? 0 : creep.task.tier);
-    let tasks = this.tasks[tier];
+    let tasks = this.constructor.TASKS[tier];
     let minCreepCount = 99999, minTaskIdx, minTask;
     let assigned = false;
 
@@ -228,9 +237,9 @@ BaseRole.prototype.assignNewTask = function(this.room, creep, isNew) {
 BaseRole.prototype.clearTask = function(this.room, creep) {
     if (creep.task) {
         let this = this.room.rolesInfo[creep.role.name];
-        let task = this.room.tasksInfo[this.tasks[creep.task.tier][creep.task.current]];
+        let task = this.room.tasksInfo[this.constructor.TASKS[creep.task.tier][creep.task.current]];
         if (task && task.creeps[creep.name]) {
-            //console.log("Clearing", creep.name, "from", this.tasks[creep.task.tier][creep.task.current]);
+            //console.log("Clearing", creep.name, "from", this.constructor.TASKS[creep.task.tier][creep.task.current]);
             task.creepsCount--;
             delete task.creeps[creep.name];
         }
@@ -242,7 +251,7 @@ BaseRole.prototype.clearTask = function(this.room, creep) {
 
 BaseRole.prototype.switchTask = function(this.room, creep) {
     let this = this.room.rolesInfo[creep.role.name];
-    creep.task.tier = (creep.task.tier + 1) % this.tasks.length;
+    creep.task.tier = (creep.task.tier + 1) % this.constructor.TASKS.length;
     creep.task.current = creep.task.tasks[creep.task.tier];
     //console.log("Switching to tier", creep.task.tier, "for", creep.name);
     if (creep.task.current == undefined) {
@@ -260,11 +269,6 @@ BaseRole.prototype.creepHasDied = function(this.room, creep, this) {
         delete this.creeps[creep.name];
         this.creepsCount--;
     }
-    this.tasks.forEach((taskTiers, i) => {
-        taskTiers.forEach((taskName) => {
-            this.tasksInfo[taskName].creepHasDied(this.room, creep);
-        });
-    });
 };
 
 module.exports = BaseRole;

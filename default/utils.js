@@ -1,4 +1,12 @@
 module.exports = {
+    /**
+     * Defines a property which gets mirrored in memory. Prototype should have a property 'memory'
+     *
+     * @method definePropertyInMemory
+     * @param prototype {Prototype} Prototype to define the 'property' on.
+     * @param property {String}
+     * @param getter {Function} Function that returns the initial value for 'property'.
+     */
     definePropertyInMemory : function(prototype, property, getter) {
         let _property = "_" + property;
         Object.defineProperty(prototype, property, {
@@ -24,6 +32,15 @@ module.exports = {
         });
     },
 
+    /**
+     * Defines a property which references an instance. Instance is stored by 'id' in memory.
+     * Prototype should have a property 'memory'.
+     *
+     * @method definePropertyInMemory
+     * @param prototype {Prototype} Prototype to define the 'property' on.
+     * @param property {String}
+     * @param ClassObject {Class} Class for the instance.
+     */
     defineInstancePropertyInMemory : function(prototype, property, ClassObject) {
         let _property = "_" + property;
         Object.defineProperty(prototype, property, {
@@ -73,6 +90,15 @@ module.exports = {
         });
     },
 
+    /**
+     * Defines a property which references an instance. Instance is stored by 'name' in memory.
+     * Prototype should have a property 'memory'.
+     *
+     * @method definePropertyInMemory
+     * @param prototype {Prototype} Prototype to define the 'property' on.
+     * @param property {String}
+     * @param memoryName {String} memoryName for the class of instance on Game.
+     */
     defineInstancePropertyByNameInMemory : function(prototype, property, memoryName) {
         let _property = "_" + property;
         Object.defineProperty(prototype, property, {
@@ -100,6 +126,67 @@ module.exports = {
                     this[_property] = value;
                 }
             },
+        });
+    },
+
+    /**
+     * Defines a property which references an instance. Instance is stored by 'name' in memory.
+     * Prototype should have a property 'memory'.
+     *
+     * @method definePropertyInMemory
+     * @param prototype {Prototype} Prototype to define the 'property' on.
+     * @param property {String}
+     * @param memoryName {String} memoryName for the class of instance on Game.
+     */
+    defineMapPropertyInMemory : function(prototype, mapProperty, memoryName) {
+        let _mapProperty = "_" + mapProperty;
+        //mapValue is the Object stored in memory, it has ids of instances stored for keys
+        //_mapValue acts as a cache, has the actual instances stored for _keys
+        let mapValue = {}, _mapValue = {};
+        //funciton to add new key
+        _mapValue.addKey = function(key, value) {
+            let _key = "_" + key;
+            _mapValue[_key] = value;
+            mapValue[key] = value.id;
+            Object.defineProperty(_mapValue, key, {
+                get : function() {
+                    //if the cache doesnt have the value, get the value from memory
+                    if (!_.has(_mapValue, _key)) {
+                        _mapValue[_key] = Memory[memoryName][mapValue[key]];
+                    }
+                    return _mapValue[_key];
+                },
+                set : function(newValue) {
+                    //set the instance to cache
+                    _mapValue[_key] = newValue;
+                    //and id to memory
+                    mapValue[key] = newValue.id;
+                },
+                value : value,
+            });
+        };
+
+        //define the actual map property
+        Object.defineProperty(prototype, mapProperty, {
+            get : function() {
+                //if map is not cached, assign _mapValue and get the instance for any stored ids in memory
+                if (!_.has(this, _mapProperty)) {
+                    //if map is not in memory, assign mapValue to memory
+                    if (!_.has(this.memory, mapProperty)) {
+                        this.memory[mapProperty] = mapValue;
+                    }
+                    //copy all keys
+                    for (let k in mapValue) {
+                        _mapValue.addKey(k, Memory[memoryName][mapValue[k]]);
+                    }
+                    this[_mapProperty] = _mapValue;
+                }
+                return this[_mapProperty];
+            },
+            //cannot be written from outside
+            writable: false,
+            enumerable: true,
+            configurable: true,
         });
     },
 

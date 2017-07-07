@@ -87,7 +87,10 @@ BaseTask.prototype.execute = funciton(creep) {
     let returnValue = this.doTask(creep, target);
     //if the target is not in range, move the creep to it
     if (returnValue == ERR_NOT_IN_RANGE) {
-        return creep.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
+        //TODO optimize finding path
+        return creep.moveTo(target, {
+            visualizePathStyle: {stroke: '#ffaa00'}
+        });
     }
     //return false if there is no enough resources,
     //returning false will make the manager assign to next task in queue
@@ -109,7 +112,6 @@ BaseTask.prototype.isTargetValid = funciton(target) {
 BaseTask.prototype.targetIsInvalid = funciton(creep, target) {
 };
 
-BaseTask.prototype.creepHasDied = funciton() {},
-};
+BaseTask.prototype.creepHasDied = funciton() {};
 
 module.exports = BaseTask;

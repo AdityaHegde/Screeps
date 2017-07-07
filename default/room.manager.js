@@ -8,68 +8,35 @@ let sourceManager = require("source.manager");
 let creepManager = require("creep.manager");
 let structureManager = require("structure.manager");
 let enemyArmy = require("army.enemy");
-
-utils.definePropertyInMemory(Room.prototype, "spawns", function() {
-    return [];
-});
-
-utils.definePropertyInMemory(Room.prototype, "fireEvents", function() {
-    return {};
-});
-
-utils.definePropertyInMemory(Room.prototype, "listenEvents", function() {
-    return {};
-});
-
-utils.definePropertyInMemory(Room.prototype, "containerCount", function() {
-    return 0;
-});
+let eventBus = require("event.bus");
 
 utils.definePropertyInMemory(Room.prototype, "roleSuite", function() {
     return 0;
-});
-
-utils.definePropertyInMemory(Room.prototype, "rolesInfo", function() {
-    let rolesInfo = {};
-    for (let role in ROLES[this.roleSuite].roles) {
-        rolesInfo[role] = ROLES[this.roleSuite].roles[role].init(this, rolesInfo[role]);
-    }
-    return rolesInfo;
-});
-
-utils.definePropertyInMemory(Room.prototype, "tasksInfo", function() {
-    let tasksInfo = {};
-    for (let taskName in TASKS) {
-        tasksInfo[taskName] = {
-            targets : [],
-            hasTarget : false,
-            creeps : {},
-            creepsCount : 0,
-        };
-        TASKS[taskName].init(this, tasksInfo[taskName]);
-    }
-    return tasksInfo;
 });
 
 utils.definePropertyInMemory(Room.prototype, "spawns", function() {
     return this.find(FIND_MY_SPAWNS).map((spawn) => spawn.name);
 });
 
+utils.definePropertyInMemory(Room.prototype, "spawnsQueueCursor", function() {
+    return 0;
+});
+
 utils.definePropertyInMemory(Room.prototype, "creeps", function() {
     return {};
 });
 
+utils.defineMapPropertyInMemory(Room.prototype, "rolesInfo", "roles");
+
+utils.defineMapPropertyInMemory(Room.prototype, "tasksInfo", "tasks");
+
+utils.defineMapPropertyInMemory(Room.prototype, "buildInfo", "build");
+
 utils.definePropertyInMemory(Room.prototype, "basePlanner", function() {
-    let basePlanner = {
+    return {
         lastLevel : this.controller.level,
         cursor : BUILD_TYPES.length,
-        plannerInfo : {},
     };
-    BUILD_INIT_ORDER.forEach(function(buildTypeIdx) {
-        let buildType = BUILD_TYPES[buildTypeIdx];
-        basePlanner.plannerInfo[buildType.name] = buildType.api.init(this);
-    }.bind(this));
-    return basePlanner;
 });
 
 utils.definePropertyInMemory(Room.prototype, "defence", function() {
@@ -83,21 +50,41 @@ Room.prototype.init = function() {
     this.spawns;
     this.basePlanner;
     this.addSources();
-    this.rolesInfo;
-    this.tasksInfo;
+
+    BUILD_INIT_ORDER.forEach((buildTypeIdx) => {
+        let buildType = BUILD_TYPES[buildTypeIdx];
+        this.buildInfo.addKey(buildType.name, new buildType.api());
+        this.buildInfo[buildType.name].init(this);
+    });
+
+    for (let roleName in ROLES[this.roleSuite].roles) {
+        this.rolesInfo.addKey(roleName, new ROLES[this.roleSuite].roles[roleName]());
+        this.rolesInfo[roleName].init(this);
+    }
+
+    for (let taskName in TASKS) {
+        this.tasksInfo.addKey(taskName, new TASKS[taskName]());
+        this.tasksInfo[taskName].init(this);
+    }
 };
 
 Room.prototype.tick = function() {
-    if (this.spawns.length === 0 || this.listenEvents[constants.SPAWN_CREATED]) {
-        this.spawns = this.find(FIND_MY_SPAWNS).map(spawn => spawn.id);
+    if (this.spawns.length == 0) {
+        this.spawns.push(...this.find(FIND_MY_SPAWNS).map(spawn => spawn.id));
     }
-
-    this.listenEvents = this.fireEvents;
     this.fireEvents = {};
 
     this.roleManager();
     this.planBuilding();
     this.defendRoom();
+
+    if (this.fireEvents[constants.SPAWN_CREATED]) {
+        this.spawns.push(...this.fireEvents[constants.SPAWN_CREATED].map(spawn => spawn.id));
+    }
+
+    for (var eventName in this.fireEvents) {
+        eventBus.fire(eventName, this, this.fireEvents[eventName]);
+    }
 };
 
 Room.prototype.roleManager = function() {
@@ -112,7 +99,8 @@ Room.prototype.roleManager = function() {
         //initialize new roles
         for (let role in roleSuite.roles) {
             console.log("New role", role);
-            this.rolesInfo[role] = roleSuite.roles[role].init(this, this.rolesInfo[role]);
+            this.rolesInfo.addKey(role, new roleSuite.roles[role]());
+            this.rolesInfo[role].init(this);
         }
 
         //distribute creeps from older roles to new ones
@@ -121,28 +109,25 @@ Room.prototype.roleManager = function() {
             for (let creepName in this.rolesInfo[role].creeps) {
                 let creep = Game.creeps[creepName];
                 let targetRoleName = roleSuite.creepDistribution[role][i];
-                oldSuite.roles[creep.role.name].removeCreep(this, creep, this.rolesInfo[role]);
-                roleSuite.roles[targetRoleName].addCreep(this, creep, this.rolesInfo[targetRoleName], targetRoleName);
+                this.rolesInfo[creep.role.name].removeCreep(creep);
+                this.rolesInfo[targetRoleName].addCreep(creep);
                 i = (i + 1) % roleSuite.creepDistribution[role].length;
             }
             delete this.rolesInfo[role];
         }
     }
 
-    for (let taskName in TASKS) {
-        let taskInfo = this.tasksInfo[taskName];
-        TASKS[taskName].tick(this, taskInfo);
+    for (let taskName in this.tasksInfo) {
+        this.tasksInfo[taskName].tick();
     }
 
     //execute in specified order to give some roles priority
     roleSuite.order.forEach((roleName) => {
-        let roleInfo = this.rolesInfo[roleName];
-        let roleApi = ROLES[this.roleSuite].roles[roleName];
-        /*console.log(roleName, ":", Object.keys(roleInfo.creeps).map((creepName) => {
+        this.rolesInfo[roleName].tick();
+        /*console.log(roleName, ":", Object.keys(this.rolesInfo[roleName].creeps).map((creepName) => {
             let creep = Game.creeps[creepName];
-            return creep.name + " (" + (creep.task ? roleInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
+            return creep.name + " (" + (creep.task ? this.rolesInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
         }).join("  "));*/
-        roleApi.tick(this, this.rolesInfo[roleName]);
     });
 };
 
@@ -157,8 +142,8 @@ Room.prototype.planBuilding = function() {
 
         for (; this.basePlanner.cursor < BUILD_TYPES.length; this.basePlanner.cursor++) {
             //if the structure is yet to be finished, break
-            if (!BUILD_TYPES[this.basePlanner.cursor].api.build(this,
-                   this.basePlanner.plannerInfo[BUILD_TYPES[this.basePlanner.cursor].name])) {
+            let buildInfo = this.buildInfo[BUILD_TYPES[this.basePlanner.cursor].name];
+            if (!buildInfo.build()) {
                 break;
             }
         }
@@ -173,11 +158,11 @@ Room.prototype.planBuilding = function() {
 Room.prototype.creepHasDied = function(creep) {
     for (let roleName in ROLES[this.roleSuite].roles) {
         let roleInfo = this.rolesInfo[roleName];
-        ROLES[this.roleSuite].roles[roleName].creepHasDied(this, creep, roleInfo);
+        this.rolesInfo[roleName].creepHasDied(creep);
 
         roleInfo.tasks.forEach((taskTiers, i) => {
             taskTiers.forEach((taskName) => {
-                TASKS[taskName].creepHasDied(this, creep);
+                this.tasksInfo[taskName].creepHasDied(creep);
             });
         });
     }
@@ -187,9 +172,11 @@ Room.prototype.defendRoom = function() {
     if (this.defence.enemyArmy) {
     }
     else {
+        //do this every tick to improve response time
         let hostiles = this.find(FIND_HOSTILE_CREEPS);
         if (hostiles.length > 0) {
             this.defence.enemyArmy = enemyArmy.init(room, hostiles);
         }
+        this.fireEvents[constants.ENEMY_AT_THE_GATE] = 1;
     }
 };

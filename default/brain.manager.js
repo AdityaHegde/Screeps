@@ -1,17 +1,23 @@
 let utils = require("utils");
-let roomManager = require("room.manager");
+let BaseClass = require("base.class");
 
-utils.definePropertyInMemory(Flag.prototype, "rooms", function() {
-    return [this.room.name];
+let Brain = BaseClass("brain");
+
+utils.definePropertyInMemory(Brain.prototype, "rooms", function() {
+    return Object.keys(Game.rooms);
 });
 
-Flag.prototype.init = function() {
+utils.definePropertyInMemory(Brain.prototype, "isInitialized", function() {
+    return false;
+});
+
+Brain.prototype.init = function() {
     this.rooms.forEach(function(roomName) {
         Game.rooms[roomName].init();
     });
 };
 
-Flag.prototype.tick = function() {
+Brain.prototype.tick = function() {
     this.rooms.forEach(function(roomName) {
         Game.rooms[roomName].tick();
     });

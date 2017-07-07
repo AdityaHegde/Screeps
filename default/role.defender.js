@@ -8,16 +8,16 @@ let BaseRole = require("role.base");
  */
 
 module.exports = BaseRole.extend({
-    getMaxCount : function(room, roleInfo) {
+    getMaxCount : function() {
         //spawn only if there is an enemy army
-        return room.defence.enemyArmy ? 3 : 0;
+        return this.room.defence.enemyArmy ? 3 : 0;
     },
 },{
     PARTS : [RANGED_ATTACK, MOVE],
     MAIN_PARTS : [RANGED_ATTACK],
     TASKS : [
         ["position"],
-        ["shoot"],
+        ["defendShoot"],
     ],
     ROLE_NAME : "defender",
 });

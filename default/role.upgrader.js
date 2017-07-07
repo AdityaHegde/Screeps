@@ -8,14 +8,14 @@ let BaseRole = require("role.base");
  */
 
 module.exports = BaseRole.extend({
-    getMaxCount : function(room, roleInfo) {
+    getMaxCount : function() {
         return 1;
     },
 }, {
     PARTS : [WORK, CARRY, CARRY, MOVE],
     MAIN_PARTS : [WORK],
     TASKS : [
-        ["withdraw.upgrader"],
+        ["withdrawUpgrader"],
         ["upgrade"],
     ],
     ROLE_NAME : "upgrader",

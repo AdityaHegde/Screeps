@@ -5,17 +5,17 @@ module.exports = [{
         worker : require("role.worker"),
     },
     switchRole : function(room) {
-        return room.tasksInfo.store.potentialTargets.length + room.tasksInfo["withdraw.upgrader"].potentialTargets.length >= room.basePlanner.plannerInfo.container.paths.length;
+        return room.tasksInfo.store.potentialTargets.length + room.tasksInfo.withdrawUpgrader.potentialTargets.length >= room.buildInfo.container.paths.length;
     },
     order : ["worker"],
 }, {
     roles : {
         builder : require("role.builder"),
+        defender : require("role.defender"),
         harvester : require("role.harvester"),
         hauler : require("role.hauler"),
-        upgrader : require("role.upgrader"),
-        defender : require("role.defender"),
         tower : require("role.tower"),
+        upgrader : require("role.upgrader"),
     },
     switchRole : function() {
         return false;

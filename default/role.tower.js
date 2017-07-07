@@ -9,7 +9,7 @@ let BaseRole = require("role.base");
  */
 
 module.exports = BaseRole.extend({
-    spawnCreeps : function(room, roleInfo) {
+    spawnCreeps : function() {
         //dummy
     },
 
@@ -17,7 +17,7 @@ module.exports = BaseRole.extend({
         //dummy
     },
 
-    getMaxCount : function(room, roleInfo) {
+    getMaxCount : function() {
         //tower is built seperately
         return 0;
     },
@@ -28,7 +28,7 @@ module.exports = BaseRole.extend({
         method : "addCreep",
     }],
     TASKS : [
-        ["repair", "shoot"],
+        ["repair", "defendShoot"],
     ],
     ROLE_NAME : "tower",
 });
