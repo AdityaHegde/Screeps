@@ -1,13 +1,14 @@
 let utils = require("utils");
 let BaseClass = require("base.class");
+let roomManager = require("room.manager");
 
 let Brain = BaseClass("brain");
 
-utils.definePropertyInMemory(Brain.prototype, "rooms", function() {
+utils.definePropertyInMemory(Brain, "rooms", function() {
     return Object.keys(Game.rooms);
 });
 
-utils.definePropertyInMemory(Brain.prototype, "isInitialized", function() {
+utils.definePropertyInMemory(Brain, "isInitialized", function() {
     return false;
 });
 
@@ -22,3 +23,5 @@ Brain.prototype.tick = function() {
         Game.rooms[roomName].tick();
     });
 };
+
+module.exports = Brain;

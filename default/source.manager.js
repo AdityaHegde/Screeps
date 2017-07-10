@@ -1,8 +1,8 @@
 let utils = require("utils");
 
-utils.addMemorySupport(Source.prototype, "sources");
+utils.addMemorySupport(Source, "sources");
 
-utils.definePropertyInMemory(Source.prototype, "availableSpaces", function() {
+utils.definePropertyInMemory(Source, "availableSpaces", function() {
     let availableSpaces = 0;
     //check for available spaces around the source
     for (let x = this.pos.x - 1; x <= this.pos.x + 1; x++) {
@@ -15,11 +15,15 @@ utils.definePropertyInMemory(Source.prototype, "availableSpaces", function() {
     return availableSpaces;
 });
 
-utils.definePropertyInMemory(Source.prototype, "occupiedSpaces", function() {
+utils.definePropertyInMemory(Source, "container", function() {
+    return null;
+});
+
+utils.definePropertyInMemory(Source, "occupiedSpaces", function() {
     return 0;
 });
 
-utils.definePropertyInMemory(Creep.prototype, "source", function() {
+utils.definePropertyInMemory(Creep, "source", function() {
     return null;
 });
 
@@ -33,8 +37,7 @@ Source.prototype.release = function(creep) {
     this.occupiedSpaces--;
 };
 
-
-utils.definePropertyInMemory(Room.prototype, "sourceManager", function() {
+utils.definePropertyInMemory(Room, "sourceManager", function() {
     return {
         sources : [],
         totalAvailableSpaces : 0,

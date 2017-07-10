@@ -13,8 +13,9 @@ let WorkerRole = BaseRole.extend({
     tick : function() {
         this.upgradeParts();
 
-        this.spawnCreeps();
-
+        this.freeTasks = {};
+        this.hasFreeTasks = {};
+        this.validTasksCount = {};
         this.constructor.TASKS.forEach((taskTier, i) => {
             this.freeTasks[i] = {};
             this.hasFreeTasks[i] = false;
@@ -29,6 +30,8 @@ let WorkerRole = BaseRole.extend({
                 }
             });
         });
+
+        this.spawnCreeps();
 
         this.executeCreepsTasks();
     },
@@ -59,6 +62,8 @@ let WorkerRole = BaseRole.extend({
             delete this.freeTasks[creep.task.tier][taskName];
             this.hasFreeTasks[creep.task.tier] = Object.keys(this.freeTasks[creep.task.tier]).length > 0;
         }
+
+        task.taskStarted(creep);
 
         //console.log("Assigning", creep.name, "to", taskName);
     },
@@ -92,6 +97,9 @@ let WorkerRole = BaseRole.extend({
     },
 
     switchTask : function(creep) {
+        if (this.tasks[creep.task.tier] && this.tasks[creep.task.tier][creep.task.current]) {
+            this.room.tasksInfo[this.tasks[creep.task.tier][creep.task.current]].taskEnded(creep);
+        }
         creep.task.tier = (creep.task.tier + 1) % this.constructor.TASKS.length;
         creep.task.current = creep.task.tasks[creep.task.tier];
         //console.log("Switching to tier", creep.task.tier, "for", creep.name);
@@ -100,10 +108,12 @@ let WorkerRole = BaseRole.extend({
         }
         //if there are free tasks and current task is not one of them and reassiging away from crrent task doesnt make it a free task
         else if (this.hasFreeTasks[creep.task.tier] &&
-            !this.freeTasks[creep.task.tier][this.constructor.TASKS[creep.task.tier][creep.task.current]] &&
-            !this.isTaskFree(this.room.tasksInfo[this.constructor.TASKS[creep.task.tier][creep.task.current]], creep.task.tier, 1)) {
-                this.reassignTask(creep);
-            }
+                 !this.freeTasks[creep.task.tier][this.constructor.TASKS[creep.task.tier][creep.task.current]] &&
+                 !this.isTaskFree(this.room.tasksInfo[this.constructor.TASKS[creep.task.tier][creep.task.current]], creep.task.tier, 1)) {
+            this.reassignTask(creep);
+        }
+        else {
+            this.room.tasksInfo[this.tasks[creep.task.tier][creep.task.current]].taskStarted(creep);
         }
     },
 
@@ -123,15 +133,15 @@ let WorkerRole = BaseRole.extend({
 
 //not needed to be persisted in Memory
 //TODO check if persisting will improve CPU usage
-/*utils.definePropertyInMemory(WorkerRole.prototype, "validTasksCount", function() {
+/*utils.definePropertyInMemory(WorkerRole, "validTasksCount", function() {
     return {};
 });
 
-utils.definePropertyInMemory(WorkerRole.prototype, "hasFreeTasks", function() {
+utils.definePropertyInMemory(WorkerRole, "hasFreeTasks", function() {
     return {};
 });
 
-utils.definePropertyInMemory(WorkerRole.prototype, "freeTasks", function() {
+utils.definePropertyInMemory(WorkerRole, "freeTasks", function() {
     return {};
 });*/
 

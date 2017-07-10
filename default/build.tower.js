@@ -19,10 +19,10 @@ module.exports = ContainerBuild.extend({
             let mx = Math.round((x1 + x2) / 2), my = Math.round((y1 + y2) / 2);
             let dx = this.room.tempWallPaths[i][mid].dx, dy = this.room.tempWallPaths[i][mid].dy;
 
-            if (!this.checkAndAdd(mx - dy, my + dx, this.room, this.paths)) {
+            if (!this.checkAndAdd(mx - dy, my + dx)) {
                 for (let j = 0; j < mid; j++) {
-                    if (this.checkAndAdd(mx + dx * j - dy, my + dy * j + dx, this.room, this.paths) ||
-                        this.checkAndAdd(mx - dx * j - dy, my - dy * j + dx, this.room, this.paths)) {
+                    if (this.checkAndAdd(mx + dx * j - dy, my + dy * j + dx) ||
+                        this.checkAndAdd(mx - dx * j - dy, my - dy * j + dx)) {
                         break;
                     }
                 }
@@ -32,4 +32,5 @@ module.exports = ContainerBuild.extend({
 }, {
     EVENT_LISTENERS : [],
     TYPE : STRUCTURE_TOWER,
+    BUILD_NAME : "tower",
 });

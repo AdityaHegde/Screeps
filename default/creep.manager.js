@@ -1,9 +1,9 @@
 let utils = require("utils");
 
-utils.definePropertyInMemory(Creep.prototype, "role", function() {
+utils.definePropertyInMemory(Creep, "role", function() {
     return null;
 });
 
-utils.definePropertyInMemory(Creep.prototype, "task", function() {
+utils.definePropertyInMemory(Creep, "task", function() {
     return null;
 });

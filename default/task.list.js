@@ -3,6 +3,7 @@ module.exports = {
     "defendShoot" : require("task.defend.shoot"),
     "dropoff" : require("task.dropoff"),
     "harvest" : require("task.harvest"),
+    "harvestForever" : require("task.harvest.forever"),
     "position" : require("task.position"),
     "repair" : require("task.repair"),
     "store" : require("task.store"),

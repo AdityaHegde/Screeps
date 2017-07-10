@@ -18,62 +18,113 @@ BaseTask.TASK_NAME = "base";
 
 BaseTask.init = function() {
     this.EVENT_LISTENERS.forEach((eventListener) => {
-        eventBus.subscribe(eventListener.eventName, this.prototype[eventListener.method], "tasksInfo." + this.TASK_NAME);
+        eventBus.subscribe(eventListener.eventName, eventListener.method, "tasksInfo." + this.TASK_NAME);
     });
     this.UPDATE_TARGET_EVENTS.forEach((eventListener) => {
-        eventBus.subscribe(eventListener.eventName, this.prototype.updateTargets, "tasksInfo." + this.TASK_NAME);
+        eventBus.subscribe(eventListener, "updateTargetsMap", "tasksInfo." + this.TASK_NAME);
     });
 };
 
-BaseTask.__staticMembers = ["EVENT_LISTENERS", "UPDATE_TARGET_EVENTS", "TASK_NAME", "init"];
+BaseTask.__staticMembers = {
+    "EVENT_LISTENERS" : 1,
+    "UPDATE_TARGET_EVENTS" : 1,
+    "TASK_NAME" : 1,
+    "init" : 1,
+};
 
-utils.definePropertyInMemory(BaseTask.prototype, "targets", function() {
-    return [];
+utils.definePropertyInMemory(BaseTask, "targetsMap", function() {
+    return {};
 });
 
-utils.definePropertyInMemory(BaseTask.prototype, "hasTarget", function() {
+utils.definePropertyInMemory(BaseTask, "hasTarget", function() {
     return false;
 });
 
-utils.defineInstancePropertyByNameInMemory(BaseRole.property, "room", "rooms");
+utils.definePropertyInMemory(BaseTask, "creeps", function() {
+    return {};
+});
 
-BaseTask.prototype.init = funciton(room) {
+utils.definePropertyInMemory(BaseTask, "creepsCount", function() {
+    return 0;
+});
+
+utils.defineInstancePropertyByNameInMemory(BaseTask, "room", "rooms");
+
+BaseTask.prototype.init = function(room) {
     this.room = room;
-    this.targets = this.getTargets();
-    this.hasTarget = this.targets.length > 0;
+    this.updateTargetsMap();
+    this.hasTarget = Object.keys(this.targetsMap).length > 0;
 };
 
-BaseTask.prototype.tick = funciton() {
+BaseTask.prototype.tick = function() {
 };
 
-BaseTask.prototype.getTarget = funciton(creep) {
-    if (!creep.task.target) {
-        //if there is no current target, get one closest
-        creep.task.target = utils.getClosestObject(creep, this.targets);
+BaseTask.prototype.getTarget = function(creep) {
+    let target;
+    if (!creep.task.targets[creep.task.tier]) {
+        target = this.assignNewTarget(creep);
     }
-    let target = Game.getObjectById(creep.task.target);
+    else {
+        target = Game.getObjectById(creep.task.targets[creep.task.tier]);
+    }
     if (!target || !this.isTargetValid(target)) {
         this.targetIsInvalid(creep, target);
-        //if target is invalid, remove it from targets of the task and get a new closest target
-        this.targets = _.pull(this.targets, creep.task.target);
-        this.hasTarget = this.targets.length > 0;
-        creep.task.target = utils.getClosestObject(creep, this.targets);
-        target = Game.getObjectById(creep.task.target);
+        //if target is invalid, remove it from targets of the task and get a new target
+        delete this.targetsMap[creep.task.targets[creep.task.tier]];
+        target = this.assignNewTarget(creep);
+    }
+    this.hasTarget =  Object.keys(this.targetsMap).length > 0;
+    return target;
+};
+
+BaseTask.prototype.assignNewTarget = function(creep) {
+    //get the closest target
+    creep.task.targets[creep.task.tier] = utils.getClosestObject(creep, Object.keys(this.targetsMap), (target) => {
+        //filter out targets that are assgined to other creeps and are not valid for more
+        //eg : creepA is picking up 50 energy from a container with 50 energy.
+        //     creepB cannot pickup from the same container as there wont be energy left after creepA is done picking up
+        return this.isAssignedTargetValid(target);
+    });
+    let target = Game.getObjectById(creep.task.targets[creep.task.tier]);
+    if (target) {
+        this.targetIsClaimed(creep, target);
     }
     return target;
 };
 
-BaseTask.prototype.updateTargets = funciton(newTargets) {
-    //add new targets from event
-    this.targets.push(...newTargets.map(newTarget => newTarget.id));
-    this.hasTarget = this.targets.length > 0;
+BaseTask.prototype.updateTargetsMap = function(newTargets) {
+    if (!newTargets || newTargets == 1) {
+        //force updating targets
+        this.targetsMap = this.getTargetsMap();
+    }
+    else {
+        //add new targets from event
+        newTargets.forEach((target) =>{
+            if (this.targetsFilter(target)) {
+                this.targetsMap[target.id] = 0;
+            }
+        });
+    }
+    this.hasTarget = Object.keys(this.targetsMap).length > 0;
 };
 
-BaseTask.prototype.getTargets = funciton() {
+BaseTask.prototype.getTargetsMap = function() {
+    let targetsMap = {};
+    this.getTargets().forEach((target) => {
+        targetsMap[target] = 0;
+    })
+    return targetsMap;
+};
+
+BaseTask.prototype.getTargets = function() {
     return [];
 };
 
-BaseTask.prototype.execute = funciton(creep) {
+BaseTask.prototype.targetsFilter = function(target) {
+    return true;
+};
+
+BaseTask.prototype.execute = function(creep) {
     let target = this.getTarget(creep);
     //console.log(creep.name, target);
     //if there was no target found for this task
@@ -92,26 +143,68 @@ BaseTask.prototype.execute = funciton(creep) {
             visualizePathStyle: {stroke: '#ffaa00'}
         });
     }
+    else if (returnValue == OK) {
+        this.taskExecuted(creep, target);
+    }
     //return false if there is no enough resources,
     //returning false will make the manager assign to next task in queue
     return returnValue;
 };
 
-BaseTask.prototype.doTask = funciton(creep, target) {
+BaseTask.prototype.doTask = function(creep, target) {
     return OK;
 };
 
-BaseTask.prototype.isTaskValid = funciton(creep, target) {
+BaseTask.prototype.taskExecuted = function(creep, target) {
+    this.targetIsReleased(creep, target);
+};
+
+BaseTask.prototype.taskStarted = function(creep) {
+    if (creep.task && creep.task.targets && creep.task.targets[creep.task.tier]) {
+        let target = Game.getObjectById(creep.task.targets[creep.task.tier]);
+        if (target) {
+            if (this.isAssignedTargetValid(target)) {
+                this.targetIsClaimed(creep, target);
+            }
+            else {
+                creep.task.targets[creep.task.tier] = null;
+            }
+        }
+    }
+};
+
+BaseTask.prototype.taskEnded = function(creep) {
+    if (creep.task && creep.task.targets && creep.task.targets[creep.task.tier]) {
+        let target = Game.getObjectById(creep.task.targets[creep.task.tier]);
+        if (target) {
+            this.targetIsReleased(creep, target);
+        }
+    }
+};
+
+BaseTask.prototype.isTaskValid = function(creep, target) {
     return this.isTargetValid(target);
 };
 
-BaseTask.prototype.isTargetValid = funciton(target) {
+BaseTask.prototype.isTargetValid = function(target) {
     return true;
 };
 
-BaseTask.prototype.targetIsInvalid = funciton(creep, target) {
+BaseTask.prototype.targetIsClaimed = function(creep, target) {
+    //console.log(this.constructor.TASK_NAME, "targetIsClaimed");
 };
 
-BaseTask.prototype.creepHasDied = funciton() {};
+BaseTask.prototype.targetIsReleased = function(creep, target) {
+    //console.log(this.constructor.TASK_NAME, "targetIsReleased");
+};
+
+BaseTask.prototype.targetIsInvalid = function(creep, target) {
+};
+
+BaseTask.prototype.isAssignedTargetValid = function(target) {
+};
+
+BaseTask.prototype.creepHasDied = function(creep) {
+};
 
 module.exports = BaseTask;

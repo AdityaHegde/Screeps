@@ -10,21 +10,9 @@ let DropOffTask = require("task.store");
  */
 
 module.exports = DropOffTask.extend({
-    getPotentialTargets : function(room) {
-        return room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return (structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.UPGRADER_STORAGE) ||
-                       structure.structureType == STRUCTURE_TOWER;
-            },
-        }).map((structure) => structure.id);
-    },
-
-    updatePotentialTargets : function(newPotentialTargets) {
-        this.potentialTargets.push(...newPotentialTargets.filter((structure) => {
-            return (structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.UPGRADER_STORAGE) ||
-                   structure.structureType == STRUCTURE_TOWER;
-        }).map(newPotentialTarget => newPotentialTarget.id));
-        this.updateTargets();
+    potentialTargetsFilter : function(structure) {
+        return (structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.UPGRADER_STORAGE) ||
+                structure.structureType == STRUCTURE_TOWER;
     },
 }, {
     UPDATE_TARGET_EVENTS : [constants.ENERGY_WITHDRAWN, constants.TOWER_USED_ENERGY],

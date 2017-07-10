@@ -1,4 +1,5 @@
 let constants = require("constants");
+let utils = require("utils");
 let ExtensionBuild = require("build.extension");
 
 /**
@@ -13,24 +14,20 @@ let ContainerBuild = ExtensionBuild.extend({
         this.room = room;
 
         for (let i = 0; i < this.room.tempRoadPaths.length; i++) {
-            for (let j = this.room.tempRoadPaths[i].length - 2 - (i == 0 ? 2 : 0); j < this.room.tempRoadPaths[i].length; j++) {
-                let dxdy = this.getDxDy(this.room.tempRoadPaths[i][j-1], this.room.tempRoadPaths[i][j]);
-                if (this.checkAndAdd(this.room.tempRoadPaths[i][j].x - dxdy[0], this.room.tempRoadPaths[i][j].y - dxdy[1], this.room, this.paths) ||
-                    this.checkAndAdd(this.room.tempRoadPaths[i][j].x + dxdy[0], this.room.tempRoadPaths[i][j].y + dxdy[1], this.room, this.paths)) {
-                    break;
-                }
-            }
             //upgrader container
             if (i == 0) {
+                this.checkAndAdd(this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 4].x, this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 4].y);
                 this.labelMap[this.paths[i].join("__")] = constants.UPGRADER_STORAGE;
+            }
+            else {
+                this.checkAndAdd(this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 2].x, this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 2].y);
             }
         }
     },
 
-    checkAndAdd : function(x, y, this.room, paths) {
+    checkAndAdd : function(x, y) {
         if(Game.map.getTerrainAt(x, y, this.room.name) != "wall") {
-            //console.log(x, y);
-            paths.push([x, y]);
+            this.paths.push([x, y]);
             return true;
         }
         return false;
@@ -47,9 +44,7 @@ let ContainerBuild = ExtensionBuild.extend({
         }
 
         for (; this.roadCursor < this.paths.length; this.roadCursor++) {
-            let returnValue = this.room.createConstructionSite(this.paths[this.roadCursor][0], this.paths[this.roadCursor][1],
-                                                               this.constructor.TYPE);
-            this.room.fireEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
+            let returnValue = this.buildAt(this.paths[this.roadCursor][0], this.paths[this.roadCursor][1]);
             c++;
             //if max sites has been reached or if RCL is not high enough, return
             if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
@@ -81,9 +76,10 @@ let ContainerBuild = ExtensionBuild.extend({
         method : "containerBuilt",
     }],
     TYPE : STRUCTURE_CONTAINER,
+    BUILD_NAME : "container",
 });
 
-utils.definePropertyInMemory(ContainerBuild.prototype, "labelMap", function() {
+utils.definePropertyInMemory(ContainerBuild, "labelMap", function() {
     return {};
 });
 

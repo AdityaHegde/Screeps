@@ -1,4 +1,4 @@
-let brainManager = require("brain.manager");
+let Brain = require("brain.manager");
 
 module.exports.loop = function () {
     let brain = new Brain("brain");
@@ -6,7 +6,7 @@ module.exports.loop = function () {
     if (!brain.isInitialized) {
         brain.init();
         brain.isInitialized = true;
-        console.log(Game.cpu.getUsed(), "cpu used during init");
+        //console.log(Game.cpu.getUsed(), "cpu used during init");
     }
 
     brain.tick();

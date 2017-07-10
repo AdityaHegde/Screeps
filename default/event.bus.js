@@ -1,21 +1,21 @@
 let utils = require("utils");
 let constants = require("constants");
+let listeners = {};
 
 module.exports = {
-    listeners : {},
-
     subscribe : function(eventName, method, contextPath) {
-        this.listeners[eventName] = this.listeners[eventName] || [];
-        this.listeners[eventName].push({
+        listeners[eventName] = listeners[eventName] || [];
+        listeners[eventName].push({
             method : method,
             contextPath : contextPath,
         });
     },
 
-    fire : function(eventName, target, args) {
-        if (this.listeners[eventName]) {
-            this.listeners[eventName].forEach((listener) => {
-                listener.method.call(_.get(target, listener.contextPath), ...args);
+    fire : function(eventName, target, ...args) {
+        if (listeners[eventName]) {
+            listeners[eventName].forEach((listener) => {
+                let context = _.get(target, listener.contextPath);
+                context[listener.method](...args);
             });
         }
     },

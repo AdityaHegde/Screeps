@@ -79,4 +79,5 @@ module.exports = BaseBuild.extend({
     },
 }, {
     TYPE : STRUCTURE_EXTENSION,
+    BUILD_NAME : "extension",
 });

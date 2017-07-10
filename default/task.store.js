@@ -11,16 +11,16 @@ let DropOffTask = require("task.dropoff");
 
 //TODO block target switching, so that harvesters store in containers assigned and wait until its empty
 module.exports = DropOffTask.extend({
-    getPotentialTargets : function(room) {
-        return room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.HARVESTER_STORAGE;
-            },
-        }).map((structure) => structure.id);
+    doTask : function(creep, target) {
+        let returnValue = creep.transfer(target, RESOURCE_ENERGY);
+        if (returnValue == OK && target.store && target.store.energy == 0) {
+            this.room.fireEvent(constants.ENERGY_STORED, target);
+        }
+        return returnValue;
     },
 
-    isTargetValid : function(target) {
-        return target.store.energy < target.energyCapacity;
+    potentialTargetsFilter : function(structure) {
+        return structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.HARVESTER_STORAGE;
     },
 }, {
     UPDATE_TARGET_EVENTS : [constants.ENERGY_WITHDRAWN],

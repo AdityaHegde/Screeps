@@ -1,5 +1,5 @@
 let constants = require("constants");
-let BaseTask = require("task.position");
+let PositionTask = require("task.position");
 
 /**
  * Task for defenders to shoot at enemy

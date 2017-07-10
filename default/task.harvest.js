@@ -21,7 +21,7 @@ module.exports = BaseTask.extend({
         return Game.getObjectById(creep.task.source);
     },
 
-    updateTargets : function() {
+    updateTargetsMap : function() {
         //dummy
     },
 
@@ -38,9 +38,12 @@ module.exports = BaseTask.extend({
     },
 
     creepHasDied : function(creep) {
-        let source = Game.getObjectById(creep.task.source);
-        if (source) {
-            source.release(creep);
+        BaseTask.prototype.creepHasDied.call(this, creep);
+        if (creep.task) {
+            let source = Game.getObjectById(creep.task.source);
+            if (source) {
+                source.release(creep);
+            }
         }
     },
 }, {

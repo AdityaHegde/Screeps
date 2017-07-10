@@ -14,6 +14,7 @@ module.exports = {
     STRUCURE_BUILT : "strucureBuilt",
 
     ENERGY_WITHDRAWN : "energyWithdrawn",
+    ENERGY_STORED : "energyStored",
     TOWER_USED_ENERGY : "towerUsedEnergy",
 
     HARVESTER_STORAGE : "harvesterStorage",

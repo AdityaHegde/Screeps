@@ -10,12 +10,8 @@ let WithdrawTask = require("task.withdraw");
  */
 
 module.exports = WithdrawTask.extend({
-    getPotentialTargets : function(room) {
-        return room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.UPGRADER_STORAGE;
-            },
-        }).map((structure) => structure.id);
+    potentialTargetsFilter : function(structure) {
+        return structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.UPGRADER_STORAGE;
     },
 }, {
     UPDATE_TARGET_EVENTS : [constants.ENERGY_STORED],

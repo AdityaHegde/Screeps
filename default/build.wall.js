@@ -121,4 +121,5 @@ module.exports = BaseBuild.extend({
     },
 }, {
     TYPE : STRUCTURE_RAMPART,
+    BUILD_NAME : "wall",
 });

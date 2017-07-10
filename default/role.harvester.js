@@ -16,18 +16,14 @@ module.exports = BaseRole.extend({
 
     getMaxParts : function() {
         //WORK parts = energy available / energy harvested per tick per body / ticks available to work until regen
-        //ticks available to work until regen = (ticks to regen energy - ticks needed to deposit harvested energy)
-        //ticks needed to deposit harvested energy = energy available / carry capacity per body * 2, we have 2 CARRY parts
-        //we need to have a corresponding MOVE part per Work part and 2 CARRY parts
-        return 2 * Math.ceil(SOURCE_ENERGY_CAPACITY / HARVEST_POWER /
-                             (ENERGY_REGEN_TIME - SOURCE_ENERGY_CAPACITY / (CARRY_CAPACITY * 2)))) + 2;
+        return 2 * Math.ceil(SOURCE_ENERGY_CAPACITY / HARVEST_POWER / ENERGY_REGEN_TIME);
     },
 }, {
-    PARTS : [WORK, CARRY, CARRY, MOVE],
+    PARTS : [WORK, MOVE],
     MAIN_PARTS : [WORK],
+    ADD_MOVE : false,
     TASKS : [
-        ["harvest"],
-        ["store"],
+        ["harvestForever"],
     ],
     ROLE_NAME : "harvester",
 });

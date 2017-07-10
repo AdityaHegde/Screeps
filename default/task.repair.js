@@ -1,18 +1,20 @@
 let constants = require("constants");
-let BaseTask = require("task.base");
+let BuildTask = require("task.build");
 
 /**
  * Task to repair structures
  *
  * @module task
  * @class RepairTask
- * @extends BaseTask
+ * @extends BuildTask
  */
 
-module.exports = BaseTask.extend({
-    updateTargets : function() {
-        this.targets = this.getTargets();
-        this.hasTarget = this.targets.length > 0;
+module.exports = BuildTask.extend({
+    updateTargetsMap : function() {
+        this.getTargets().forEach((target) => {
+            this.targetsMap[target] = this.targetsMap[target] || 0;
+        });
+        this.hasTarget = Object.keys(this.targetsMap).length > 0;
     },
 
     getTargets : function() {
@@ -27,6 +29,10 @@ module.exports = BaseTask.extend({
 
     isTargetValid : function(target) {
         return target && target.hits >= target.hitsMax;
+    },
+
+    isAssignedTargetValid : function(target) {
+        return (target.maxHits - target.hits - this.targetsMap[target.id]) > 0;
     },
 }, {
     UPDATE_TARGET_EVENTS : [constants.PERIODIC_10_TICKS],

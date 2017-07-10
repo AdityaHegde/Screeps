@@ -22,7 +22,7 @@ let HaulerRole = WorkerRole.extend({
         //average time per trip = 2 * average one way trip distance + ticks to withdraw (1) + ticks to deposit (1)
         //we need to have a corresponding MOVE part per CARRY part
         return 2 * Math.ceil((SOURCE_ENERGY_CAPACITY / CARRY_CAPACITY / ENERGY_REGEN_TIME) /
-                             (ENERGY_REGEN_TIME / (2 * this.averageHaulDistance + 2));
+                             (ENERGY_REGEN_TIME / (2 * this.averageHaulDistance + 2)));
     },
 }, {
     PARTS : [CARRY, MOVE],
@@ -34,7 +34,7 @@ let HaulerRole = WorkerRole.extend({
     ROLE_NAME : "hauler",
 });
 
-utils.definePropertyInMemory(HaulerRole.prototype, "averageHaulDistance", function() {
+utils.definePropertyInMemory(HaulerRole, "averageHaulDistance", function() {
     return 1;
 });
 

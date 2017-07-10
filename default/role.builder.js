@@ -9,7 +9,7 @@ let WorkerRole = require("role.worker");
 
 module.exports = WorkerRole.extend({
     getMaxCount : function() {
-        return 2 + this.tasksInfo.build.hasTarget * 2;
+        return 2 + this.room.tasksInfo.build.hasTarget * 2;
     },
 }, {
     PARTS : [WORK, CARRY, MOVE, MOVE],

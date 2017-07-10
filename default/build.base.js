@@ -1,6 +1,7 @@
 let constants = require("constants");
 let utils = require("utils");
 let BaseClass = require("base.class");
+let eventBus = require("event.bus");
 
 /**
 * Base class for auto build
@@ -13,29 +14,34 @@ let BaseBuild = BaseClass("build");
 
 BaseBuild.TYPE = 0;
 BaseBuild.EVENT_LISTENERS = [];
-BaseBuild.BUILD_NAME = "":
+BaseBuild.BUILD_NAME = "";
 
 BaseBuild.init = function() {
     this.EVENT_LISTENERS.forEach((eventListener) => {
-        eventBus.subscribe(eventListener.eventName, this.prototype[eventListener.method], "this." + this.BUILD_NAME);
+        eventBus.subscribe(eventListener.eventName, eventListener.method, "buildInfo." + this.BUILD_NAME);
     });
 };
 
-BaseBuild.__staticMembers = ["TYPE", "EVENT_LISTENERS", "BUILD_NAME", "init"];
+BaseBuild.__staticMembers = {
+    "TYPE" : 1,
+    "EVENT_LISTENERS" : 1,
+    "BUILD_NAME" : 1,
+    "init" : 1,
+};
 
-utils.definePropertyInMemory(BaseBuild.prototype, "paths", function() {
+utils.definePropertyInMemory(BaseBuild, "paths", function() {
     return [];
 });
 
-utils.definePropertyInMemory(BaseBuild.prototype, "roadCursor", function() {
+utils.definePropertyInMemory(BaseBuild, "roadCursor", function() {
     return 0;
 });
 
-utils.definePropertyInMemory(BaseBuild.prototype, "pathCursor", function() {
+utils.definePropertyInMemory(BaseBuild, "pathCursor", function() {
     return 0;
 });
 
-utils.defineInstancePropertyByNameInMemory(BaseRole.property, "room", "rooms");
+utils.defineInstancePropertyByNameInMemory(BaseBuild, "room", "rooms");
 
 BaseBuild.prototype.init = function(room) {
     this.room = room;
@@ -43,7 +49,7 @@ BaseBuild.prototype.init = function(room) {
 
     let spawn = Game.spawns[this.room.spawns[0]];
     let structures = [];
-    structures.push(this.room.controller, ...this.room.sources.map(source => Game.getObjectById(source)));
+    structures.push(this.room.controller, ...this.room.sourceManager.sources.map(source => Game.getObjectById(source)));
     //structures.push(this.room.controller, ...this.room.find(FIND_SOURCES));
 
     this.room.tempRoadPaths = [];
@@ -73,9 +79,7 @@ BaseBuild.prototype.build = function() {
         let path = Room.deserializePath(this.paths[this.roadCursor]);
 
         for (; this.pathCursor < path.length; this.pathCursor++) {
-            let returnValue = this.room.createConstructionSite(path[this.pathCursor].x, path[this.pathCursor].y,
-                                                               this.constructor.TYPE);
-            this.room.fireEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
+            let returnValue = this.buildAt(path[this.pathCursor].x, path[this.pathCursor].y);
             c++;
             //if max sites has been reached or if RCL is not high enough, return
             if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
@@ -94,6 +98,11 @@ BaseBuild.prototype.build = function() {
 
     //build only one type at a time
     return false;
+};
+
+BaseBuild.prototype.buildAt = function(x, y) {
+    let returnValue = this.room.createConstructionSite(x, y, this.constructor.TYPE);
+    this.room.delayedEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
 };
 
 module.exports = BaseBuild;

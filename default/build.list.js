@@ -1,19 +1,11 @@
 module.exports = {
-    types : [{
-        name : "container",
-        api : require("build.container"),
-    }, {
-        name : "extension",
-        api : require("build.extension"),
-    }, {
-        name : "road",
-        api : require("build.road"),
-    }, {
-        name : "wall",
-        api : require("build.wall"),
-    }, {
-        name : "tower",
-        api : require("build.tower"),
-    }],
-    initOrder : [2, 0, 1, 3, 4],
+    types : {
+        "container" : require("build.container"),
+        "extension" : require("build.extension"),
+        "road" : require("build.road"),
+        "wall" : require("build.wall"),
+        "tower" : require("build.tower"),
+    },
+    buildOrder : ["container", "extension", "road", "wall", "tower"],
+    initOrder : ["road", "container", "extension", "wall", "tower"],
 };

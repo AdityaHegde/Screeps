@@ -9,19 +9,24 @@ module.exports = function(className) {
         if (arguments.length > 0) {
             this.id = id;
         }
+        else {
+            this.id = className + "_" + (++Memory.ids[className]);
+        }
     };
 
-    utils.addMemorySupport(ClassFunction.prototype, className);
+    utils.addMemorySupport(ClassFunction, className);
 
-    utils.definePropertyInMemory(ClassFunction.prototype, "id", () => {
+    /*utils.definePropertyInMemory(ClassFunction, "id", () => {
         return className + "_" + (++Memory.ids[className]);
-    });
+    });*/
 
     ClassFunction.extend = function(members, staticMembers) {
-        let child = function() {};
+        let child = function() {
+            ClassFunction.call(this, ...arguments);
+        };
 
         child.prototype = Object.create(this.prototype);
-        child.prototype.constructor = ClassFunction;
+        child.prototype.constructor = child;
         child.parent = this;
 
         child.extend = this.extend;
@@ -43,7 +48,7 @@ module.exports = function(className) {
             }
         }
         if (this.__staticMembers) {
-            for (sm in this.__staticMembers) {
+            for (let sm in this.__staticMembers) {
                 if (this.__staticMembers.hasOwnProperty(sm) && !child.__staticMembers.hasOwnProperty(sm)) {
                     child[sm] = this[sm];
                     child.__staticMembers[sm] = 1;
