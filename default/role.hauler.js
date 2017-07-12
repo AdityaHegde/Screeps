@@ -10,9 +10,9 @@ let WorkerRole = require("role.worker");
 
 let HaulerRole = WorkerRole.extend({
     getMaxCount : function() {
-        //have a container for each source and one more for controller
+        //have a container for each source and one more for controller and another one for towers
         //hauler will haul from each container to other sources
-        return 4;
+        return this.room.sourceManager.sources.length + 2;
     },
 
     getMaxParts : function() {

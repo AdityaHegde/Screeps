@@ -45,6 +45,12 @@ utils.definePropertyInMemory(Room, "sourceManager", function() {
     };
 });
 
+utils.definePropertyInCache(Room, "sources", function() {
+    return this.sourceManager.sources.map((sourceId) => {
+        return Game.getObjectById(sourceId);
+    });
+});
+
 Room.prototype.addSources = function() {
     let sources = this.find(FIND_SOURCES);
     this.sourceManager.sources = sources.map(source => source.id);

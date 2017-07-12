@@ -1,4 +1,5 @@
 let constants = require("constants");
+let math = require("math");
 let BaseBuild = require("build.base");
 let SIN45 = Math.sin(-Math.PI / 4), COS45 = Math.cos(-Math.PI / 4);
 let SIN90 = Math.sin(-Math.PI / 2), COS90 = Math.cos(-Math.PI / 2);
@@ -11,54 +12,22 @@ let SIN90 = Math.sin(-Math.PI / 2), COS90 = Math.cos(-Math.PI / 2);
 */
 
 module.exports = BaseBuild.extend({
-    init : function(room) {
-        this.room = room;
-
-        this.room.tempExtensionsPath = [];
-
-        //road builder has already calculated paths to sources, add positions for extensions beside that path
-        let allocatedCount = 0;
-        for (let i = 1; i < this.room.tempRoadPaths.length; i++) {
-            let path = this.room.tempRoadPaths[i];
-            let path1 = [], path2 = [];
-
-            //have a buffer of 2 slots for creating extensions
-            for (let j = 1; j < path.length - 1; j++) {
-                let dxdy = this.getDxDy(path[j-1], path[j]);
-
-                this.addPathEntry(path1, path2, path[j], dxdy[0], dxdy[1]);
-            }
-
-            this.paths.push(Room.serializePath(path1), Room.serializePath(path2));
-            this.room.tempExtensionsPath.push(path1, path2);
-        }
+    getCursorObjects : function(buildPlanner) {
+        return buildPlanner.buildInfo.road.paths.slice(1, buildPlanner.room.sourceManager.sources.length);
     },
 
-    getDxDy : function(pos0, pos1) {
-        let dx, dy;
+    initForCursorObject : function(buildPlanner, cursorObject, i) {
+        let path = Room.deserializePath(cursorObject);
+        let path1 = [], path2 = [];
 
-        if (pos1.dx == pos0.dx && pos1.dy == pos0.dy) {
-            return this.getPerpendicularDxDy(pos1.dx, pos1.dy);
-        }
-        else if ((pos1.dx * pos1.dy == 0 && pos0.dx * pos0.dy == 0) ||
-            (pos1.dx * pos1.dy != 0 && pos0.dx * pos0.dy != 0)) {
-            dx = Math.round(COS45 * pos0.dx - SIN45 * pos0.dy);
-            dy = Math.round(SIN45 * pos0.dx + COS45 * pos0.dy);
-        }
-        else if (pos1.dx * pos1.dy == 0) {
-            dx = pos1.dy;
-            dy = pos1.dx;
-        }
-        else if (pos0.dx * pos0.dy == 0) {
-            dx = pos0.dy;
-            dy = pos0.dx;
+        //have a buffer of 2 slots for creating extensions
+        for (let i = 1; i < path.length - 1; i++) {
+            let dxdy = math.getDxDy(path[i-1], path[i]);
+
+            this.addPathEntry(path1, path2, path[i], dxdy[0], dxdy[1]);
         }
 
-        return [dx, dy];
-    },
-
-    getPerpendicularDxDy : function(dx, dy) {
-        return [Math.round(COS90 * dx - SIN90 * dy), Math.round(SIN90 * dx + COS90 * dy)];
+        this.paths.push(Room.serializePath(path1), Room.serializePath(path2));
     },
 
     addPathEntry : function(path1, path2, pathEntry, dx, dy) {

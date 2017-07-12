@@ -3,7 +3,7 @@ let constants = require("constants");
 module.exports = {
     suites : [{
         switchRole : function(room) {
-            return room.tasksInfo.store.potentialTargets.length + room.tasksInfo.withdrawUpgrader.potentialTargets.length >= room.buildInfo.container.paths.length;
+            return room.tasksInfo.store.potentialTargets.length + room.tasksInfo.withdrawUpgrader.potentialTargets.length >= room.buildPlanner.buildInfo.container.paths.length;
         },
         order : ["worker"],
     }, {

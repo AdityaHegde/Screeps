@@ -10,23 +10,23 @@ let ExtensionBuild = require("build.extension");
 */
 
 let ContainerBuild = ExtensionBuild.extend({
-    init : function(room) {
-        this.room = room;
+    getCursorObjects : function(buildPlanner) {
+        return buildPlanner.buildInfo.road.paths.slice(0, buildPlanner.room.sourceManager.sources.length + 1);
+    },
 
-        for (let i = 0; i < this.room.tempRoadPaths.length; i++) {
-            //upgrader container
-            if (i == 0) {
-                this.checkAndAdd(this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 4].x, this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 4].y);
-                this.labelMap[this.paths[i].join("__")] = constants.UPGRADER_STORAGE;
-            }
-            else {
-                this.checkAndAdd(this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 2].x, this.room.tempRoadPaths[i][this.room.tempRoadPaths[i].length - 2].y);
-            }
+    initForCursorObject : function(buildPlanner, cursorObject, i) {
+        let path = Room.deserializePath(buildPlanner.buildInfo.road.paths[i]);
+        if (i == 0) {
+            this.checkAndAdd(buildPlanner.room, path[path.length - 4].x, path[path.length - 4].y);
+            this.labelMap[this.paths[i].join("__")] = constants.UPGRADER_STORAGE;
+        }
+        else {
+            this.checkAndAdd(buildPlanner.room, path[path.length - 2].x, path[path.length - 2].y);
         }
     },
 
-    checkAndAdd : function(x, y) {
-        if(Game.map.getTerrainAt(x, y, this.room.name) != "wall") {
+    checkAndAdd : function(room, x, y) {
+        if(Game.map.getTerrainAt(x, y, room.name) != "wall") {
             this.paths.push([x, y]);
             return true;
         }
@@ -35,16 +35,16 @@ let ContainerBuild = ExtensionBuild.extend({
 
     //build structures in positions
     //returns true if all structures are built for the current RCL, false if max sites has been reached
-    build : function() {
+    build : function(buildPlanner) {
         //store the last built road block to resume later when max construction site has been reached
         let c = 0;
-        if (this.roadCursor == this.paths.length) {
+        if (this.cursor == this.paths.length) {
             //return true if this type of structure was finished before
             return true;
         }
 
-        for (; this.roadCursor < this.paths.length; this.roadCursor++) {
-            let returnValue = this.buildAt(this.paths[this.roadCursor][0], this.paths[this.roadCursor][1]);
+        for (; this.cursor < this.paths.length; this.cursor++) {
+            let returnValue = this.buildAt(buildPlanner, this.paths[this.cursor][0], this.paths[this.cursor][1]);
             c++;
             //if max sites has been reached or if RCL is not high enough, return
             if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
@@ -57,7 +57,7 @@ let ContainerBuild = ExtensionBuild.extend({
             }
         }
 
-        this.room.fireEvents[constants.CONSTRUCTION_COMPLETED] = this.type;
+        buildPlanner.room.fireEvents[constants.CONSTRUCTION_COMPLETED] = this.type;
 
         //build only one type at a time
         return false;

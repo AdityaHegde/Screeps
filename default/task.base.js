@@ -138,10 +138,16 @@ BaseTask.prototype.execute = function(creep) {
     let returnValue = this.doTask(creep, target);
     //if the target is not in range, move the creep to it
     if (returnValue == ERR_NOT_IN_RANGE) {
-        //TODO optimize finding path
-        return creep.moveTo(target, {
-            visualizePathStyle: {stroke: '#ffaa00'}
-        });
+        //if there is an optimized preset path, use it to save CPU
+        if (creep.path) {
+            return creep.moveByPath(creep.path);
+        }
+        //else find a path and use it
+        else {
+            return creep.moveTo(target, {
+                visualizePathStyle: {stroke: '#ffaa00'}
+            });
+        }
     }
     else if (returnValue == OK) {
         this.taskExecuted(creep, target);

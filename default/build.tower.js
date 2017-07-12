@@ -9,22 +9,23 @@ let ContainerBuild = require("build.container");
 */
 
 module.exports = ContainerBuild.extend({
-    init : function(room) {
-        this.room = room;
+    getCursorObjects : function(buildPlanner) {
+        return buildPlanner.buildInfo.wall.paths;
+    },
 
-        for (let i = 0; i < this.room.tempWallPaths.length; i++) {
-            let x1 = this.room.tempWallPaths[i][1].x, y1 = this.room.tempWallPaths[i][1].y;
-            let x2 = this.room.tempWallPaths[i][this.room.tempWallPaths[i].length - 2].x, y2 = this.room.tempWallPaths[i][this.room.tempWallPaths[i].length - 2].y;
-            let mid = Math.round(this.room.tempWallPaths.length / 2);
-            let mx = Math.round((x1 + x2) / 2), my = Math.round((y1 + y2) / 2);
-            let dx = this.room.tempWallPaths[i][mid].dx, dy = this.room.tempWallPaths[i][mid].dy;
+    initForCursorObject : function(buildPlanner, cursorObject) {
+        let path = Room.deserializePath(cursorObject);
+        let x1 = path[1].x, y1 = path[1].y;
+        let x2 = path[path.length - 2].x, y2 = path[path.length - 2].y;
+        let mid = Math.round(path.length / 2);
+        let mx = Math.round((x1 + x2) / 2), my = Math.round((y1 + y2) / 2);
+        let dx = path[mid].dx, dy = path[mid].dy;
 
-            if (!this.checkAndAdd(mx - dy, my + dx)) {
-                for (let j = 0; j < mid; j++) {
-                    if (this.checkAndAdd(mx + dx * j - dy, my + dy * j + dx) ||
-                        this.checkAndAdd(mx - dx * j - dy, my - dy * j + dx)) {
-                        break;
-                    }
+        if (!this.checkAndAdd(buildPlanner.room, mx - dy, my + dx)) {
+            for (let j = 0; j < mid; j++) {
+                if (this.checkAndAdd(buildPlanner.room, mx + dx * j - dy, my + dy * j + dx) ||
+                this.checkAndAdd(buildPlanner.room, mx - dx * j - dy, my - dy * j + dx)) {
+                    break;
                 }
             }
         }

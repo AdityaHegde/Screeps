@@ -2,15 +2,15 @@ let constants = require("constants");
 let utils = require("utils");
 let ROLES_SUITES = require("role.list").suites;
 let ROLES = require("role.list").roles;
-let TASKS = require("task.list");
+let TASKS = require("task.list").tasks;
+let TASKS_INIT_ORDER = require("task.list").initOrder;
 let BUILD_TYPES = require("build.list").types;
-let BUILD_ORDER = require("build.list").buildOrder;
-let BUILD_INIT_ORDER = require("build.list").initOrder;
 let sourceManager = require("source.manager");
 let creepManager = require("creep.manager");
 let structureManager = require("structure.manager");
 let enemyArmy = require("army.enemy");
 let eventBus = require("event.bus");
+let BuildPlanner = require("build.planner");
 
 for (let buildName in BUILD_TYPES) {
     BUILD_TYPES[buildName].init();
@@ -42,14 +42,7 @@ utils.defineMapPropertyInMemory(Room, "rolesInfo", "roles", ROLES);
 
 utils.defineMapPropertyInMemory(Room, "tasksInfo", "tasks", TASKS);
 
-utils.defineMapPropertyInMemory(Room, "buildInfo", "build", BUILD_TYPES);
-
-utils.definePropertyInMemory(Room, "basePlanner", function() {
-    return {
-        lastLevel : this.controller.level,
-        cursor : BUILD_ORDER.length,
-    };
-});
+utils.defineInstancePropertyInMemory(Room, "buildPlanner", BuildPlanner);
 
 utils.definePropertyInMemory(Room, "defence", function() {
     return {
@@ -62,28 +55,42 @@ utils.definePropertyInMemory(Room, "delayedEvents", function() {
     return {};
 });
 
+utils.definePropertyInMemory(Room, "avgCpuUsed", function() {
+    return 0;
+});
+
+utils.definePropertyInMemory(Room, "maxCpuUsed", function() {
+    return 0;
+});
+
+utils.definePropertyInMemory(Room, "isInitialized", function() {
+    return 0;
+});
+
 Room.prototype.init = function() {
-    this.spawns;
-    this.basePlanner;
-    this.addSources();
+    if (this.buildPlanner.init(this)) {
+        this.isInitialized = 2;
+    }
+    else if (this.isInitialized == 0) {
+        this.addSources();
 
-    BUILD_INIT_ORDER.forEach((buildName) => {
-        this.buildInfo.addKey(buildName, new BUILD_TYPES[buildName]());
-        this.buildInfo[buildName].init(this);
-    });
+        ROLES_SUITES[this.roleSuite].order.forEach((roleName) => {
+            this.rolesInfo.addKey(roleName, new ROLES[roleName]());
+            this.rolesInfo[roleName].init(this);
+        });
 
-    ROLES_SUITES[this.roleSuite].order.forEach((roleName) => {
-        this.rolesInfo.addKey(roleName, new ROLES[roleName]());
-        this.rolesInfo[roleName].init(this);
-    });
+        TASKS_INIT_ORDER.forEach((taskName) => {
+            this.tasksInfo.addKey(taskName, new TASKS[taskName]());
+            this.tasksInfo[taskName].init(this);
+        });
 
-    for (let taskName in TASKS) {
-        this.tasksInfo.addKey(taskName, new TASKS[taskName]());
-        this.tasksInfo[taskName].init(this);
+        this.isInitialized = 1;
     }
 };
 
 Room.prototype.tick = function() {
+    let begCpu = Game.cpu.getUsed();
+
     for (let eventName in this.delayedEvents) {
         eventBus.fire(eventName, this, this.delayedEvents[eventName]);
         delete this.delayedEvents[eventName];
@@ -95,7 +102,7 @@ Room.prototype.tick = function() {
     this.fireEvents = {};
 
     this.roleManager();
-    this.planBuilding();
+    this.buildPlanner.build();
     this.defendRoom();
 
     if (Game.time % 5 == 0) {
@@ -116,7 +123,17 @@ Room.prototype.tick = function() {
         eventBus.fire(eventName, this, this.fireEvents[eventName]);
     }
 
-    //console.log(Game.cpu.getUsed(), "cpu used");
+    let cpuUsed = Game.cpu.getUsed() - begCpu;
+    this.avgCpuUsed += cpuUsed;
+
+    if (cpuUsed > this.maxCpuUsed) {
+        this.maxCpuUsed = cpuUsed;
+    }
+    if (Game.time % 20 == 0) {
+        console.log("Average CPU used for", this.name, ":", (this.avgCpuUsed / 20), "Max CPU :", this.maxCpuUsed);
+        this.avgCpuUsed = 0;
+        this.maxCpuUsed = 0;
+    }
 };
 
 Room.prototype.roleManager = function() {
@@ -178,30 +195,6 @@ Room.prototype.roleManager = function() {
             return creep.name + " (" + (creep.task ? this.rolesInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
         }).join("  "));*/
     });
-};
-
-Room.prototype.planBuilding = function() {
-    //check if RCL changed or some structures are yet to be built for current RCL
-    //or there are some structures are being built
-    if (!this.tasksInfo.build.hasTarget && (this.controller.level > this.basePlanner.lastLevel || this.basePlanner.cursor < BUILD_ORDER.length)) {
-        //reset the cursor when executed for the 1st time RCL changed
-        if (this.basePlanner.cursor == BUILD_ORDER.length) {
-            this.basePlanner.cursor = 0;
-        }
-
-        for (; this.basePlanner.cursor < BUILD_ORDER.length; this.basePlanner.cursor++) {
-            //if the structure is yet to be finished, break
-            let buildInfo = this.buildInfo[BUILD_ORDER[this.basePlanner.cursor]];
-            if (!buildInfo.build()) {
-                break;
-            }
-        }
-
-        if (this.basePlanner.cursor == BUILD_ORDER.length) {
-            //proceed only if all structures for this level are built
-            this.basePlanner.lastLevel = this.controller.level;
-        }
-    }
 };
 
 Room.prototype.creepHasDied = function(creep) {
