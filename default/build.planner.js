@@ -122,22 +122,28 @@ BuildPlanner.prototype.checkAroundPoint = function(x, y) {
 BuildPlanner.prototype.init = function(room) {
     let begCpu = Game.cpu.getUsed();
     if (!this.center) {
-        console.log("planning");
         this.room = room;
         this.plan();
         this.center = this.center || {};
-        console.log((Game.cpu.getUsed() - begCpu), "cpu used during planning");
         return false;
     }
     else {
-        let buildName = BUILD_INIT_ORDER[this.cursor++];
-        console.log("init", buildName);
-        if (!this.buildInfo[buildName]) {
-            this.buildInfo.addKey(buildName, new BUILD_TYPES[buildName]());
+        //loop until there is enough cpu
+        while((Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5) {
+            let buildName = BUILD_INIT_ORDER[this.cursor++];
+            console.log("init", buildName);
+            if (!this.buildInfo[buildName]) {
+                this.buildInfo.addKey(buildName, new BUILD_TYPES[buildName]());
+            }
+            //loop until there is enough cpu
+            //have a 5 ticks buffer
+            while ((Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5) {
+                if (this.buildInfo[buildName].init(this)) {
+                    break;
+                }
+            }
         }
-        while (!this.buildInfo[buildName].init(this)) {}
     }
-    console.log(Game.cpu.getUsed() - begCpu, "cpu used");
 
     return this.cursor == BUILD_INIT_ORDER.length;
 };

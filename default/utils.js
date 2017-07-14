@@ -38,9 +38,9 @@ module.exports = {
      * @param [deserializer] {Function} Function to deserialize value retrieved from memory. Defaults to returning value as is.
      */
     definePropertyInMemory : function(Class, property, getter, serializer, deserializer) {
-        getter = getter || function() { return null };
-        serializer = serializer || function(value) { return value };
-        deserializer = deserializer || function(value) { return value };
+        getter = getter || function() { return null; };
+        serializer = serializer || function(value) { return value; };
+        deserializer = deserializer || function(value) { return value; };
         let _property = "_" + property;
         Object.defineProperty(Class.prototype, property, {
             get : function() {
@@ -247,7 +247,7 @@ module.exports = {
     },
 
     getClosestObject : function(creep, targets, filterFunction) {
-        filterFunction = filterFunction || function() { return true };
+        filterFunction = filterFunction || function() { return true; };
         let distanceObj = targets.reduce((curDistanceObj, targetId) => {
             let target = Game.getObjectById(targetId);
             if (filterFunction(target)) {

@@ -22,6 +22,9 @@ module.exports = {
 
     ENEMY_AT_THE_GATE : "enemyAtTheGate",
 
+    ROOM_CLAIMED : "roomClaimed",
+    ROOM_SCOUTED : "roomScouted",
+
     PERIODIC_5_TICKS : "periodic5Ticks",
     PERIODIC_10_TICKS : "periodic10Ticks",
     PERIODIC_20_TICKS : "periodic20Ticks",

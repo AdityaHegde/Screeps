@@ -9,11 +9,11 @@ utils.definePropertyInMemory(Brain, "rooms", function() {
 });
 
 Brain.prototype.tick = function() {
-    this.rooms.forEach(function(roomName) {
+    this.rooms.forEach((roomName) => {
         let room = Game.rooms[roomName];
 
         if (room.isInitialized == 2) {
-            //room.tick();
+            room.tick();
         }
         else {
             room.init();

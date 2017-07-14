@@ -180,24 +180,24 @@ BaseRole.prototype.executeTask = function(creep) {
                 case ERR_INVALID_TARGET:
                 case ERR_NO_BODYPART:
                 case ERR_RCL_NOT_ENOUGH:
-                //console.log("reassignTask");
-                this.reassignTask(creep);
-                break;
+                    //console.log("reassignTask");
+                    this.reassignTask(creep);
+                    break;
 
                 case ERR_NOT_ENOUGH_RESOURCES:
                 case constants.ERR_INVALID_TASK:
-                //console.log("switchTask");
-                this.switchTask(creep);
-                break;
+                    //console.log("switchTask");
+                    this.switchTask(creep);
+                    break;
 
                 case OK:
                 case ERR_BUSY:
-                //console.log("OK");
-                break;
+                    //console.log("OK");
+                    break;
 
                 default:
-                //console.log(returnValue);
-                break;
+                    //console.log(returnValue);
+                    break;
             }
         }
         else {
@@ -230,6 +230,7 @@ BaseRole.prototype.assignTask = function(creep, task, taskIdx) {
     creep.task.current = taskIdx;
     creep.task.tasks[creep.task.tier] = taskIdx;
 
+    task.execute(creep);
     task.taskStarted(creep);
 
     //console.log("Assigning", creep.name, "to", this.constructor.TASKS[creep.task.tier][taskIdx]);

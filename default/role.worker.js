@@ -63,6 +63,7 @@ let WorkerRole = BaseRole.extend({
             this.hasFreeTasks[creep.task.tier] = Object.keys(this.freeTasks[creep.task.tier]).length > 0;
         }
 
+        task.execute(creep);
         task.taskStarted(creep);
 
         //console.log("Assigning", creep.name, "to", taskName);
