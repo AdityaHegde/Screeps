@@ -1,32 +1,44 @@
 let constants = require("constants");
 let utils = require("utils");
 let math = require("math");
+let eventBus = require("event.bus");
 let BaseClass = require("base.class");
 let BUILD_TYPES = require("build.list").types;
-let BUILD_ORDER = require("build.list").buildOrder;
-let BUILD_INIT_ORDER = require("build.list").initOrder;
+let BUILD_INIT_OBJECTS = require("build.list").initObjects;
 
-let BuildPlanner = BaseClass("buildPlanner");
+let BuildPlanner = BaseClass("buildPlanner", "buildPlanner");
+
+BuildPlanner.init = function() {
+    [constants.CONTAINER_BUILT, constants.EXTENSION_BUILT, constants.WALL_BUILT, constants.TOWER_BUILT].forEach((event) => {
+        eventBus.subscribe(event, "built", "buildPlanner");
+    });
+};
 
 utils.addMemorySupport(BuildPlanner, "buildPlanner");
 
-utils.defineInstancePropertyByNameInMemory(BuildPlanner, "room", "rooms");
+//utils.defineInstancePropertyByNameInMemory(BuildPlanner, "room", "rooms");
 
-utils.defineMapPropertyInMemory(BuildPlanner, "buildInfo", "build", BUILD_TYPES);
-
-utils.definePropertyInMemory(BuildPlanner, "roadPaths", function() {
+utils.definePropertyInMemory(BuildPlanner, "pathsInfo", function() {
     return [];
 });
 
-utils.definePropertyInMemory(BuildPlanner, "center", function() {
-    return null;
-});
+utils.definePosPropertyInMemory(BuildPlanner, "center");
 
 utils.definePropertyInMemory(BuildPlanner, "lastLevel", function() {
     return 0;
 });
 
+utils.definePropertyInMemory(BuildPlanner, "structureData", function() {
+    return {};
+});
+
 utils.definePropertyInMemory(BuildPlanner, "cursor", function() {
+    return 0;
+});
+utils.definePropertyInMemory(BuildPlanner, "pathCursor", function() {
+    return 0;
+});
+utils.definePropertyInMemory(BuildPlanner, "posCursor", function() {
     return 0;
 });
 
@@ -120,57 +132,67 @@ BuildPlanner.prototype.checkAroundPoint = function(x, y) {
 };
 
 BuildPlanner.prototype.init = function(room) {
+    this.costMatrix = this.costMatrix || new PathFinder.CostMatrix();
     let begCpu = Game.cpu.getUsed();
     if (!this.center) {
         this.room = room;
         this.plan();
-        this.center = this.center || {};
+        this.center = this.center || {x : 25, y : 25};
         return false;
     }
     else {
         //loop until there is enough cpu
-        while((Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5) {
-            let buildName = BUILD_INIT_ORDER[this.cursor++];
-            console.log("init", buildName);
-            if (!this.buildInfo[buildName]) {
-                this.buildInfo.addKey(buildName, new BUILD_TYPES[buildName]());
+        while((Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5 && this.cursor < BUILD_INIT_OBJECTS.length) {
+            let build = BUILD_INIT_OBJECTS[this.cursor++];
+            if (this.pathsInfo.length < this.cursor) {
+                this.pathsInfo.push({
+                    paths : [],
+                    type : build.type,
+                });
             }
+            let pathInfo = this.pathsInfo[this.cursor - 1];
+            let cursorObjects = build.getter(this);
             //loop until there is enough cpu
             //have a 5 ticks buffer
-            while ((Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5) {
-                if (this.buildInfo[buildName].init(this)) {
-                    break;
-                }
+            for (i = this.pathCursor; i < cursorObjects.length && (Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5; i++) {
+                pathInfo.paths.push(...BUILD_TYPES[build.type].initForCursorObject(this, cursorObjects[i], i));
             }
         }
     }
+    console.log((Game.cpu.getUsed() - begCpu), "cup used during planing");
+    this.costMatrix = this.costMatrix || new PathFinder.CostMatrix();
 
-    return this.cursor == BUILD_INIT_ORDER.length;
+    return this.cursor == BUILD_INIT_OBJECTS.length;
 };
 
 BuildPlanner.prototype.build = function() {
     //check if RCL changed or some structures are yet to be built for current RCL
     //or there are some structures are being built
     if (!this.room.tasksInfo.build.hasTarget &&
-        (this.room.controller.level > this.lastLevel || this.cursor < BUILD_ORDER.length)) {
+        (this.room.controller.level > this.lastLevel || this.cursor < this.pathsInfo.length)) {
         //reset the cursor when executed for the 1st time RCL changed
-        if (this.cursor == BUILD_ORDER.length) {
+        if (this.cursor == this.pathsInfo.length) {
             this.cursor = 0;
         }
 
-        for (; this.cursor < BUILD_ORDER.length; this.cursor++) {
+        for (; this.cursor < this.pathsInfo.length; this.cursor++) {
             //if the structure is yet to be finished, break
-            let buildInfo = this.buildInfo[BUILD_ORDER[this.cursor]];
-            if (!buildInfo.build(this)) {
+            if (!BUILD_TYPES[this.pathsInfo[this.cursor].type].build(this)) {
                 break;
             }
         }
 
-        if (this.cursor == BUILD_ORDER.length) {
+        if (this.cursor == this.pathsInfo.length) {
             //proceed only if all structures for this level are built
             this.lastLevel = this.room.controller.level;
         }
     }
+};
+
+BuildPlanner.prototype.built = function(structures) {
+    structures.forEach((structure) => {
+        BUILD_TYPES[structure.structureType].built(this, structure);
+    });
 };
 
 module.exports = BuildPlanner;

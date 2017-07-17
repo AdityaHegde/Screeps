@@ -4,6 +4,8 @@ module.exports = {
     RCL_UPDATED : "rclUpdated",
     CONSTRUCTION_SITE_ADDED : "constructionSiteAdded",
     ERR_INVALID_TASK : "invalidTask",
+    ERR_COULDNT_MOVE : "couldntMove",
+    CREEP_REACHED_TARGET : "creepReachedTarget",
 
     CONSTRUCTION_COMPLETED : "constructionCompleted",
 

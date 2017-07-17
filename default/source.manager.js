@@ -15,13 +15,14 @@ utils.definePropertyInMemory(Source, "availableSpaces", function() {
     return availableSpaces;
 });
 
-utils.definePropertyInMemory(Source, "container", function() {
-    return null;
-});
+utils.definePosPropertyInMemory(Source, "container");
 
 utils.definePropertyInMemory(Source, "occupiedSpaces", function() {
     return 0;
 });
+
+utils.definePropertyInMemory(Source, "pathIdx");
+utils.definePropertyInMemory(Source, "pathPos");
 
 utils.definePropertyInMemory(Creep, "source", function() {
     return null;
@@ -54,7 +55,7 @@ utils.definePropertyInCache(Room, "sources", function() {
 Room.prototype.addSources = function() {
     let sources = this.find(FIND_SOURCES);
     this.sourceManager.sources = sources.map(source => source.id);
-    this.sourceManager.totalAvailableSpaces = sources.reduce(function(totalAvailableSpaces, source) {
+    this.sourceManager.totalAvailableSpaces = sources.reduce(function(totalAvailableSpaces, source, i) {
         return totalAvailableSpaces + source.availableSpaces;
     }, 0);
 };

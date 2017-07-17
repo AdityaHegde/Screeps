@@ -11,16 +11,15 @@ let structureManager = require("structure.manager");
 let enemyArmy = require("army.enemy");
 let eventBus = require("event.bus");
 let BuildPlanner = require("build.planner");
+let PathInfo = require("path.info");
 
-for (let buildName in BUILD_TYPES) {
-    BUILD_TYPES[buildName].init();
-}
 for (let taskName in TASKS) {
     TASKS[taskName].init();
 }
 for (let roleName in ROLES) {
     ROLES[roleName].init();
 }
+BuildPlanner.init();
 
 utils.definePropertyInMemory(Room, "roleSuite", function() {
     return 0;
@@ -38,9 +37,9 @@ utils.definePropertyInMemory(Room, "creeps", function() {
     return {};
 });
 
-utils.defineMapPropertyInMemory(Room, "rolesInfo", "roles", ROLES);
+utils.defineInstanceMapPropertyInMemory(Room, "rolesInfo", ROLES);
 
-utils.defineMapPropertyInMemory(Room, "tasksInfo", "tasks", TASKS);
+utils.defineInstanceMapPropertyInMemory(Room, "tasksInfo", TASKS);
 
 utils.defineInstancePropertyInMemory(Room, "buildPlanner", BuildPlanner);
 
@@ -66,6 +65,13 @@ utils.definePropertyInMemory(Room, "maxCpuUsed", function() {
 utils.definePropertyInMemory(Room, "isInitialized", function() {
     return 0;
 });
+
+utils.definePropertyInMemory(Room, "paths", function() {
+    return [];
+});
+
+Room.className = "room";
+Room.memoryName = "rooms";
 
 Room.prototype.init = function() {
     if (this.buildPlanner.init(this)) {
@@ -198,7 +204,6 @@ Room.prototype.roleManager = function() {
 };
 
 Room.prototype.creepHasDied = function(creep) {
-    //console.log(creep.name, "has died");
     ROLES_SUITES[this.roleSuite].order.forEach((roleName) => {
         let roleInfo = this.rolesInfo[roleName];
         this.rolesInfo[roleName].creepHasDied(creep);

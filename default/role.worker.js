@@ -42,7 +42,6 @@ let WorkerRole = BaseRole.extend({
 
     isTaskFree : function(task, tier, offset) {
         offset = offset || 0;
-        //console.log(task.hasTarget, task.creepsCount, Math.round(this.creepsCount, this.validTasksCount[tier]));
         return task.hasTarget && task.creepsCount < Math.round(this.creepsCount / this.validTasksCount[tier]) - offset;
     },
 
@@ -63,10 +62,8 @@ let WorkerRole = BaseRole.extend({
             this.hasFreeTasks[creep.task.tier] = Object.keys(this.freeTasks[creep.task.tier]).length > 0;
         }
 
-        task.execute(creep);
         task.taskStarted(creep);
-
-        //console.log("Assigning", creep.name, "to", taskName);
+        task.execute(creep);
     },
 
     assignNewTask : function(creep, isNew) {
@@ -79,7 +76,6 @@ let WorkerRole = BaseRole.extend({
         if (this.validTasksCount[tier] > 0) {
             do {
                 let task = this.room.tasksInfo[tasks[i]];
-                //console.log(creep.name, tasks[i]);
                 if (this.isTaskFree(task, tier)) {
                     this.assignTask(creep, task, i);
                     assigned = true;
@@ -103,7 +99,6 @@ let WorkerRole = BaseRole.extend({
         }
         creep.task.tier = (creep.task.tier + 1) % this.constructor.TASKS.length;
         creep.task.current = creep.task.tasks[creep.task.tier];
-        //console.log("Switching to tier", creep.task.tier, "for", creep.name);
         if (creep.task.current == undefined) {
             this.assignNewTask(creep);
         }
@@ -131,19 +126,5 @@ let WorkerRole = BaseRole.extend({
     ],
     ROLE_NAME : "worker",
 });
-
-//not needed to be persisted in Memory
-//TODO check if persisting will improve CPU usage
-/*utils.definePropertyInMemory(WorkerRole, "validTasksCount", function() {
-    return {};
-});
-
-utils.definePropertyInMemory(WorkerRole, "hasFreeTasks", function() {
-    return {};
-});
-
-utils.definePropertyInMemory(WorkerRole, "freeTasks", function() {
-    return {};
-});*/
 
 module.exports = WorkerRole;

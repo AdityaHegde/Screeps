@@ -1,6 +1,6 @@
 let constants = require("constants");
 let utils = require("utils");
-let ExtensionBuild = require("build.extension");
+let extensionBuild = require("build.extension");
 
 /**
 * Class to auto build walls
@@ -9,28 +9,34 @@ let ExtensionBuild = require("build.extension");
 * @extends ExtensionBuild
 */
 
-let ContainerBuild = ExtensionBuild.extend({
-    getCursorObjects : function(buildPlanner) {
-        return buildPlanner.buildInfo.road.paths.slice(0, buildPlanner.room.sourceManager.sources.length + 1);
-    },
-
+let ContainerBuild = _.merge({}, extensionBuild, {
     initForCursorObject : function(buildPlanner, cursorObject, i) {
-        let path = Room.deserializePath(buildPlanner.buildInfo.road.paths[i]);
-        if (i == 0) {
-            this.checkAndAdd(buildPlanner.room, path[path.length - 4].x, path[path.length - 4].y);
-            this.labelMap[this.paths[i].join("__")] = constants.UPGRADER_STORAGE;
+        let path = Room.deserializePath(cursorObject.path);
+        let pos, posIdx;
+        let newPath;
+        if (i == buildPlanner.room.sourceManager.sources.length) {
+            posIdx = path.length - 4;
+            buildPlanner.room.controller.container = path[posIdx];
         }
         else {
-            this.checkAndAdd(buildPlanner.room, path[path.length - 2].x, path[path.length - 2].y);
+            posIdx = path.length - 2;
+            buildPlanner.room.sources[i].container = path[posIdx];
         }
+        pos = path[posIdx];
+        buildPlanner.structureData[pos.x + "__" + pos.y] = {
+            label : constants.UPGRADER_STORAGE,
+            idx : i,
+            pos : posIdx,
+        };
+        newPath = this.checkAndAdd(buildPlanner.room, pos.x, pos.y);
+        return newPath || [];
     },
 
     checkAndAdd : function(room, x, y) {
         if(Game.map.getTerrainAt(x, y, room.name) != "wall") {
-            this.paths.push([x, y]);
-            return true;
+            return [x + ":" + y];
         }
-        return false;
+        return null;
     },
 
     //build structures in positions
@@ -38,13 +44,14 @@ let ContainerBuild = ExtensionBuild.extend({
     build : function(buildPlanner) {
         //store the last built road block to resume later when max construction site has been reached
         let c = 0;
-        if (this.cursor == this.paths.length) {
+        if (buildPlanner.pathCursor == this.paths.length) {
             //return true if this type of structure was finished before
             return true;
         }
 
-        for (; this.cursor < this.paths.length; this.cursor++) {
-            let returnValue = this.buildAt(buildPlanner, this.paths[this.cursor][0], this.paths[this.cursor][1]);
+        for (; buildPlanner.pathCursor < this.paths.length; buildPlanner.pathCursor++) {
+            let xy = this.paths[buildPlanner.pathCursor].split(":");
+            let returnValue = this.buildAt(buildPlanner, xy[0], xy[1]);
             c++;
             //if max sites has been reached or if RCL is not high enough, return
             if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
@@ -57,30 +64,21 @@ let ContainerBuild = ExtensionBuild.extend({
             }
         }
 
+
         buildPlanner.room.fireEvents[constants.CONSTRUCTION_COMPLETED] = this.type;
 
         //build only one type at a time
         return false;
     },
 
-    containerBuilt : function(containers) {
-        containers.forEach((container) => {
-            if (this.labelMap[container.pos.x + "__" + container.pos.y]) {
-                container.label = this.labelMap[container.pos.x + "__" + container.pos.y];
-            }
-        });
+    built : function(buildPlanner, container) {
+        container.label = buildPlanner.structureData[container.pos.x + "__" + container.pos.y].label;
+        container.pathIdx = buildPlanner.structureData[container.pos.x + "__" + container.pos.y].idx;
+        container.pathPos = buildPlanner.structureData[container.pos.x + "__" + container.pos.y].pos;
+        delete buildPlanner.structureData[container.pos.x + "__" + container.pos.y];
     },
-}, {
-    EVENT_LISTENERS : [{
-        eventName : constants.CONTAINER_BUILT,
-        method : "containerBuilt",
-    }],
-    TYPE : STRUCTURE_CONTAINER,
-    BUILD_NAME : "container",
-});
 
-utils.definePropertyInMemory(ContainerBuild, "labelMap", function() {
-    return {};
+    TYPE : STRUCTURE_CONTAINER,
 });
 
 module.exports = ContainerBuild;

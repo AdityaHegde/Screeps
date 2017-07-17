@@ -1,52 +1,46 @@
 let constants = require("constants");
+let utils = require("utils");
 let math = require("math");
-let BaseBuild = require("build.base");
-let SIN45 = Math.sin(-Math.PI / 4), COS45 = Math.cos(-Math.PI / 4);
-let SIN90 = Math.sin(-Math.PI / 2), COS90 = Math.cos(-Math.PI / 2);
+let roadBuild = require("build.road");
 
 /**
 * Class to auto build extensions
 * @module build
 * @class ExtensionBuild
-* @extends BaseBuild
+* @extends RoadBuild
 */
 
-module.exports = BaseBuild.extend({
-    getCursorObjects : function(buildPlanner) {
-        return buildPlanner.buildInfo.road.paths.slice(1, buildPlanner.room.sourceManager.sources.length);
-    },
-
-    initForCursorObject : function(buildPlanner, cursorObject, i) {
-        let path = Room.deserializePath(cursorObject);
+let ExtensionBuild = _.merge({}, roadBuild, {
+    initForCursorObject : function(buildPlanner, cursorObject, idx) {
+        let path = Room.deserializePath(cursorObject.path);
         let path1 = [], path2 = [];
 
         //have a buffer of 2 slots for creating extensions
         for (let i = 1; i < path.length - 1; i++) {
             let dxdy = math.getDxDy(path[i-1], path[i]);
 
-            this.addPathEntry(path1, path2, path[i], dxdy[0], dxdy[1]);
+            path1.push({
+                x : path[i].x + dxdy[0],
+                y : path[i].y +  dxdy[1],
+                dx : path[i].dx,
+                dy : path[i].dy,
+                direction : path[i].direction,
+            });
+            buildPlanner.structureData[(path[i].x + dxdy[0]) + "__" + (path[i].y +  dxdy[1])] = [idx, i];
+            path2.push({
+                x : path[i].x - dxdy[0],
+                y : path[i].y -  dxdy[1],
+                dx : path[i].dx,
+                dy : path[i].dy,
+                direction : path[i].direction,
+            });
+            buildPlanner.structureData[(path[i].x - dxdy[0]) + "__" + (path[i].y -  dxdy[1])] = [idx, i];
         }
 
-        this.paths.push(Room.serializePath(path1), Room.serializePath(path2));
+        return [Room.serializePath(path1), Room.serializePath(path2)];
     },
 
-    addPathEntry : function(path1, path2, pathEntry, dx, dy) {
-        path1.push({
-            x : pathEntry.x - dx,
-            y : pathEntry.y + dy,
-            dx : pathEntry.dx,
-            dy : pathEntry.dy,
-            direction : pathEntry.direction,
-        });
-        path2.push({
-            x : pathEntry.x + dx,
-            y : pathEntry.y - dy,
-            dx : pathEntry.dx,
-            dy : pathEntry.dy,
-            direction : pathEntry.direction,
-        });
-    },
-}, {
     TYPE : STRUCTURE_EXTENSION,
-    BUILD_NAME : "extension",
 });
+
+module.exports = ExtensionBuild;

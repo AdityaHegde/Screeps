@@ -1,4 +1,5 @@
 let constants = require("constants");
+let utils = require("utils");
 let BaseTask = require("task.base");
 
 let TYPE_TO_EVENT = {
@@ -34,12 +35,6 @@ module.exports = BaseTask.extend({
         return creep.build(target);
     },
 
-    taskExecuted : function(creep, target) {
-        this.targetsMap[target.id] -= (creep.task.lastEnergy - creep.carry.energy);
-        creep.task.lastEnergy = creep.carry.energy;
-        //console.log(this.constructor.TASK_NAME, "targetIsUpdated", target.id, this.targetsMap[target.id]);
-    },
-
     targetIsInvalid : function(creep, target) {
         if (creep.task.targetType) {
             let newTarget = target || this.room.lookForAt(LOOK_STRUCTURES, creep.task.targetPos.x, creep.task.targetPos.y)[0];
@@ -53,7 +48,7 @@ module.exports = BaseTask.extend({
         BaseTask.prototype.taskStarted.call(this, creep);
         var source = Game.getObjectById(creep.task.source);
         if (source) {
-            var dir = ((creep.pos.getDirectionTo(source.pos) + 3) % 8) + 1;
+            var dir = utils.getOppisiteDirection(creep.pos.getDirectionTo(source.pos));
             creep.move(dir);
         }
     },
@@ -63,20 +58,16 @@ module.exports = BaseTask.extend({
     },
 
     targetIsClaimed : function(creep, target) {
-        creep.task.lastEnergy = creep.carry.energy;
+        BaseTask.prototype.targetIsClaimed.call(this, creep, target);
         this.targetsMap[target.id] += creep.carry.energy;
-        //console.log(this.constructor.TASK_NAME, "targetIsClaimed", target.id, this.targetsMap[target.id]);
     },
 
     targetIsReleased : function(creep, target) {
-        this.targetsMap[target.id] -= (creep.task.lastEnergy - creep.carry.energy);
-        delete creep.task.lastEnergy;
-        //console.log(this.constructor.TASK_NAME, "targetIsReleased", target.id, this.targetsMap[target.id]);
+        this.targetsMap[target.id] -= creep.carry.energy;
     },
 
     isAssignedTargetValid : function(target) {
-        //console.log(target.id, target.progressTotal, target.progress, this.targetsMap[target.id], target.progressTotal - target.progress - this.targetsMap[target.id]);
-        return (target.progressTotal - target.progress - this.targetsMap[target.id]) > 0;
+        return (target.progressTotal - this.targetsMap[target.id]) > 0;
     },
 }, {
     UPDATE_TARGET_EVENTS : [constants.CONSTRUCTION_SITE_ADDED],

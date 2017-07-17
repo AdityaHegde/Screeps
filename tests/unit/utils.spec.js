@@ -94,7 +94,7 @@ describe("utils", function() {
         A.prototype.memory = {};
 
         before(function() {
-            utils.defineMapPropertyInMemory(A, "a", "b", classesMap);
+            utils.defineInstanceMapPropertyInMemory(A, "a", classesMap);
             global.Memory = Memory;
             a = new A();
         })

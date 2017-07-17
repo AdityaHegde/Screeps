@@ -2,23 +2,22 @@ let utils = require("utils");
 
 Memory.ids = Memory.ids || {};
 
-module.exports = function(className) {
-    Memory.ids[className] = Memory.ids[className] || 0;
+module.exports = function(className, memoryName) {
+    Memory.ids[memoryName] = Memory.ids[memoryName] || 0;
 
     let ClassFunction = function(id) {
         if (arguments.length > 0) {
             this.id = id;
         }
         else {
-            this.id = className + "_" + (++Memory.ids[className]);
+            this.id = className + "_" + (++Memory.ids[memoryName]);
         }
     };
 
-    utils.addMemorySupport(ClassFunction, className);
+    ClassFunction.className = className;
+    ClassFunction.memoryName = memoryName;
 
-    /*utils.definePropertyInMemory(ClassFunction, "id", () => {
-        return className + "_" + (++Memory.ids[className]);
-    });*/
+    utils.addMemorySupport(ClassFunction, memoryName);
 
     ClassFunction.extend = function(members, staticMembers) {
         let child = function() {

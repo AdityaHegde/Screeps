@@ -61,13 +61,12 @@ let DropOffTask = BaseTask.extend({
     },
 
     targetIsClaimed : function(creep, target) {
+        BaseTask.prototype.targetIsClaimed.call(this, creep, target);
         this.targetsMap[target.id] += creep.carry.energy;
-        //console.log(this.constructor.TASK_NAME, "targetIsClaimed", target.id, this.targetsMap[target.id]);
     },
 
     targetIsReleased : function(creep, target) {
         this.targetsMap[target.id] -= creep.carry.energy;
-        //console.log(this.constructor.TASK_NAME, "targetIsReleased", target.id, this.targetsMap[target.id]);
     },
 
     isAssignedTargetValid : function(target) {

@@ -37,6 +37,10 @@ module.exports = BaseTask.extend({
         return creep.carry.energy < creep.carryCapacity;
     },
 
+    targetIsReleased : function(creep, target) {
+        target.release(creep);
+    },
+
     creepHasDied : function(creep) {
         BaseTask.prototype.creepHasDied.call(this, creep);
         if (creep.task) {

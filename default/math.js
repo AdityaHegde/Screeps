@@ -10,8 +10,8 @@ module.exports = {
         }
         else if ((pos1.dx * pos1.dy == 0 && pos0.dx * pos0.dy == 0) ||
             (pos1.dx * pos1.dy != 0 && pos0.dx * pos0.dy != 0)) {
-            dx = Math.round(COS45 * pos0.dx - SIN45 * pos0.dy);
-            dy = Math.round(SIN45 * pos0.dx + COS45 * pos0.dy);
+            dx = Math.ceil(COS45 * pos0.dx - SIN45 * pos0.dy);
+            dy = Math.ceil(SIN45 * pos0.dx + COS45 * pos0.dy);
         }
         else if (pos1.dx * pos1.dy == 0) {
             dx = pos1.dy;

@@ -11,11 +11,11 @@ let HarvestTask = require("task.harvest");
 
 module.exports = HarvestTask.extend({
     doTask : function(creep, target) {
-        if (creep.pos.x == target.container[0] && creep.pos.y == target.container[1]) {
+        if (creep.pos.x == target.container.x && creep.pos.y == target.container.y) {
             return creep.harvest(target);
         }
         else {
-            return creep.moveTo(...target.container);
+            return creep.moveTo(target.container);
         }
     },
 

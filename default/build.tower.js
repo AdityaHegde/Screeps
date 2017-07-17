@@ -1,5 +1,6 @@
 let constants = require("constants");
-let ContainerBuild = require("build.container");
+let math = require("math");
+let containerBuild = require("build.container");
 
 /**
 * Class to auto build walls
@@ -8,30 +9,31 @@ let ContainerBuild = require("build.container");
 * @extends ContainerBuild
 */
 
-module.exports = ContainerBuild.extend({
-    getCursorObjects : function(buildPlanner) {
-        return buildPlanner.buildInfo.wall.paths;
-    },
+module.exports = _.merge({}, containerBuild, {
+    initForCursorObject : function(buildPlanner, cursorObject, idx) {
+        let path = Room.deserializePath(cursorObject.path);
+        let paths = [];
 
-    initForCursorObject : function(buildPlanner, cursorObject) {
-        let path = Room.deserializePath(cursorObject);
-        let x1 = path[1].x, y1 = path[1].y;
-        let x2 = path[path.length - 2].x, y2 = path[path.length - 2].y;
-        let mid = Math.round(path.length / 2);
-        let mx = Math.round((x1 + x2) / 2), my = Math.round((y1 + y2) / 2);
-        let dx = path[mid].dx, dy = path[mid].dy;
+        //have a buffer of 2 slots for creating extensions
+        for (let i = 1; i < path.length - 1 && paths.length < 2; i++) {
+            let dxdy = math.getDxDy(path[i-1], path[i]);
 
-        if (!this.checkAndAdd(buildPlanner.room, mx - dy, my + dx)) {
-            for (let j = 0; j < mid; j++) {
-                if (this.checkAndAdd(buildPlanner.room, mx + dx * j - dy, my + dy * j + dx) ||
-                this.checkAndAdd(buildPlanner.room, mx - dx * j - dy, my - dy * j + dx)) {
-                    break;
+            [[path[i].x + dxdy[0], path[i].y + dxdy[1]],
+             [path[i].x - dxdy[0], path[i].y - dxdy[1]]].forEach((pos) => {
+                console.log(pos[0], pos[1]);
+                if (paths.length < 2) {
+                    let retPos = this.checkAndAdd(buildPlanner.room, pos[0], pos[1]);
+                    if (retPos) {
+                        paths.push(...retPos);
+                        buildPlanner.structureData[pos[0] + "__" + pos[1]] = [idx, i];
+                        buildPlanner.costMatrix.set(pos[0], pos[1], 0xff);
+                    }
                 }
-            }
+            });
         }
+
+        return paths;
     },
-}, {
-    EVENT_LISTENERS : [],
+
     TYPE : STRUCTURE_TOWER,
-    BUILD_NAME : "tower",
 });

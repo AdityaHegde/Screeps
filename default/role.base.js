@@ -10,7 +10,7 @@ let eventBus = require("event.bus");
 * @extends BaseClass
 */
 
-let BaseRole = BaseClass("role");
+let BaseRole = BaseClass("role", "roles");
 
 BaseRole.PARTS = [WORK, CARRY, MOVE, MOVE];
 BaseRole.MAIN_PARTS = [WORK, CARRY];
@@ -67,7 +67,7 @@ utils.definePropertyInMemory(BaseRole, "creepsCount", function() {
     return 0;
 });
 
-utils.defineInstancePropertyByNameInMemory(BaseRole, "room", "rooms");
+//utils.defineInstancePropertyByNameInMemory(BaseRole, "room", "rooms");
 
 
 BaseRole.prototype.init = function(room) {
@@ -155,8 +155,6 @@ BaseRole.prototype.addCreep = function(creep) {
 
     this.creeps[creep.name] = 1;
     this.creepsCount++;
-    //console.log(creep.name, "added to", this.constructor.ROLE_NAME);
-    //this.assignNewTask(creep, true);
 };
 
 BaseRole.prototype.removeCreep = function(creep) {
@@ -230,10 +228,8 @@ BaseRole.prototype.assignTask = function(creep, task, taskIdx) {
     creep.task.current = taskIdx;
     creep.task.tasks[creep.task.tier] = taskIdx;
 
-    task.execute(creep);
     task.taskStarted(creep);
-
-    //console.log("Assigning", creep.name, "to", this.constructor.TASKS[creep.task.tier][taskIdx]);
+    task.execute(creep);
 };
 
 BaseRole.prototype.assignNewTask = function(creep, isNew) {
@@ -250,8 +246,6 @@ BaseRole.prototype.assignNewTask = function(creep, isNew) {
             minTask = task;
         }
     }
-
-    //console.log(creep.name, minTaskIdx);
 
     if (minTaskIdx >= 0) {
         this.assignTask(creep, minTask, minTaskIdx);
