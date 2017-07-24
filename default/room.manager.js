@@ -11,7 +11,7 @@ let structureManager = require("structure.manager");
 let enemyArmy = require("army.enemy");
 let eventBus = require("event.bus");
 let BuildPlanner = require("build.planner");
-let PathInfo = require("path.info");
+let PathManager = require("path.manager");
 
 for (let taskName in TASKS) {
     TASKS[taskName].init();
@@ -66,9 +66,7 @@ utils.definePropertyInMemory(Room, "isInitialized", function() {
     return 0;
 });
 
-utils.definePropertyInMemory(Room, "paths", function() {
-    return [];
-});
+utils.defineInstancePropertyInMemory(Room, "pathManager", PathManager);
 
 Room.className = "room";
 Room.memoryName = "rooms";

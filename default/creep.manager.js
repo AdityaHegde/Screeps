@@ -10,6 +10,13 @@ utils.definePropertyInMemory(Creep, "pathIdx", function() {
 utils.definePropertyInMemory(Creep, "pathPos", function() {
     return 0;
 });
+//moved away from the path
+utils.definePropertyInMemory(Creep, "movedAway", function() {
+    return 0;
+});
+utils.definePropertyInMemory(Creep, "movingAway", function() {
+    return 0;
+});
 utils.definePropertyInMemory(Creep, "targetPathPos", function() {
     return 0;
 });

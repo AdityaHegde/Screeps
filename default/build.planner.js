@@ -12,6 +12,7 @@ BuildPlanner.init = function() {
     [constants.CONTAINER_BUILT, constants.EXTENSION_BUILT, constants.WALL_BUILT, constants.TOWER_BUILT].forEach((event) => {
         eventBus.subscribe(event, "built", "buildPlanner");
     });
+    eventBus.subscribe(constants.CONSTRUCTION_SCEDULED, "constructionSiteAdded", "buildPlanner");
 };
 
 utils.addMemorySupport(BuildPlanner, "buildPlanner");
@@ -44,6 +45,12 @@ utils.definePropertyInMemory(BuildPlanner, "posCursor", function() {
 
 utils.defineCostMatrixPropertyInMemory(BuildPlanner, "costMatrix");
 
+
+utils.definePropertyInMemory(ConstructionSite, "pathIdx");
+utils.definePropertyInMemory(ConstructionSite, "pathPos");
+utils.definePropertyInMemory(ConstructionSite, "moveAway");
+
+
 BuildPlanner.prototype.plan = function() {
     let center;
 
@@ -56,10 +63,13 @@ BuildPlanner.prototype.plan = function() {
 
         center = math.getCentroid(points);
     }
+    else if (Game.flags[this.room.name]) {
+        center = Game.flags[this.room.name].pos;
+    }
     else {
         let spawn = Game.spawns[this.room.spawns[0]];
         //avoid the spawn
-        this.costMatrix.set(spawn.pos.x, spawn.pos.y, 0xff);
+        this.costMatrix.set(spawn.pos.x, spawn.pos.y, 255);
         center = {
             x : spawn.pos.x - 1,
             y : spawn.pos.y - 1,
@@ -143,23 +153,27 @@ BuildPlanner.prototype.init = function(room) {
     else {
         //loop until there is enough cpu
         while((Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5 && this.cursor < BUILD_INIT_OBJECTS.length) {
-            let build = BUILD_INIT_OBJECTS[this.cursor++];
-            if (this.pathsInfo.length < this.cursor) {
+            let build = BUILD_INIT_OBJECTS[this.cursor];
+            if (this.pathsInfo.length < this.cursor + 1) {
                 this.pathsInfo.push({
                     paths : [],
                     type : build.type,
                 });
             }
-            let pathInfo = this.pathsInfo[this.cursor - 1];
+            let pathInfo = this.pathsInfo[this.cursor];
             let cursorObjects = build.getter(this);
             //loop until there is enough cpu
             //have a 5 ticks buffer
-            for (i = this.pathCursor; i < cursorObjects.length && (Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5; i++) {
-                pathInfo.paths.push(...BUILD_TYPES[build.type].initForCursorObject(this, cursorObjects[i], i));
+            for (; this.pathCursor < cursorObjects.length && (Game.cpu.getUsed() - begCpu) < Game.cpu.tickLimit - 5; this.pathCursor++) {
+                pathInfo.paths.push(...BUILD_TYPES[build.type].initForCursorObject(this, cursorObjects[this.pathCursor], this.pathCursor, build.maxCount, pathInfo.paths.length));
+            }
+
+            if (this.pathCursor == cursorObjects.length) {
+                this.pathCursor = 0;
+                this.cursor++;
             }
         }
     }
-    console.log((Game.cpu.getUsed() - begCpu), "cup used during planing");
     this.costMatrix = this.costMatrix || new PathFinder.CostMatrix();
 
     return this.cursor == BUILD_INIT_OBJECTS.length;
@@ -192,6 +206,12 @@ BuildPlanner.prototype.build = function() {
 BuildPlanner.prototype.built = function(structures) {
     structures.forEach((structure) => {
         BUILD_TYPES[structure.structureType].built(this, structure);
+    });
+};
+
+BuildPlanner.prototype.constructionSiteAdded = function(constructionSites) {
+    constructionSites.forEach((constructionSite) => {
+        BUILD_TYPES[constructionSite.structureType].constructionSiteAdded(this, constructionSite);
     });
 };
 

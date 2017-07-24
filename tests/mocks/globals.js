@@ -1,10 +1,20 @@
-module.exports = function(sandbox) {
+let constants = require("./constants-mocks");
+let _ = require("lodash");
+let PathFinder = require("./PathFinder");
+
+module.exports.init = function(sandbox) {
+    global._ = _;
+
     global.Game = {
         time : 0,
         cpu : {
             tickLimit : 0,
-            getUsed : sandbox.stub(),
+            getUsed : sandbox.spy(function() {
+                //console.log("getUsed", (global.Game.cpu.getUsed.callCount + 1) * 2);
+                return (global.Game.cpu.getUsed.callCount + 1) * 2;
+            }),
         },
+        flags : {},
         rooms : {},
         spawns : {},
         creeps : {},
@@ -16,10 +26,14 @@ module.exports = function(sandbox) {
     };
 
     global.Room = sandbox.stub();
-    global.Room.serializePath = sandbox.stub();
-    global.Room.deserializePath = sandbox.stub();
+    global.Room.serializePath = sandbox.stub().returnsArg(0);
+    global.Room.deserializePath = sandbox.stub().returnsArg(0);
 
-    global.RoomPosition = sandbox.stub();
+    global.RoomPosition = function(x, y, roomName) {
+        this.x = x;
+        this.y = y;
+        this.roomName = roomName;
+    };
 
     global.Creep = sandbox.stub();
 
@@ -29,8 +43,21 @@ module.exports = function(sandbox) {
 
     global.Mineral = sandbox.stub();
 
+    global.ConstructionSite = sandbox.stub();
+
     global.StructureContainer = sandbox.stub();
     global.StructureExtension = sandbox.stub();
     global.StructureSpawn = sandbox.stub();
     global.StructureTower = sandbox.stub();
+
+    PathFinder(sandbox);
+
+    constants();
+};
+
+module.exports.stub = function() {
+    global.Room.serializePath.returnsArg(0);
+    global.Room.deserializePath.returnsArg(0);
+    global.PathFinder.CostMatrix.prototype.serialize.returnsArg(0);
+    global.PathFinder.CostMatrix.deserialize.returnsArg(0);
 };

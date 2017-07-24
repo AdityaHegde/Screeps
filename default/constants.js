@@ -6,6 +6,7 @@ module.exports = {
     ERR_INVALID_TASK : "invalidTask",
     ERR_COULDNT_MOVE : "couldntMove",
     CREEP_REACHED_TARGET : "creepReachedTarget",
+    CREEP_AT_TARGET : "creepAtTarget",
 
     CONSTRUCTION_COMPLETED : "constructionCompleted",
 

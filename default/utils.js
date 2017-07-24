@@ -1,13 +1,4 @@
-let DIRECTION_TO_OFFSET = {
-    [TOP]: [0,-1],
-    [TOP_RIGHT]: [1,-1],
-    [RIGHT]: [1,0],
-    [BOTTOM_RIGHT]: [1,1],
-    [BOTTOM]: [0,1],
-    [BOTTOM_LEFT]: [-1,1],
-    [LEFT]: [-1,0],
-    [TOP_LEFT]: [-1,-1]
-};
+let math = require("math");
 
 module.exports = {
     /**
@@ -268,7 +259,12 @@ module.exports = {
      */
     defineInstanceMapPropertyInMemory : function(Class, mapProperty, instanceGetter) {
         let _instanceGetter;
-        if (_.isFunction(instanceGetter)) {
+        if (instanceGetter.extend) {
+            _instanceGetter = function(key, id) {
+                return new instanceGetter(id);
+            };
+        }
+        else if (_.isFunction(instanceGetter)) {
             _instanceGetter = instanceGetter;
         }
         else {
@@ -320,85 +316,17 @@ module.exports = {
         });
     },
 
-    getClosestObject : function(creep, targets, filterFunction) {
-        filterFunction = filterFunction || function() { return true; };
-        let distanceObj = targets.reduce((curDistanceObj, targetId) => {
-            let target = Game.getObjectById(targetId);
-            if (filterFunction(target)) {
-                let distanceFromCreep = Math.sqrt((creep.pos.x - target.pos.x) * (creep.pos.x - target.pos.x) + (creep.pos.y - target.pos.y) * (creep.pos.y - target.pos.y));
-                if (distanceFromCreep < curDistanceObj.distance) {
-                    return {
-                        distance : distanceFromCreep,
-                        targetId : targetId,
-                    };
-                }
-            }
-            return curDistanceObj;
-        }, {
-            distance : 99999,
-        });
-        return distanceObj.targetId;
-    },
-
-    getPathFromPoints : function(points) {
-        let path = [{
-            x : points[0].x,
-            y : points[0].y,
-            dx : 0,
-            dy : 0,
-            direction : TOP,
-        }];
-        for (let i = 1; i < points.length; i++) {
-            path.push({
-                x : points[i].x,
-                y : points[i].y,
-                dx : points[i].x - points[i-1].x,
-                dy : points[i].y - points[i-1].y,
-                direction : points[i-1].getDirectionTo(points[i]),
-            });
-        }
-        return path;
-    },
-
-    getReversedPath : function(path) {
-        return path.map((pos) => {
-            return {
-                x : pos.x,
-                y : pos.y,
-                dx : -pos.dx,
-                dy : -pos.dy,
-                direction : this.getOppisiteDirection(pos.direction),
-            };
+    getClosestObject : function(creep, targets, filterFunction = function() { return true; }) {
+        return _.minBy(targets.map((targetId) => {
+            return Game.getObjectById(targetId);
+        }).filter(filterFunction), (target) => {
+            return math.getDistanceBetweenPos(creep.pos, target.pos);
         });
     },
 
-    getOppisiteDirection : function(direction) {
-        return this.rotateDirection(direction, 4);
-    },
-
-    getOffsetByDirection : function(direction) {
-        return DIRECTION_TO_OFFSET[direction];
-    },
-
-    rotateDirection : function(direction, times) {
-        times = times < 0 ? 8 - times : times;
-        return ((direction + times - 1) % 8) + 1;
-    },
-
-    getPosByDirection : function(pos, direction, distance = 1) {
-        let offset = this.getOffsetByDirection(direction);
-        return new RoomPosition(pos.x + distance * offset[0], pos.y + distance * offset[1], pos.roomName);
-    },
-
-    getSortedDirections : function(directions) {
-        directions = directions.sort();
-        for (let i = 1; i < directions.length; i++) {
-            if (this.rotateDirection(directions[i-1], 1) != directions[i]) {
-                directions = [...directions.slice(i), ...directions.slice(0, i)];
-                break;
-            }
-        }
-
-        return directions;
+    getClosestEdge : function(edges, filterFunction = function() { return true; }) {
+        return _.minBy(edges.filter(filterFunction), (edge) => {
+            return math.getDistanceBetweenPos(edge.pos0, edge.pos1);
+        });
     },
 };

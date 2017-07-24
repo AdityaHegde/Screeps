@@ -1,15 +1,20 @@
 let sinon = require("sinon");
 let should = require("should");
-let utils = require("../../default/utils");
+let mockery = require("mockery");
 let _ = require("lodash");
+let globals = require("../mocks/globals");
 let sandbox = sinon.sandbox.create();
+let testUtils = require("../test-utils");
 
 describe("utils", function() {
-    let MemoryBackup;
+    let utils;
 
     before(function() {
-        MemoryBackup = global.Memory;
-        global._ = _;
+        mockery.enable({ useCleanCache: true });
+        testUtils.registerAllowables(mockery, "math");
+        globals.init(sandbox);
+        mockery.registerAllowable("../../default/utils");
+        utils = require("../../default/utils");
     });
 
     it("definePropertyInMemory", function() {
@@ -130,6 +135,9 @@ describe("utils", function() {
     });
 
     after(function() {
-        global.Memory = MemoryBackup;
+        mockery.deregisterAll();
+        mockery.disable();
+        sandbox.restore();
+        delete global.Memory;
     })
 });

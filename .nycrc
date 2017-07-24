@@ -1,0 +1,10 @@
+{
+  "exclude": [
+    "tests/**/*.js",
+    "gulpfile.js"
+  ],
+  "reporter": [
+    "lcov",
+    "text-summary"
+  ]
+}

@@ -19,10 +19,18 @@ module.exports = _.merge({}, roadBuild, {
         let dxp, dyp, dirp, _dirp;
         let exit = Number(cursorObject);
         switch (exit) {
-            case TOP: x = 0; y = 0; dx = 1; dy = 0; dir = RIGHT; dxp = 0; dyp = 1; dirp = BOTTOM; _dirp = TOP; break;
-            case RIGHT: x = 49; y = 0; dx = 0; dy = 1; dir = BOTTOM; dxp = -1; dyp = 0; dirp = LEFT; _dirp = RIGHT; break;
-            case BOTTOM: x = 49; y = 49; dx = -1; dy = 0; dir = LEFT; dxp = 0; dyp = -1; dirp = TOP; _dirp = BOTTOM; break;
-            case LEFT: x = 0; y = 49; dx = 0; dy = -1; dir = TOP; dxp = 1; dyp = 0; dirp = RIGHT; _dirp = LEFT; break;
+            case TOP:
+                x = 0; y = 0; dx = 1; dy = 0; dir = RIGHT;
+                dxp = 0; dyp = 1; dirp = BOTTOM; _dirp = TOP; break;
+            case RIGHT:
+                x = 49; y = 0; dx = 0; dy = 1; dir = BOTTOM;
+                dxp = -1; dyp = 0; dirp = LEFT; _dirp = RIGHT; break;
+            case BOTTOM:
+                x = 49; y = 49; dx = -1; dy = 0; dir = LEFT;
+                dxp = 0; dyp = -1; dirp = TOP; _dirp = BOTTOM; break;
+            case LEFT:
+                x = 0; y = 49; dx = 0; dy = -1; dir = TOP;
+                dxp = 1; dyp = 0; dirp = RIGHT; _dirp = LEFT; break;
         }
 
         let path = [], lastWall, paths = [];
@@ -53,7 +61,6 @@ module.exports = _.merge({}, roadBuild, {
                     });
                 }
                 if (i - lastWall == 3) {
-                    //console.log(i, x - 2 * dx + 2 * dxp, y - 2 * dy + 2 * dyp, x - dx + 2 * dxp, y - dy + 2 * dyp);
                     path.push({
                         x : x - 2 * dx + 2 * dxp,
                         y : y - 2 * dy + 2 * dyp,
@@ -61,6 +68,15 @@ module.exports = _.merge({}, roadBuild, {
                         dy : dy,
                         direction : dir,
                     }, {
+                        x : x - dx + 2 * dxp,
+                        y : y - dy + 2 * dyp,
+                        dx : dx,
+                        dy : dy,
+                        direction : dir,
+                    });
+                }
+                else if (i - lastWall == 2) {
+                    path.push({
                         x : x - dx + 2 * dxp,
                         y : y - dy + 2 * dyp,
                         dx : dx,
@@ -80,10 +96,6 @@ module.exports = _.merge({}, roadBuild, {
             else {
                 if (path.length > 0 && ((lastWall != undefined && i - lastWall == 3) || i == 49)) {
                     let diff = i - lastWall - 1;
-                    //console.log(i, lastWall, diff);
-                    //console.log(x - diff * dx + 2 * dxp,       y - diff * dy + 2 * dyp);
-                    //console.log(x - (diff - 1) * dx + 2 * dxp, y - (diff - 1) * dy + 2 * dyp);
-                    //console.log(x - (diff - 1) * dx + dxp,     y - (diff - 1) * dy + dyp);
                     path.push({
                         x : x - diff * dx + 2 * dxp,
                         y : y - diff * dy + 2 * dyp,
@@ -103,12 +115,84 @@ module.exports = _.merge({}, roadBuild, {
                         dy : -dyp,
                         direction : _dirp,
                     });
+                    this.addPathToCenter(buildPlanner, path);
                     paths.push(Room.serializePath(path));
                     path = [];
                 }
             }
         }
         return paths;
+    },
+
+    addPathToCenter : function(buildPlanner, path) {
+        let edges = [0, 1, 2].map((idx) => {
+            let pos0 = buildPlanner.room.pathManager.pathsInfo[idx].path[buildPlanner.room.pathManager.pathsInfo[idx].path.length - 1];
+            let pos1 = {};
+            let pathPos, pathPosOnWall;
+            if (pos0.x >= path[0].x && pos0.x <= path[path.length - 1].x) {
+                pos1.x = pos0.x;
+                for (let i = 0; i < path.length; i++) {
+                    if (path[i].x == pos0.x) {
+                        pathPosOnWall = i;
+                        break;
+                    }
+                }
+            }
+            else if (pos0.x <= path[0].x) {
+                pos1.x = path[0].x;
+                pathPos = 0;
+            }
+            else {
+                pos1.x = path[path.length - 1].x;
+                pathPos = path.length - 1;
+            }
+
+            if (pos0.y >= path[0].y && pos0.y <= path[path.length - 1].y) {
+                pos1.y = pos0.y;
+                for (let i = 0; i < path.length; i++) {
+                    if (path[i].y == pos0.y) {
+                        pathPosOnWall = i;
+                        break;
+                    }
+                }
+            }
+            else if (pos0.y <= path[0].y) {
+                pos1.y = path[0].y;
+                pathPos = 0;
+            }
+            else {
+                pos1.y = path[path.length - 1].y;
+                pathPos = path.length - 1;
+            }
+
+            return {
+                pos0 : pos0,
+                pos1 : pos1,
+                idx : idx,
+                fromPos : buildPlanner.room.pathManager.pathsInfo[idx].path.length - 1,
+                toPos : pathPos,
+                toWallPathPos : pathPosOnWall,
+            };
+        });
+        let closest = utils.getClosestEdge(edges);
+        let pathToWall = buildPlanner.room.findPath(closest.pos0, closest.pos1, {
+            maxRooms : 1,
+            costCallback : () => {
+                return buildPlanner.costMatrix;
+            },
+        });
+        let pathToWallIdx = buildPlanner.room.pathManager.addPath(pathToWall, {
+            [closest.idx] : {
+                fromPos : closest.fromPos,
+                toPos : 0,
+            },
+        });
+        buildPlanner.room.pathManager.addPath(path, {
+            [pathToWallIdx] : {
+                fromPos : pathToWall.length - 1,
+                toPos : closest.toWallPathPos,
+            },
+        });
     },
 
     TYPE : STRUCTURE_RAMPART,

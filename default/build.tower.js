@@ -10,24 +10,16 @@ let containerBuild = require("build.container");
 */
 
 module.exports = _.merge({}, containerBuild, {
-    initForCursorObject : function(buildPlanner, cursorObject, idx) {
-        let path = Room.deserializePath(cursorObject.path);
+    initForCursorObject : function(buildPlanner, pathInfo, idx) {
+        let parallelPath0 = pathInfo.parallelPath0;
+        let parallelPath1 = pathInfo.parallelPath1;
         let paths = [];
 
         //have a buffer of 2 slots for creating extensions
-        for (let i = 1; i < path.length - 1 && paths.length < 2; i++) {
-            let dxdy = math.getDxDy(path[i-1], path[i]);
-
-            [[path[i].x + dxdy[0], path[i].y + dxdy[1]],
-             [path[i].x - dxdy[0], path[i].y - dxdy[1]]].forEach((pos) => {
-                console.log(pos[0], pos[1]);
+        for (let i = 0; i < parallelPath0.length && i < parallelPath1.length && paths.length < 2; i++) {
+            [parallelPath0[i], parallelPath1[i]].forEach((pos) => {
                 if (paths.length < 2) {
-                    let retPos = this.checkAndAdd(buildPlanner.room, pos[0], pos[1]);
-                    if (retPos) {
-                        paths.push(...retPos);
-                        buildPlanner.structureData[pos[0] + "__" + pos[1]] = [idx, i];
-                        buildPlanner.costMatrix.set(pos[0], pos[1], 0xff);
-                    }
+                    this.checkAndAddToPoints(buildPlanner, paths, pos, idx, i);
                 }
             });
         }

@@ -10,33 +10,23 @@ let extensionBuild = require("build.extension");
 */
 
 let ContainerBuild = _.merge({}, extensionBuild, {
-    initForCursorObject : function(buildPlanner, cursorObject, i) {
-        let path = Room.deserializePath(cursorObject.path);
+    initForCursorObject : function(buildPlanner, pathInfo, idx) {
         let pos, posIdx;
+        let path = pathInfo.path;
         let newPath;
-        if (i == buildPlanner.room.sourceManager.sources.length) {
+        let label;
+        if (idx == buildPlanner.room.sourceManager.sources.length) {
             posIdx = path.length - 4;
             buildPlanner.room.controller.container = path[posIdx];
+            label = constants.UPGRADER_STORAGE;
         }
         else {
             posIdx = path.length - 2;
-            buildPlanner.room.sources[i].container = path[posIdx];
+            buildPlanner.room.sources[idx].container = path[posIdx];
+            label = constants.HARVESTER_STORAGE;
         }
-        pos = path[posIdx];
-        buildPlanner.structureData[pos.x + "__" + pos.y] = {
-            label : constants.UPGRADER_STORAGE,
-            idx : i,
-            pos : posIdx,
-        };
-        newPath = this.checkAndAdd(buildPlanner.room, pos.x, pos.y);
-        return newPath || [];
-    },
 
-    checkAndAdd : function(room, x, y) {
-        if(Game.map.getTerrainAt(x, y, room.name) != "wall") {
-            return [x + ":" + y];
-        }
-        return null;
+        return [this.checkAndAdd(buildPlanner, path[posIdx], idx, posIdx, undefined, label)];
     },
 
     //build structures in positions
@@ -69,13 +59,6 @@ let ContainerBuild = _.merge({}, extensionBuild, {
 
         //build only one type at a time
         return false;
-    },
-
-    built : function(buildPlanner, container) {
-        container.label = buildPlanner.structureData[container.pos.x + "__" + container.pos.y].label;
-        container.pathIdx = buildPlanner.structureData[container.pos.x + "__" + container.pos.y].idx;
-        container.pathPos = buildPlanner.structureData[container.pos.x + "__" + container.pos.y].pos;
-        delete buildPlanner.structureData[container.pos.x + "__" + container.pos.y];
     },
 
     TYPE : STRUCTURE_CONTAINER,

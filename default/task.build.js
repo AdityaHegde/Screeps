@@ -1,5 +1,6 @@
 let constants = require("constants");
 let utils = require("utils");
+let math = require("math");
 let BaseTask = require("task.base");
 
 let TYPE_TO_EVENT = {
@@ -48,7 +49,7 @@ module.exports = BaseTask.extend({
         BaseTask.prototype.taskStarted.call(this, creep);
         var source = Game.getObjectById(creep.task.source);
         if (source) {
-            var dir = utils.getOppisiteDirection(creep.pos.getDirectionTo(source.pos));
+            var dir = math.rotateDirection(math.getDirectionBetweenPos(creep.pos, source.pos), 4);
             creep.move(dir);
         }
     },
@@ -58,11 +59,13 @@ module.exports = BaseTask.extend({
     },
 
     targetIsClaimed : function(creep, target) {
+        //TODO consider boosted parts
         BaseTask.prototype.targetIsClaimed.call(this, creep, target);
         this.targetsMap[target.id] += creep.carry.energy;
     },
 
     targetIsReleased : function(creep, target) {
+        //TODO consider boosted parts
         this.targetsMap[target.id] -= creep.carry.energy;
     },
 

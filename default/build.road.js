@@ -1,6 +1,5 @@
 let constants = require("constants");
 let utils = require("utils");
-let BaseBuild = require("build.base");
 
 /**
 * Class to auto build roads
@@ -10,7 +9,7 @@ let BaseBuild = require("build.base");
 */
 
 module.exports = {
-    initForCursorObject : function(buildPlanner, cursorObject, i) {
+    initForCursorObject : function(buildPlanner, cursorObject, idx) {
         if (!(cursorObject.source instanceof RoomPosition)) {
             cursorObject.source = new RoomPosition(cursorObject.source.x, cursorObject.source.y, buildPlanner.room.name);
         }
@@ -23,20 +22,39 @@ module.exports = {
                 return buildPlanner.costMatrix;
             },
         });
+        //add the source too
+        path.unshift({
+            x : cursorObject.source.x,
+            y : cursorObject.source.y,
+            dx : 0,
+            dy : -1,
+            direction : TOP,
+        });
 
         //set the caclulated path to the cost matrix
+        buildPlanner.structureData[path[0].x + "__" + path[0].y] = [idx, 0];
         for (let i = 1; i < path.length; i++) {
             buildPlanner.costMatrix.set(path[i].x, path[i].y, 1);
+            buildPlanner.structureData[path[i].x + "__" + path[i].y] = [idx, i];
         }
 
-        if (buildPlanner.rooms.sources[i].pos.isEqualTo(cursorObject.target)) {
-            buildPlanner.rooms.sources[i].pathIdx = i;
-            buildPlanner.rooms.sources[i].pathPos = path.length;
+        if (buildPlanner.room.sources.length > idx &&
+            buildPlanner.room.sources[idx].isEqualTo(cursorObject.target)) {
+
+            buildPlanner.room.sources[idx].pathIdx = idx;
+            buildPlanner.room.sources[idx].pathPos = path.length;
         }
 
-        let retPath = buildPlanner.room.addPath(path);
+        let connections = {};
+        for (let i = 0; i < idx - 1; i++) {
+            connections[i] = {
+                fromPos : 0,
+                toPos : 0,
+            };
+        }
+        buildPlanner.room.pathManager.addPath(path, connections, true);
 
-        return [retPath];
+        return [buildPlanner.room.pathManager.pathsInfo[idx].memory.path];
     },
 
     build : function(buildPlanner) {
@@ -52,6 +70,7 @@ module.exports = {
 
             for (; buildPlanner.posCursor < path.length; buildPlanner.posCursor++) {
                 let returnValue = this.buildAt(buildPlanner, path[buildPlanner.posCursor].x, path[buildPlanner.posCursor].y);
+                buildPlanner.room.fireDelayedEvent(constants.CONSTRUCTION_SCEDULED, [x, y]);
                 c++;
                 //if max sites has been reached or if RCL is not high enough, return
                 if (returnValue == ERR_FULL || returnValue == ERR_RCL_NOT_ENOUGH) {
@@ -74,7 +93,6 @@ module.exports = {
 
     buildAt : function(buildPlanner, x, y) {
         let returnValue = buildPlanner.room.createConstructionSite(x, y, this.TYPE);
-        buildPlanner.room.delayedEvents[constants.CONSTRUCTION_SITE_ADDED] = 1;
     },
 
     built : function(buildPlanner, structure) {
@@ -83,6 +101,17 @@ module.exports = {
             structure.pathIdx = buildPlanner.structureData[key][0];
             structure.pathPos = buildPlanner.structureData[key][1];
             delete buildPlanner.structureData[key];
+        }
+    },
+
+    constructionSiteAdded : function(buildPlanner, constructionSite) {
+        let key = constructionSite.pos.x + "__" + constructionSite.pos.y;
+        if (buildPlanner.structureData[key]) {
+            constructionSite.pathIdx = buildPlanner.structureData[key][0];
+            constructionSite.pathPos = buildPlanner.structureData[key][1];
+            if (buildPlanner.structureData[key][2]) {
+                constructionSite.moveAway = buildPlanner.structureData[key][2];
+            }
         }
     },
 

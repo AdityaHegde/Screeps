@@ -12,6 +12,7 @@ module.exports = {
             return [buildPlanner.center];
         },
         type : "spawn",
+        //maxCount : CONTROLLER_STRUCTURES.spawn[8],
     }, {
         getter : function(buildPlanner) {
             let cursorObjects = [];
@@ -31,32 +32,33 @@ module.exports = {
         type : "road",
     }, {
         getter : function(buildPlanner) {
-            return buildPlanner.room.paths;
+            let paths = [];
+            for (let i = 0; i <= buildPlanner.room.sourceManager.sources.length; i++) {
+                paths.push(buildPlanner.room.pathManager.pathsInfo[i]);
+            }
+            return paths;
         },
         type : "container",
-    // }, {
-    //     getter : function(buildPlanner) {
-    //         return buildPlanner.room.sources.map((energySource) => {
-    //             return {
-    //                 source : energySource.container,
-    //                 target : buildPlanner.room.controller.container,
-    //                 range : 0,
-    //             };
-    //         });
-    //     },
-    //     type : "road",
     }, {
         getter : function(buildPlanner) {
-            //return buildPlanner.room.paths.slice(0, buildPlanner.room.sourceManager.source.length + 1);
-            return buildPlanner.room.paths;
+            let paths = [];
+            for (let i = 0; i <= buildPlanner.room.sourceManager.sources.length; i++) {
+                paths.push(buildPlanner.room.pathManager.pathsInfo[i]);
+            }
+            return paths;
         },
         type : "tower",
+        //maxCount : CONTROLLER_STRUCTURES.tower[8],
     }, {
         getter : function(buildPlanner) {
-            //return buildPlanner.room.paths.slice(0, buildPlanner.room.sourceManager.source.length + 1);
-            return buildPlanner.room.paths;
+            let paths = [];
+            for (let i = 0; i <= buildPlanner.room.sourceManager.sources.length; i++) {
+                paths.push(buildPlanner.room.pathManager.pathsInfo[i]);
+            }
+            return paths;
         },
         type : "extension",
+        maxCount : CONTROLLER_STRUCTURES.extension[8],
     }, {
         getter : function(buildPlanner) {
             return Object.keys(Game.map.describeExits(buildPlanner.room.name));

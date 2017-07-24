@@ -1,32 +1,71 @@
 let utils = require("utils");
+let math = require("math");
 
 utils.addMemorySupport(Source, "sources");
 
-utils.definePropertyInMemory(Source, "availableSpaces", function() {
-    let availableSpaces = 0;
-    //check for available spaces around the source
-    for (let x = this.pos.x - 1; x <= this.pos.x + 1; x++) {
-        for (let y = this.pos.y - 1; y <= this.pos.y + 1; y++) {
-            if (Game.map.getTerrainAt(x, y, this.room.name) != "wall") {
-                availableSpaces++;
-            }
-        }
-    }
-    return availableSpaces;
-});
+utils.definePropertyInMemory(Source, "spaces");
 
 utils.definePosPropertyInMemory(Source, "container");
 
-utils.definePropertyInMemory(Source, "occupiedSpaces", function() {
-    return 0;
-});
+utils.definePropertyInMemory(Source, "occupiedSpaces");
 
 utils.definePropertyInMemory(Source, "pathIdx");
 utils.definePropertyInMemory(Source, "pathPos");
 
-utils.definePropertyInMemory(Creep, "source", function() {
-    return null;
-});
+utils.definePropertyInMemory(Creep, "source");
+
+Source.prototype.init = function(pathIdx, pathPos, lastButOnePos) {
+    this.pathIdx = pathIdx;
+    this.pathPos = pathPos;
+
+    let spaces = [], path = [];
+    for (let x = this.pos.x - 1; x <= this.pos.x + 1; x++) {
+        for (let y = this.pos.y - 1; y <= this.pos.y + 1; y++) {
+            if (Game.map.getTerrainAt(x, y, this.room.name) != "wall") {
+                spaces.push({
+                    x, y,
+                    direction : math.getDirectionBetweenPos(this.pos, {x, y}),
+                })
+                availableSpaces++;
+            }
+        }
+    }
+    spaces = math.sortPositionsByDirection(spaces);
+
+    let lastPos2, intersectionPos;
+
+    spaces.forEach((space) => {
+        let pos1 = math.getPosByDirection(this.pos, space.direction);
+        let pos2 = math.getPosByDirection(pos1, space.direction);
+        if (pos2.isEqualTo(lastButOnePos)) {
+            intersectionPos = path.length;
+        }
+        path.push(pos2);
+
+        if (lastPos2) {
+            pos2 = math.getPosByDirection(pos2, math.rotateDirection(space.direction, -1));
+            if (pos2.isEqualTo(lastButOnePos)) {
+                intersectionPos = path.length;
+            }
+            path.push(pos2);
+        }
+
+        lastPos2 = true;
+
+        space.pathIdx = this.room.pathManager.size;
+        space.pathPos = path.length - 1;
+    });
+
+    this.room.pathManager.addPath(math.getPathFromPoints(path), {
+        [pathIdx] : {
+            fromPos : pathPos,
+            toPos : intersectionPos,
+        },
+    });
+
+    this.spaces = spaces;
+    this.occupiedSpaces = 0;
+};
 
 Source.prototype.claim = function(creep) {
     creep.task.source = this.id;
