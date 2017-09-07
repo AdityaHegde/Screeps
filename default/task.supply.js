@@ -1,3 +1,5 @@
+/* globals STRUCTURE_CONTAINER, STRUCTURE_TOWER */
+
 let constants = require("constants");
 let DropOffTask = require("task.store");
 
@@ -10,12 +12,12 @@ let DropOffTask = require("task.store");
  */
 
 module.exports = DropOffTask.extend({
-    potentialTargetsFilter : function(structure) {
-        return (structure.structureType == STRUCTURE_CONTAINER && structure.label == constants.UPGRADER_STORAGE) ||
-                structure.structureType == STRUCTURE_TOWER;
-    },
+    potentialTargetsFilter: function (structure) {
+        return (structure.structureType === STRUCTURE_CONTAINER && structure.label === constants.UPGRADER_STORAGE) ||
+                structure.structureType === STRUCTURE_TOWER;
+    }
 }, {
-    UPDATE_TARGET_EVENTS : [constants.ENERGY_WITHDRAWN, constants.TOWER_USED_ENERGY],
-    UPDATE_POTENTIAL_TARGETS_EVENTS : [constants.CONTAINER_BUILT, constants.TOWER_BUILT],
-    TASK_NAME : "supply",
+    UPDATE_TARGET_EVENTS: [constants.ENERGY_WITHDRAWN, constants.TOWER_USED_ENERGY],
+    UPDATE_POTENTIAL_TARGETS_EVENTS: [constants.CONTAINER_BUILT, constants.TOWER_BUILT],
+    TASK_NAME: "supply"
 });

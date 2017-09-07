@@ -1,3 +1,3 @@
-module.exports = function(sandbox) {
+module.exports = function (sandbox) {
 
 };

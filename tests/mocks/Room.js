@@ -1,7 +1,7 @@
 let Source = require("./Source");
 let StructureController = require("./StructureController");
 
-module.exports = function(sandbox, roomData, roomName) {
+module.exports = function (sandbox, roomData, roomName) {
     this.name = roomName;
     this.table = [];
 

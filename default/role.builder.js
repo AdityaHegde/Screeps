@@ -1,3 +1,5 @@
+/* globals WORK, CARRY, MOVE */
+
 let WorkerRole = require("role.worker");
 
 /**
@@ -8,17 +10,17 @@ let WorkerRole = require("role.worker");
  */
 
 module.exports = WorkerRole.extend({
-    getMaxCount : function() {
+    getMaxCount: function () {
         return 2 + this.room.tasksInfo.build.hasTarget * 2;
-    },
+    }
 }, {
-    PARTS : [WORK, CARRY, MOVE, MOVE],
-    MAIN_PARTS : [WORK, CARRY],
-    TASKS : [
+    PARTS: [WORK, CARRY, MOVE, MOVE],
+    MAIN_PARTS: [WORK, CARRY],
+    TASKS: [
         ["withdraw"],
-        //let build and repair be managed by the same role,
-        //with auto balancing
-        ["build", "repair"],
+        // let build and repair be managed by the same role,
+        // with auto balancing
+        ["build", "repair"]
     ],
-    ROLE_NAME : "builder",
+    ROLE_NAME: "builder"
 });

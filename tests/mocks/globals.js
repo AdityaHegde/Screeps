@@ -2,14 +2,14 @@ let constants = require("./constants-mocks");
 let _ = require("lodash");
 let PathFinder = require("./PathFinder");
 
-module.exports.init = function(sandbox) {
+module.exports.init = function (sandbox, utils) {
     global._ = _;
 
     global.Game = {
         time : 0,
         cpu : {
             tickLimit : 0,
-            getUsed : sandbox.spy(function() {
+            getUsed : sandbox.spy(function () {
                 //console.log("getUsed", (global.Game.cpu.getUsed.callCount + 1) * 2);
                 return (global.Game.cpu.getUsed.callCount + 1) * 2;
             }),
@@ -29,10 +29,13 @@ module.exports.init = function(sandbox) {
     global.Room.serializePath = sandbox.stub().returnsArg(0);
     global.Room.deserializePath = sandbox.stub().returnsArg(0);
 
-    global.RoomPosition = function(x, y, roomName) {
+    global.RoomPosition = function (x, y, roomName) {
         this.x = x;
         this.y = y;
         this.roomName = roomName;
+    };
+    global.RoomPosition.prototype.isEqualTo = function (pos) {
+        return this.x === pos.x && this.y === pos.y;
     };
 
     global.Creep = sandbox.stub();
@@ -55,7 +58,13 @@ module.exports.init = function(sandbox) {
     constants();
 };
 
-module.exports.stub = function() {
+module.exports.updatePrototypes = function (sandbox, utils) {
+    utils.addMemorySupport(global.Room, "rooms");
+    utils.addMemorySupport(global.Creep, "rooms");
+    utils.addMemorySupport(global.Source, "rooms");
+};
+
+module.exports.stub = function () {
     global.Room.serializePath.returnsArg(0);
     global.Room.deserializePath.returnsArg(0);
     global.PathFinder.CostMatrix.prototype.serialize.returnsArg(0);

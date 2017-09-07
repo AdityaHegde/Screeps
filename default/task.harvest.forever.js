@@ -1,4 +1,3 @@
-let constants = require("constants");
 let HarvestTask = require("task.harvest");
 
 /**
@@ -10,20 +9,15 @@ let HarvestTask = require("task.harvest");
  */
 
 module.exports = HarvestTask.extend({
-    doTask : function(creep, target) {
-        if (creep.pos.x == target.container.x && creep.pos.y == target.container.y) {
-            return creep.harvest(target);
-        }
-        else {
-            return creep.moveTo(target.container);
-        }
-    },
-
-    isTaskValid : function(creep, target) {
+    isTaskValid: function (creep, target) {
         return true;
     },
+
+    getTargetForMovement: function (creep, target) {
+        return target;
+    }
 }, {
-    EVENT_LISTENERS : [],
-    UPDATE_TARGET_EVENTS : [],
-    TASK_NAME : "harvestForever",
+    EVENT_LISTENERS: [],
+    UPDATE_TARGET_EVENTS: [],
+    TASK_NAME: "harvestForever"
 });

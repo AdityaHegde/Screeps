@@ -1,4 +1,5 @@
-let constants = require("constants");
+/* globals _, Game, STRUCTURE_SPAWN */
+
 let roadBuild = require("build.road");
 
 /**
@@ -9,24 +10,24 @@ let roadBuild = require("build.road");
 */
 
 module.exports = _.merge({}, roadBuild, {
-    initForCursorObject : function(buildPlanner, cursorObject, idx) {
+    initForCursorObject: function (buildPlanner, cursorObject, idx) {
         let spawn = Game.spawns[buildPlanner.room.spawns[0]];
 
         return [{
-            x : spawn ? spawn.pos.x : cursorObject.x + 1,
-            y : spawn ? spawn.pos.y : cursorObject.y + 1,
-            pathIdx : 0,
-            pathPos : 0,
+            x: spawn ? spawn.pos.x : cursorObject.x + 1,
+            y: spawn ? spawn.pos.y : cursorObject.y + 1,
+            pathIdx: 0,
+            pathPos: 0
         }, {
-            x : cursorObject.x,
-            y : cursorObject.y - 1,
-            pathIdx : 1,
-            pathPos : 0,
+            x: cursorObject.x,
+            y: cursorObject.y - 1,
+            pathIdx: 1,
+            pathPos: 0
         }, {
-            x : cursorObject.x - 1,
-            y : cursorObject.y,
-            pathIdx : 2,
-            pathPos : 0,
+            x: cursorObject.x - 1,
+            y: cursorObject.y,
+            pathIdx: 2,
+            pathPos: 0
         }].map((pos) => {
             buildPlanner.costMatrix.set(pos.x, pos.y, 255);
             buildPlanner.structureData[pos.x + "__" + pos.y] = [pos.pathIdx, pos.pathPos];
@@ -34,5 +35,5 @@ module.exports = _.merge({}, roadBuild, {
         });
     },
 
-    TYPE : STRUCTURE_SPAWN,
+    TYPE: STRUCTURE_SPAWN
 });

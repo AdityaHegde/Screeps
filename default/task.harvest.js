@@ -1,4 +1,5 @@
-let constants = require("constants");
+/* globals Game */
+
 let BaseTask = require("task.base");
 
 /**
@@ -10,38 +11,42 @@ let BaseTask = require("task.base");
  */
 
 module.exports = BaseTask.extend({
-    tick : function() {
+    tick: function () {
         this.hasTarget = true;
     },
 
-    getTarget : function(creep) {
+    getTarget: function (creep) {
         if (!creep.task.source) {
-            this.room.findSource().claim(creep);
+            this.room.findAndClaimSource(creep);
         }
         return Game.getObjectById(creep.task.source);
     },
 
-    updateTargetsMap : function() {
-        //dummy
+    updateTargetsMap: function () {
+        // dummy
     },
 
-    getTargets : function() {
+    getTargets: function () {
         return [];
     },
 
-    doTask : function(creep, target) {
+    doTask: function (creep, target) {
         return creep.harvest(target);
     },
 
-    isTaskValid : function(creep, target) {
+    isTaskValid: function (creep, target) {
         return creep.carry.energy < creep.carryCapacity;
     },
 
-    targetIsReleased : function(creep, target) {
+    targetIsReleased: function (creep, target) {
         target.release(creep);
     },
 
-    creepHasDied : function(creep) {
+    getTargetForMovement: function (creep, target) {
+        return target.spaces[creep.task.space];
+    },
+
+    creepHasDied: function (creep) {
         BaseTask.prototype.creepHasDied.call(this, creep);
         if (creep.task) {
             let source = Game.getObjectById(creep.task.source);
@@ -49,9 +54,9 @@ module.exports = BaseTask.extend({
                 source.release(creep);
             }
         }
-    },
+    }
 }, {
-    EVENT_LISTENERS : [],
-    UPDATE_TARGET_EVENTS : [],
-    TASK_NAME : "harvest",
+    EVENT_LISTENERS: [],
+    UPDATE_TARGET_EVENTS: [],
+    TASK_NAME: "harvest"
 });

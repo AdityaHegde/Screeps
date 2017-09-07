@@ -1,7 +1,6 @@
 {
-  "exclude": [
-    "tests/**/*.js",
-    "gulpfile.js"
+  "include": [
+    "default/**/*.js"
   ],
   "reporter": [
     "lcov",

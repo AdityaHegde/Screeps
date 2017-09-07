@@ -1,3 +1,5 @@
+/* globals RANGED_ATTACK, MOVE */
+
 let BaseRole = require("role.base");
 
 /**
@@ -8,16 +10,16 @@ let BaseRole = require("role.base");
  */
 
 module.exports = BaseRole.extend({
-    getMaxCount : function() {
-        //spawn only if there is an enemy army
+    getMaxCount: function () {
+        // spawn only if there is an enemy army
         return this.room.defence.enemyArmy ? 3 : 0;
-    },
-},{
-    PARTS : [RANGED_ATTACK, MOVE],
-    MAIN_PARTS : [RANGED_ATTACK],
-    TASKS : [
+    }
+}, {
+    PARTS: [RANGED_ATTACK, MOVE],
+    MAIN_PARTS: [RANGED_ATTACK],
+    TASKS: [
         ["position"],
-        ["defendShoot"],
+        ["defendShoot"]
     ],
-    ROLE_NAME : "defender",
+    ROLE_NAME: "defender"
 });

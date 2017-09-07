@@ -1,27 +1,25 @@
-let constants = require("constants");
-
 module.exports = {
-    suites : [{
-        switchRole : function(room) {
+    suites: [{
+        switchRole: function (room) {
             return room.tasksInfo.store.potentialTargets.length + room.tasksInfo.withdrawUpgrader.potentialTargets.length >= room.buildPlanner.pathsInfo[2].paths.length;
         },
-        order : ["worker"],
+        order: ["worker"]
     }, {
-        switchRole : function() {
+        switchRole: function () {
             return false;
         },
-        creepDistribution : {
-            worker : ["harvester", "hauler", "builder", "upgrader"],
+        creepDistribution: {
+            worker: ["harvester", "hauler", "builder", "upgrader"]
         },
-        order : ["defender", "tower", "harvester", "hauler", "builder", "upgrader"],
+        order: ["defender", "tower", "harvester", "hauler", "builder", "upgrader"]
     }],
-    roles : {
-        builder : require("role.builder"),
-        defender : require("role.defender"),
-        harvester : require("role.harvester"),
-        hauler : require("role.hauler"),
-        tower : require("role.tower"),
-        upgrader : require("role.upgrader"),
-        worker : require("role.worker"),
-    },
+    roles: {
+        builder: require("role.builder"),
+        defender: require("role.defender"),
+        harvester: require("role.harvester"),
+        hauler: require("role.hauler"),
+        tower: require("role.tower"),
+        upgrader: require("role.upgrader"),
+        worker: require("role.worker")
+    }
 };

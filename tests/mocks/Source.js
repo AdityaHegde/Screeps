@@ -1,4 +1,4 @@
-module.exports = function(x, y, room) {
+module.exports = function (x, y, room) {
     this.pos = {
         x : x,
         y : y,

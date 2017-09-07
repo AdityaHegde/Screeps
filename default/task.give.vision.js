@@ -1,4 +1,5 @@
-let constants = require("constants");
+/* globals RoomPosition */
+
 let BaseTask = require("task.base");
 
 /**
@@ -10,11 +11,11 @@ let BaseTask = require("task.base");
  */
 
 module.exports = BaseTask.extend({
-    execute : function(creep) {
+    execute: function (creep) {
         return creep.moveTo(new RoomPosition(25, 25, creep.task.target), {
-            reusePath : 15 + 10 * (creep.room.name == creep.task.target),
+            reusePath: 15 + 10 * (creep.room.name === creep.task.target)
         });
-    },
+    }
 }, {
-    TASK_NAME : "giveVision",
+    TASK_NAME: "giveVision"
 });

@@ -9,26 +9,26 @@ let BaseRole = require("role.base");
  */
 
 module.exports = BaseRole.extend({
-    spawnCreeps : function() {
-        //dummy
+    spawnCreeps: function () {
+        // dummy
     },
 
-    upgradeParts : function() {
-        //dummy
+    upgradeParts: function () {
+        // dummy
     },
 
-    getMaxCount : function() {
-        //tower is built seperately
+    getMaxCount: function () {
+        // tower is built seperately
         return 0;
-    },
+    }
 }, {
-    EVENT_LISTENERS : [{
-        //add tower as a creep so that it gets executed in the role/task pipeline
-        eventName : constants.TOWER_BUILT,
-        method : "addCreep",
+    EVENT_LISTENERS: [{
+        // add tower as a creep so that it gets executed in the role/task pipeline
+        eventName: constants.TOWER_BUILT,
+        method: "addCreep"
     }],
-    TASKS : [
-        ["repair", "defendShoot"],
+    TASKS: [
+        ["repair", "defendShoot"]
     ],
-    ROLE_NAME : "tower",
+    ROLE_NAME: "tower"
 });

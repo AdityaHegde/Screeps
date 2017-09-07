@@ -1,4 +1,7 @@
+/* globals _, Game, RoomPosition, OK, TOP, RIGHT, BOTTOM, LEFT */
+
 let constants = require("constants");
+let utils = require("utils");
 let BaseTask = require("task.base");
 
 /**
@@ -9,27 +12,26 @@ let BaseTask = require("task.base");
  * @extends BaseTask
  */
 
-//TODO scout more than just the immeadiate rooms
+// TODO scout more than just the immeadiate rooms
 let ScoutTask = BaseTask.extend({
-    execute : function(creep) {
-        if (creep.room.name != creep.task.rooms[0]) {
+    execute: function (creep) {
+        if (creep.room.name !== creep.task.rooms[0]) {
             return creep.moveTo(new RoomPosition(25, 25, creep.task.rooms[0]), {
-                reusePath : 15,
+                reusePath: 15
             });
-        }
-        else {
+        } else {
             this.room.fireEvent(constants.ROOM_SCOUTED, creep.room.name);
             creep.task.rooms.shift();
             return creep.task.rooms.length > 0 ? OK : constants.ERR_INVALID_TASK;
         }
     },
 
-    getTargetRooms : function(sourceRoom, direction, size) {
+    getTargetRooms: function (sourceRoom, direction, size) {
         let rooms = [];
         let roomMatch = sourceRoom.match(/^(W|E)(\d*)(N|S)(\d*)$/);
         let dirX = roomMatch[1], dirY = roomMatch[3];
-        let x = Number(roomMatch[2]) * (dirX == "W" ? -1 : 1) + (direction == RIGHT) - (direction == LEFT);
-        let y = Number(roomMatch[4]) * (dirY == "S" ? -1 : 1) + (direction == BOTTOM) - (direction == TOP);
+        let x = Number(roomMatch[2]) * (dirX === "W" ? -1 : 1) + (direction === RIGHT) - (direction === LEFT);
+        let y = Number(roomMatch[4]) * (dirY === "S" ? -1 : 1) + (direction === BOTTOM) - (direction === TOP);
 
         for (let i = x - size; i <= x + size; i++) {
             for (let j = y - size; j < y + size; j++) {
@@ -41,28 +43,28 @@ let ScoutTask = BaseTask.extend({
         }
     },
 
-    updateOwnedRooms : function(rooms) {
+    updateOwnedRooms: function (rooms) {
         rooms.forEach((room) => {
             this.ownedRooms[room] = 1;
         });
     },
 
-    taskStarted : function(creep) {
+    taskStarted: function (creep) {
         let exits = Game.map.describeExits(creep.room.name);
-        let direction = _.find([TOP, RIGHT, BOTTOM, LEFT], function(dir) {
+        let direction = _.find([TOP, RIGHT, BOTTOM, LEFT], function (dir) {
             return _.has(exits, dir);
         });
         creep.task.rooms = this.getTargetRooms(creep.room.name, direction, 1);
-    },
+    }
 }, {
-    EVENT_LISTENERS : [{
-        eventName : constants.ROOM_CLAIMED,
-        method : "updateOwnedRooms",
+    EVENT_LISTENERS: [{
+        eventName: constants.ROOM_CLAIMED,
+        method: "updateOwnedRooms"
     }],
-    TASK_NAME : "scout",
+    TASK_NAME: "scout"
 });
 
-utils.definePropertyInMemory(ScoutTask, "ownedRooms", function() {
+utils.definePropertyInMemory(ScoutTask, "ownedRooms", function () {
     return {};
 });
 

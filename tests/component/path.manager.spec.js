@@ -5,146 +5,541 @@ let mockery = require("mockery");
 let globals = require("../mocks/globals");
 let testUtils = require("../test-utils");
 
-describe("PathManager", function() {
+describe("PathManager", function () {
     let PathManager;
 
-    before(function() {
-        mockery.enable({ useCleanCache: true });
-        testUtils.registerAllowables(mockery, "utils", "math", "constants", "base.class", "path.info", "path.connection");
+    before(function () {
         globals.init(sandbox);
+        mockery.enable({ useCleanCache: true });
+        testUtils.registerAllowables(mockery, "utils", "math", "heap", "constants", "base.class", "path.info", "path.connection");
         mockery.registerAllowable("../../default/path.manager");
         PathManager = require("../../default/path.manager");
     });
 
-    it("Adding paths", function() {
+    it("Adding paths", function () {
         let pathManager = new PathManager("test");
 
-        pathManager.addPath(testUtils.getPathFromDirections(BOTTOM, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT, RIGHT, RIGHT, TOP_RIGHT, TOP_RIGHT, TOP_RIGHT, TOP), {});
-        pathManager.addPath(testUtils.getPathFromDirections(TOP, TOP, TOP, TOP_LEFT, TOP_LEFT, LEFT, LEFT, TOP_LEFT, LEFT, LEFT), {
-            0 : {
-                fromPos : 5,
-                toPos : 4,
+        pathManager.addPath(testUtils.deserializePath("05054x83x54x7"));
+        pathManager.addPath(testUtils.deserializePath("24097x46667x5666"));
+        pathManager.addPath(testUtils.deserializePath("10152x93x5"));
+        pathManager.addPath(testUtils.deserializePath("15208x622233555"));
+        pathManager.addPath(testUtils.deserializePath("17223x8"));
+        pathManager.addPath(testUtils.deserializePath("23205x6"));
+        pathManager.addPath(testUtils.deserializePath("20231x52x4333"));
+
+        testUtils.correctJSON(JSON.parse(JSON.stringify(pathManager.pathsInfo))).should.be.eql({
+            0: {
+                id: 0,
+                path: testUtils.deserializePath("05054x83x54x7"),
+                reverse: testUtils.deserializePath("24198x87x58x7"),
+                connections: {
+                    1: {
+                        id: "pathConnection_2",
+                        idx: 1,
+                        pos: 12,
+                        targetPos: 7
+                    },
+                    2: {
+                        id: "pathConnection_4",
+                        idx: 2,
+                        pos: 8,
+                        targetPos: 0
+                    },
+                    3: {
+                        id: "pathConnection_6",
+                        idx: 3,
+                        pos: 8,
+                        targetPos: 0
+                    },
+                    4: {
+                        id: "pathConnection_4",
+                        idx: 2,
+                        pos: 8,
+                        targetPos: 0
+                    },
+                    5: {
+                        id: "pathConnection_12",
+                        idx: 5,
+                        pos: 10,
+                        targetPos: 0
+                    },
+                    6: {
+                        id: "pathConnection_16",
+                        idx: 8,
+                        pos: 17,
+                        targetPos: 7
+                    },
+                    7: {
+                        id: "pathConnection_16",
+                        idx: 8,
+                        pos: 17,
+                        targetPos: 7
+                    },
+                    8: {
+                        id: "pathConnection_16",
+                        idx: 8,
+                        pos: 17,
+                        targetPos: 7
+                    }
+                },
+                directConnections: [1, 2, 3, 5, 8],
+            },
+            1: {
+                id: 1,
+                path: testUtils.deserializePath("24097x46667"),
+                reverse: testUtils.deserializePath("171233222333"),
+                connections: {
+                    0: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    2: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    3: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    4: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    5: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    6: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    7: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    },
+                    8: {
+                        id: "pathConnection_1",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 12
+                    }
+                },
+                directConnections: [0],
+            },
+            2: {
+                id: 2,
+                path: testUtils.deserializePath("13127666"),
+                reverse: testUtils.deserializePath("10152x4"),
+                connections: {
+                    0: {
+                        id: "pathConnection_3",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    1: {
+                        id: "pathConnection_3",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    3: {
+                        id: "pathConnection_8",
+                        idx: 3,
+                        pos: 0,
+                        targetPos: 0
+                    },
+                    4: {
+                        id: "pathConnection_10",
+                        idx: 4,
+                        pos: 3,
+                        targetPos: 5
+                    },
+                    5: {
+                        id: "pathConnection_3",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    6: {
+                        id: "pathConnection_3",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    7: {
+                        id: "pathConnection_3",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    8: {
+                        id: "pathConnection_3",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    }
+                },
+                directConnections: [0, 3, 4],
+            },
+            3: {
+                id: 3,
+                path: testUtils.deserializePath("13122x63x5"),
+                reverse: testUtils.deserializePath("23077x66x5"),
+                connections: {
+                    0: {
+                        id: "pathConnection_5",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    1: {
+                        id: "pathConnection_5",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    2: {
+                        id: "pathConnection_7",
+                        idx: 2,
+                        pos: 0,
+                        targetPos: 0
+                    },
+                    4: {
+                        id: "pathConnection_7",
+                        idx: 2,
+                        pos: 0,
+                        targetPos: 0
+                    },
+                    5: {
+                        id: "pathConnection_5",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    6: {
+                        id: "pathConnection_5",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    7: {
+                        id: "pathConnection_5",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    },
+                    8: {
+                        id: "pathConnection_5",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 8
+                    }
+                },
+                directConnections: [0, 2],
+            },
+            4: {
+                id: 4,
+                path: testUtils.deserializePath("15208x6"),
+                reverse: testUtils.deserializePath("10154x6"),
+                connections: {
+                    0: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    1: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    2: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    3: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    5: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    6: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    7: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    },
+                    8: {
+                        id: "pathConnection_9",
+                        idx: 2,
+                        pos: 5,
+                        targetPos: 3
+                    }
+                },
+                directConnections: [2],
+            },
+            5: {
+                id: 5,
+                path: testUtils.deserializePath("15123555"),
+                reverse: testUtils.deserializePath("15151x4"),
+                connections: {
+                    0: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    1: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    2: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    3: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    4: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    6: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    7: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    },
+                    8: {
+                        id: "pathConnection_11",
+                        idx: 0,
+                        pos: 0,
+                        targetPos: 10
+                    }
+                },
+                directConnections: [0],
+            },
+            6: {
+                id: 6,
+                path: testUtils.deserializePath("17223x8"),
+                reverse: testUtils.deserializePath("24227x8"),
+                connections: {
+                    0: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                    1: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                    2: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                    3: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                    4: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                    5: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                    7: {
+                        id: "pathConnection_14",
+                        idx: 7,
+                        pos: 6,
+                        targetPos: 3
+                    },
+                    8: {
+                        id: "pathConnection_18",
+                        idx: 8,
+                        pos: 3,
+                        targetPos: 2
+                    },
+                },
+                directConnections: [7, 8],
+            },
+            7: {
+                id: 7,
+                path: testUtils.deserializePath("23205x6"),
+                reverse: testUtils.deserializePath("23251x6"),
+                connections: {
+                    0: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    1: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    2: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    3: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    4: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    5: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    6: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    },
+                    8: {
+                        id: "pathConnection_13",
+                        idx: 6,
+                        pos: 3,
+                        targetPos: 6
+                    }
+                },
+                directConnections: [6],
+            },
+            8: {
+                id: 8,
+                path: testUtils.deserializePath("20231x52x4333"),
+                reverse: testUtils.deserializePath("27157x46x45x4"),
+                connections: {
+                    0: {
+                        id: "pathConnection_15",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 17
+                    },
+                    1: {
+                        id: "pathConnection_15",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 17
+                    },
+                    2: {
+                        id: "pathConnection_15",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 17
+                    },
+                    3: {
+                        id: "pathConnection_15",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 17
+                    },
+                    4: {
+                        id: "pathConnection_15",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 17
+                    },
+                    5: {
+                        id: "pathConnection_15",
+                        idx: 0,
+                        pos: 7,
+                        targetPos: 17
+                    },
+                    6: {
+                        id: "pathConnection_17",
+                        idx: 6,
+                        pos: 2,
+                        targetPos: 3
+                    },
+                    7: {
+                        id: "pathConnection_17",
+                        idx: 6,
+                        pos: 2,
+                        targetPos: 3
+                    }
+                },
+                directConnections: [0, 6],
             },
         });
-        pathManager.addPath(testUtils.getPathFromDirections(TOP_RIGHT, TOP_RIGHT, TOP, TOP, TOP, TOP_RIGHT, TOP_RIGHT, RIGHT, RIGHT, TOP_RIGHT, TOP_RIGHT), {
-            0 : {
-                fromPos : 2,
-                toPos : 7,
-            },
-            1 : {
-                fromPos : 1,
-                toPos : 3,
-            },
-        });
-        pathManager.addPath(testUtils.getPathFromDirections(RIGHT, RIGHT, RIGHT, BOTTOM, BOTTOM, BOTTOM_RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM, BOTTOM_LEFT, BOTTOM_LEFT, BOTTOM_LEFT), {
-            2 : {
-                fromPos : 3,
-                toPos : 6,
-            },
-        });
-        pathManager.addPath(testUtils.getPathFromDirections(RIGHT, RIGHT, RIGHT, BOTTOM, BOTTOM, BOTTOM_RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM, BOTTOM_LEFT, BOTTOM_LEFT, BOTTOM_LEFT), {
-            2 : {
-                fromPos : 3,
-                toPos : 4,
-            },
-            3 : {
-                fromPos : 6,
-                toPos : 4,
-            },
-        });
 
-        (pathManager.pathsInfo[0].connections[1].idx).should.be.equal(1);
-        (pathManager.pathsInfo[0].connections[1].pos).should.be.equal(5);
-        (pathManager.pathsInfo[0].connections[1].targetPos).should.be.equal(4);
-        (pathManager.pathsInfo[0].connections[1].id).should.be.equal("pathConnection_2");
-        (pathManager.pathsInfo[0].connections[2].idx).should.be.equal(2);
-        (pathManager.pathsInfo[0].connections[2].pos).should.be.equal(2);
-        (pathManager.pathsInfo[0].connections[2].targetPos).should.be.equal(7);
-        (pathManager.pathsInfo[0].connections[2].id).should.be.equal("pathConnection_4");
-        (pathManager.pathsInfo[0].connections[3].idx).should.be.equal(2);
-        (pathManager.pathsInfo[0].connections[3].pos).should.be.equal(2);
-        (pathManager.pathsInfo[0].connections[3].targetPos).should.be.equal(7);
-        (pathManager.pathsInfo[0].connections[3].id).should.be.equal("pathConnection_4");
-        (pathManager.pathsInfo[0].connections[4].idx).should.be.equal(2);
-        (pathManager.pathsInfo[0].connections[4].pos).should.be.equal(2);
-        (pathManager.pathsInfo[0].connections[4].targetPos).should.be.equal(7);
-        (pathManager.pathsInfo[0].connections[4].id).should.be.equal("pathConnection_4");
-        (pathManager.pathsInfo[0].directConnections).should.be.containDeep([1, 2]);
-
-        (pathManager.pathsInfo[1].connections[0].idx).should.be.equal(0);
-        (pathManager.pathsInfo[1].connections[0].pos).should.be.equal(4);
-        (pathManager.pathsInfo[1].connections[0].targetPos).should.be.equal(5);
-        (pathManager.pathsInfo[1].connections[0].id).should.be.equal("pathConnection_1");
-        (pathManager.pathsInfo[1].connections[2].idx).should.be.equal(2);
-        (pathManager.pathsInfo[1].connections[2].pos).should.be.equal(1);
-        (pathManager.pathsInfo[1].connections[2].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[1].connections[2].id).should.be.equal("pathConnection_6");
-        (pathManager.pathsInfo[1].connections[3].idx).should.be.equal(2);
-        (pathManager.pathsInfo[1].connections[3].pos).should.be.equal(1);
-        (pathManager.pathsInfo[1].connections[3].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[1].connections[3].id).should.be.equal("pathConnection_6");
-        (pathManager.pathsInfo[1].connections[4].idx).should.be.equal(2);
-        (pathManager.pathsInfo[1].connections[4].pos).should.be.equal(1);
-        (pathManager.pathsInfo[1].connections[4].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[1].connections[4].id).should.be.equal("pathConnection_6");
-        (pathManager.pathsInfo[1].directConnections).should.be.containDeep([0, 2]);
-
-        (pathManager.pathsInfo[2].connections[0].idx).should.be.equal(0);
-        (pathManager.pathsInfo[2].connections[0].pos).should.be.equal(7);
-        (pathManager.pathsInfo[2].connections[0].targetPos).should.be.equal(2);
-        (pathManager.pathsInfo[2].connections[0].id).should.be.equal("pathConnection_3");
-        (pathManager.pathsInfo[2].connections[1].idx).should.be.equal(1);
-        (pathManager.pathsInfo[2].connections[1].pos).should.be.equal(3);
-        (pathManager.pathsInfo[2].connections[1].targetPos).should.be.equal(1);
-        (pathManager.pathsInfo[2].connections[1].id).should.be.equal("pathConnection_5");
-        (pathManager.pathsInfo[2].connections[3].idx).should.be.equal(3);
-        (pathManager.pathsInfo[2].connections[3].pos).should.be.equal(3);
-        (pathManager.pathsInfo[2].connections[3].targetPos).should.be.equal(6);
-        (pathManager.pathsInfo[2].connections[3].id).should.be.equal("pathConnection_8");
-        (pathManager.pathsInfo[2].connections[4].idx).should.be.equal(4);
-        (pathManager.pathsInfo[2].connections[4].pos).should.be.equal(3);
-        (pathManager.pathsInfo[2].connections[4].targetPos).should.be.equal(4);
-        (pathManager.pathsInfo[2].connections[4].id).should.be.equal("pathConnection_10");
-        (pathManager.pathsInfo[2].directConnections).should.be.containDeep([0, 1, 3, 4]);
-
-        (pathManager.pathsInfo[3].connections[0].idx).should.be.equal(2);
-        (pathManager.pathsInfo[3].connections[0].pos).should.be.equal(6);
-        (pathManager.pathsInfo[3].connections[0].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[3].connections[0].id).should.be.equal("pathConnection_7");
-        (pathManager.pathsInfo[3].connections[1].idx).should.be.equal(2);
-        (pathManager.pathsInfo[3].connections[1].pos).should.be.equal(6);
-        (pathManager.pathsInfo[3].connections[1].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[3].connections[1].id).should.be.equal("pathConnection_7");
-        (pathManager.pathsInfo[3].connections[2].idx).should.be.equal(2);
-        (pathManager.pathsInfo[3].connections[2].pos).should.be.equal(6);
-        (pathManager.pathsInfo[3].connections[2].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[3].connections[2].id).should.be.equal("pathConnection_7");
-        (pathManager.pathsInfo[3].connections[4].idx).should.be.equal(4);
-        (pathManager.pathsInfo[3].connections[4].pos).should.be.equal(6);
-        (pathManager.pathsInfo[3].connections[4].targetPos).should.be.equal(4);
-        (pathManager.pathsInfo[3].connections[4].id).should.be.equal("pathConnection_12");
-        (pathManager.pathsInfo[3].directConnections).should.be.containDeep([2, 4]);
-
-        (pathManager.pathsInfo[4].connections[0].idx).should.be.equal(2);
-        (pathManager.pathsInfo[4].connections[0].pos).should.be.equal(4);
-        (pathManager.pathsInfo[4].connections[0].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[4].connections[0].id).should.be.equal("pathConnection_9");
-        (pathManager.pathsInfo[4].connections[1].idx).should.be.equal(2);
-        (pathManager.pathsInfo[4].connections[1].pos).should.be.equal(4);
-        (pathManager.pathsInfo[4].connections[1].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[4].connections[1].id).should.be.equal("pathConnection_9");
-        (pathManager.pathsInfo[4].connections[2].idx).should.be.equal(2);
-        (pathManager.pathsInfo[4].connections[2].pos).should.be.equal(4);
-        (pathManager.pathsInfo[4].connections[2].targetPos).should.be.equal(3);
-        (pathManager.pathsInfo[4].connections[2].id).should.be.equal("pathConnection_9");
-        (pathManager.pathsInfo[4].connections[3].idx).should.be.equal(3);
-        (pathManager.pathsInfo[4].connections[3].pos).should.be.equal(4);
-        (pathManager.pathsInfo[4].connections[3].targetPos).should.be.equal(6);
-        (pathManager.pathsInfo[4].connections[3].id).should.be.equal("pathConnection_11");
-        (pathManager.pathsInfo[4].directConnections).should.be.containDeep([2, 3]);
+        // testUtils.visualize(30, 30,
+        //     ..._.values(pathManager.pathsInfo).map(pathInfo => pathInfo.path)
+        // );
     });
 
-    it("Moving creep to target in same path", function() {
+    it("Moving creep to target in same path", function () {
         let pathManager = new PathManager("test");
         let creep = {
             name : "testCreep",
@@ -204,66 +599,51 @@ describe("PathManager", function() {
         (pathManager.pathsInfo[0].creeps).should.be.eql({});
     });
 
-    it("Moving creep to target in next path", function() {
+    it("Moving creep to target in next path", function () {
         let pathManager = new PathManager("test");
         let creep = {
             name : "testCreep",
             move : sandbox.stub().returns(OK),
             pathIdx : 0,
-            pathPos : 0,
-            targetPathPos : 0,
+            pathPos : 8,
+            targetPathPos : 8,
         };
         let target = {
             pathIdx : 1,
-            pathPos : 8,
+            pathPos : 5,
         };
 
         [{
             returnValue : OK,
             pathIdx : 0,
-            pathPos : 1,
-            targetPathPos : 5,
+            pathPos : 9,
+            targetPathPos : 12,
         }, {
             returnValue : OK,
             pathIdx : 0,
-            pathPos : 2,
-            targetPathPos : 5,
+            pathPos : 10,
+            targetPathPos : 12,
         }, {
             returnValue : OK,
             pathIdx : 0,
-            pathPos : 3,
-            targetPathPos : 5,
+            pathPos : 11,
+            targetPathPos : 12,
         }, {
             returnValue : OK,
             pathIdx : 0,
-            pathPos : 4,
-            targetPathPos : 5,
-        }, {
-            returnValue : OK,
-            pathIdx : 0,
-            pathPos : 5,
-            targetPathPos : 5,
-        }, {
-            returnValue : OK,
-            pathIdx : 1,
-            pathPos : 5,
-            targetPathPos : 8,
+            pathPos : 12,
+            targetPathPos : 12,
         }, {
             returnValue : OK,
             pathIdx : 1,
             pathPos : 6,
-            targetPathPos : 8,
-        }, {
-            returnValue : OK,
-            pathIdx : 1,
-            pathPos : 7,
-            targetPathPos : 8,
+            targetPathPos : 5,
         }, {
             returnValue : "creepReachedTarget",
             pathIdx : 1,
-            pathPos : 8,
-            targetPathPos : 8,
-        }].forEach((testData) => {
+            pathPos : 5,
+            targetPathPos : 5,
+        }].forEach((testData, i) => {
             (pathManager.moveCreep(creep, target)).should.be.equal(testData.returnValue);
 
             (creep.pathIdx).should.be.equal(testData.pathIdx);
@@ -280,44 +660,49 @@ describe("PathManager", function() {
         (pathManager.pathsInfo[1].creeps).should.be.eql({});
     });
 
-    it("Moving creep to target 2 paths out", function() {
+    it("Moving creep to target 2 paths out", function () {
         let pathManager = new PathManager("test");
         let creep = {
             name : "testCreep",
             move : sandbox.stub().returns(OK),
             pathIdx : 0,
-            pathPos : 0,
-            targetPathPos : 0,
+            pathPos : 4,
+            targetPathPos : 4,
         };
         let target = {
-            pathIdx : 3,
-            pathPos : 8,
+            pathIdx : 4,
+            pathPos : 2,
         };
 
         [{
             returnValue : OK,
             pathIdx : 0,
-            pathPos : 1,
-            targetPathPos : 2,
+            pathPos : 5,
+            targetPathPos : 8,
         }, {
             returnValue : OK,
             pathIdx : 0,
-            pathPos : 2,
-            targetPathPos : 2,
-        }, {
-            returnValue : OK,
-            pathIdx : 2,
             pathPos : 6,
+            targetPathPos : 8,
+        }, {
+            returnValue : OK,
+            pathIdx : 0,
+            pathPos : 7,
+            targetPathPos : 8,
+        }, {
+            returnValue : OK,
+            pathIdx : 0,
+            pathPos : 8,
+            targetPathPos : 8,
+        }, {
+            returnValue : OK,
+            pathIdx : 2,
+            pathPos : 1,
             targetPathPos : 3,
         }, {
             returnValue : OK,
             pathIdx : 2,
-            pathPos : 5,
-            targetPathPos : 3,
-        }, {
-            returnValue : OK,
-            pathIdx : 2,
-            pathPos : 4,
+            pathPos : 2,
             targetPathPos : 3,
         }, {
             returnValue : OK,
@@ -326,14 +711,19 @@ describe("PathManager", function() {
             targetPathPos : 3,
         }, {
             returnValue : OK,
-            pathIdx : 3,
-            pathPos : 7,
-            targetPathPos : 8,
+            pathIdx : 4,
+            pathPos : 4,
+            targetPathPos : 2,
+        }, {
+            returnValue : OK,
+            pathIdx : 4,
+            pathPos : 3,
+            targetPathPos : 2,
         }, {
             returnValue : "creepReachedTarget",
-            pathIdx : 3,
-            pathPos : 8,
-            targetPathPos : 8,
+            pathIdx : 4,
+            pathPos : 2,
+            targetPathPos : 2,
         }].forEach((testData) => {
             (pathManager.moveCreep(creep, target)).should.be.equal(testData.returnValue);
 
@@ -352,11 +742,11 @@ describe("PathManager", function() {
         (pathManager.pathsInfo[3].creeps).should.be.eql({});
     });
 
-    describe("Moving creep with other creeps on the same path", function() {
+    describe("Moving creep with other creeps on the same path", function () {
         let pathManager;
         let creep, otherCreeps;
 
-        before(function() {
+        before(function () {
             pathManager = new PathManager("test");
             creep = {
                 name : "testCreep",
@@ -522,22 +912,22 @@ describe("PathManager", function() {
             });
         });
 
-        it("creeps is empty for pathInfo of path 0", function() {
+        it("creeps is empty for pathInfo of path 0", function () {
             pathManager.creepHasDied(creep);
             (pathManager.pathsInfo[0].creeps).should.be.eql({});
         })
 
-        afterEach(function() {
+        afterEach(function () {
             delete creep.hasMoved;
             delete creep.processed;
             delete creep.swapPos;
         });
     });
 
-    describe("Moving creep with other creeps on the different paths", function() {
+    describe("Moving creep with other creeps on the different paths", function () {
         let pathManager, move;
 
-        before(function() {
+        before(function () {
             pathManager = new PathManager("test");
             move = sandbox.stub().returns(OK);
         });
@@ -548,47 +938,47 @@ describe("PathManager", function() {
                 creep : {
                     name : "creep1",
                     pathIdx : 0,
-                    pathPos : 1,
-                    targetPathPos : 7,
+                    pathPos : 18,
+                    targetPathPos : 10,
                 },
                 target : {},
                 result : {
                     pathIdx : 0,
-                    pathPos : 1,
+                    pathPos : 18,
                     returnValue : "couldntMove",
                 },
             }, {
                 creep : {
                     name : "creep2",
-                    pathIdx : 2,
+                    pathIdx : 8,
                     pathPos : 7,
                     targetPathPos : 2,
                 },
                 target : {},
                 result : {
-                    pathIdx : 2,
+                    pathIdx : 8,
                     pathPos : 6,
                     returnValue : "ok",
                 },
             }, {
                 creep : {
                     name : "creep3",
-                    pathIdx : 2,
+                    pathIdx : 8,
                     pathPos : 6,
                     targetPathPos : 8,
                 },
                 target : {},
                 result : {
-                    pathIdx : 2,
+                    pathIdx : 8,
                     pathPos : 7,
                     returnValue : "ok",
                 },
             }],
             creepsInfo : {
                 0 : {
-                    1 : ["creep1"],
+                    18 : ["creep1"],
                 },
-                2 : {
+                8 : {
                     6 : ["creep2"],
                     7 : ["creep3"],
                 },
@@ -599,33 +989,33 @@ describe("PathManager", function() {
                 creep : {
                     name : "creep1",
                     pathIdx : 0,
-                    pathPos : 1,
-                    targetPathPos : 7,
+                    pathPos : 18,
+                    targetPathPos : 10,
                 },
                 target : {},
                 result : {
                     pathIdx : 0,
-                    pathPos : 2,
+                    pathPos : 17,
                     returnValue : "ok",
                 },
             }, {
                 creep : {
                     name : "creep2",
-                    pathIdx : 2,
+                    pathIdx : 8,
                     pathPos : 7,
                     targetPathPos : 7,
                 },
                 target : {},
                 result : {
                     pathIdx : 0,
-                    pathPos : 1,
+                    pathPos : 18,
                     returnValue : "ok",
                 },
             }],
             creepsInfo : {
                 0 : {
-                    1 : ["creep2"],
-                    2 : ["creep1"],
+                    17 : ["creep1"],
+                    18 : ["creep2"],
                 },
             },
         }, {
@@ -634,41 +1024,41 @@ describe("PathManager", function() {
                 creep : {
                     name : "creep1",
                     pathIdx : 0,
-                    pathPos : 2,
-                    targetPathPos : 2,
+                    pathPos : 17,
+                    targetPathPos : 17,
                 },
                 target : {
-                    pathIdx : 2,
-                    pathPos : 8,
+                    pathIdx : 8,
+                    pathPos : 6,
                 },
                 result : {
-                    pathIdx : 2,
-                    pathPos : 8,
+                    pathIdx : 8,
+                    pathPos : 6,
                     returnValue : "creepReachedTarget",
                 },
             }, {
                 creep : {
                     name : "creep2",
-                    pathIdx : 2,
+                    pathIdx : 8,
                     pathPos : 7,
                     targetPathPos : 7,
                 },
                 target : {
                     pathIdx : 0,
-                    pathPos : 1,
+                    pathPos : 17,
                 },
                 result : {
                     pathIdx : 0,
-                    pathPos : 1,
+                    pathPos : 17,
                     returnValue : "creepReachedTarget",
                 },
             }],
             creepsInfo : {
                 0 : {
-                    1 : ["creep2"],
+                    17 : ["creep2"],
                 },
-                2 : {
-                    8 : ["creep1"],
+                8 : {
+                    6 : ["creep1"],
                 }
             },
         }].forEach((testData) => {
@@ -703,15 +1093,15 @@ describe("PathManager", function() {
         });
     });
 
-    describe("Moving creep away and towards the path", function() {
+    describe("Moving creep away and towards the path", function () {
         let pathManager, move;
 
-        before(function() {
+        before(function () {
             pathManager = new PathManager("test");
             move = sandbox.stub();
         });
 
-        beforeEach(function() {
+        beforeEach(function () {
             sandbox.reset();
 
             globals.stub();
@@ -725,13 +1115,13 @@ describe("PathManager", function() {
                     name : "creep1",
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 0,
+                    direction : 0,
                     targetPathPos : 1,
                 },
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 2,
+                    direction : 2,
                     isEqualTo : false,
                 },
                 result : {
@@ -746,7 +1136,7 @@ describe("PathManager", function() {
                     name : "creep2",
                     pathIdx : 0,
                     pathPos : 2,
-                    moveAway : 0,
+                    direction : 0,
                     targetPathPos : 0,
                 },
                 target : {
@@ -772,7 +1162,7 @@ describe("PathManager", function() {
                     name : "creep1",
                     pathIdx : 0,
                     pathPos : 2,
-                    moveAway : 0,
+                    direction : 0,
                     targetPathPos : 0,
                 },
                 target : {
@@ -790,13 +1180,13 @@ describe("PathManager", function() {
                     name : "creep2",
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 0,
+                    direction : 0,
                     targetPathPos : 1,
                 },
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 2,
+                    direction : 2,
                     isEqualTo : false,
                 },
                 result : {
@@ -825,7 +1215,7 @@ describe("PathManager", function() {
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 2,
+                    direction : 2,
                     isEqualTo : false,
                 },
                 result : {
@@ -846,7 +1236,7 @@ describe("PathManager", function() {
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 6,
+                    direction : 6,
                     isEqualTo : true,
                 },
                 result : {
@@ -911,7 +1301,7 @@ describe("PathManager", function() {
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 2,
+                    direction : 2,
                     isEqualTo : false,
                 },
                 result : {
@@ -932,7 +1322,7 @@ describe("PathManager", function() {
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 6,
+                    direction : 6,
                     isEqualTo : true,
                 },
                 result : {
@@ -961,7 +1351,7 @@ describe("PathManager", function() {
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 2,
+                    direction : 2,
                     isEqualTo : false,
                 },
                 result : {
@@ -1050,7 +1440,7 @@ describe("PathManager", function() {
                 target : {
                     pathIdx : 0,
                     pathPos : 1,
-                    moveAway : 2,
+                    direction : 2,
                     isEqualTo : false,
                 },
                 result : {
@@ -1126,7 +1516,19 @@ describe("PathManager", function() {
         });
     });
 
-    after(function() {
+    // it("generate", function () {
+    //     let pathManager = new PathManager("generate");
+    //
+    //     pathManager.addPath(testUtils.deserializePath("25207x98x7111"));
+    //     pathManager.addPath(testUtils.deserializePath("25207x97776x6"));
+    //     pathManager.addPath(testUtils.deserializePath("2520334x73x6"));
+    //     pathManager.addPath(testUtils.deserializePath("25203x52x8111"));
+    //     testUtils.visualize(50, 50,
+    //         ..._.values(pathManager.pathsInfo).map(pathInfo => pathInfo.path)
+    //     );
+    // });
+
+    after(function () {
         mockery.deregisterAll();
         mockery.disable();
         sandbox.restore();

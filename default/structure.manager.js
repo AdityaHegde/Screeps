@@ -1,53 +1,60 @@
+/* globals _, ConstructionSite, StructureContainer, StructureController, StructureExtension, StructureExtractor, StructureLab, StructureLink, StructureNuker, StructurePowerSpawn, StructureRampart, StructureRoad, StructureSpawn, StructureStorage, StructureTerminal, StructureTower, StructureWall, Source */
+
 let utils = require("utils");
 let constants = require("constants");
 
-utils.addMemorySupport(StructureContainer, "structures");
-utils.addMemorySupport(StructureController, "structures");
-utils.addMemorySupport(StructureExtension, "structures");
-//utils.addMemorySupport(StructureTower, "structures");
-
-utils.definePropertyInMemory(StructureContainer, "label", function() {
+utils.definePropertyInMemory(StructureContainer, "label", function () {
     return constants.HARVESTER_STORAGE;
 });
 
-utils.definePosPropertyInMemory(StructureController, "container");
+// prototype from parent Structure is extracted before this code is executed.
+// we have to define this on every strcuture
+[ConstructionSite, StructureContainer, StructureController, StructureExtension, StructureExtractor, StructureLab, StructureLink, StructureNuker, StructurePowerSpawn, StructureRampart, StructureRoad, StructureSpawn, StructureStorage, StructureTerminal, StructureTower, StructureWall, Source].forEach((StructureClass) => {
+    if (!StructureClass.prototype.memory) {
+        utils.addMemorySupport(StructureClass, "structures");
+    }
 
-utils.definePropertyInMemory(StructureExtension, "pathIdx");
-utils.definePropertyInMemory(StructureExtension, "pathPos");
-utils.definePropertyInMemory(StructureContainer, "pathIdx");
-utils.definePropertyInMemory(StructureContainer, "pathPos");
+    utils.definePropertyInMemory(StructureClass, "pathData", null, function (value) {
+        return value.join(":");
+    }, function (value) {
+        return value.split(":");
+    });
+    utils.definePropertyInCache(StructureClass, "pathIdx", function () {
+        return this.pathData[0];
+    });
+    utils.definePropertyInCache(StructureClass, "pathPos", function () {
+        return this.pathData[1];
+    });
+    utils.definePropertyInCache(StructureClass, "direction", function () {
+        return this.pathData[2];
+    });
 
+    if (!StructureClass.property.getPathIdxPathPos) {
+        StructureClass.property.getPathIdxPathPos = function (creep) {
+            return this.pathData;
+        };
+    }
+});
 
-StructureContainer.prototype.canStoreEnergy = function() {
-    return this.store.energy < this.storeCapacity;
-};
+[StructureContainer, StructureStorage, StructureTerminal].forEach((StructureClass) => {
+    StructureContainer.prototype.canStore = function () {
+        return _.sum(this.store) < this.storeCapacity;
+    };
 
-StructureTower.prototype.canStoreEnergy = function() {
-    return this.energy < this.energyCapacity;
-};
+    StructureContainer.prototype.getRemainingCapacity = function () {
+        return this.storeCapacity - _.sum(this.store);
+    };
+});
 
-StructureSpawn.prototype.canStoreEnergy = function() {
-    return this.energy < this.energyCapacity;
-};
+[StructureExtension, StructureLab, StructureLink, StructureNuker, StructureSpawn, StructureTower].forEach((StructureClass) => {
+    StructureTower.prototype.canStore = function (type = "energy") {
+        return this[type] < this[type + "Capacity"];
+    };
 
-StructureExtension.prototype.canStoreEnergy = function() {
-    return this.energy < this.energyCapacity;
-};
+    StructureTower.prototype.getRemainingCapacity = function (type = "energy") {
+        return this[type + "Capacity"] - this[type];
+    };
+});
 
-
-
-StructureContainer.prototype.getRemainingEnergyCapacity = function() {
-    return this.storeCapacity - this.store.energy;
-};
-
-StructureTower.prototype.getRemainingEnergyCapacity = function() {
-    return this.energyCapacity - this.energy;
-};
-
-StructureSpawn.prototype.getRemainingEnergyCapacity = function() {
-    return this.energyCapacity - this.energy;
-};
-
-StructureExtension.prototype.getRemainingEnergyCapacity = function() {
-    return this.energyCapacity - this.energy;
-};
+// used to generaize canStore and getRemainingCapacity
+utils.definePropertyInCache(StructureLab, "mineral", "mineralAmount");

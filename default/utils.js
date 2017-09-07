@@ -1,6 +1,30 @@
+/* globals _, Game, Memory, Room, RoomPosition, PathFinder */
+
 let math = require("math");
+let Heap = require("heap");
 
 module.exports = {
+    /**
+     * Defines a alias to another property.
+     *
+     * @method defineAliasProperty
+     * @param Class {Class} Class to define the 'property' on.
+     * @param property {String}
+     * @param targetProperty {String}
+     */
+    defineAliasProperty: function (Class, property, targetProperty) {
+        Object.defineProperty(Class.prototype, property, {
+            get: function () {
+                return this[targetProperty];
+            },
+            set: function (value) {
+                this[targetProperty] = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+    },
+
     /**
      * Defines a property which get cached and returns from cache.
      *
@@ -9,23 +33,23 @@ module.exports = {
      * @param property {String}
      * @param getter {Function} Function that returns the initial value for 'property'.
      */
-    definePropertyInCache : function(Class, property, getter) {
+    definePropertyInCache: function (Class, property, getter) {
         let _property = "_" + property;
         Object.defineProperty(Class.prototype, property, {
-            get : function() {
-                //if the property is not defined in cache yet, get it from memory
+            get: function () {
+                // if the property is not defined in cache yet, get it from memory
                 if (!_.has(this, _property)) {
                     this[_property] = getter.call(this, ...arguments);
                 }
-                //return from cache
+                // return from cache
                 return this[_property];
             },
-            set : function(value) {
-                //save the value to the cache
+            set: function (value) {
+                // save the value to the cache
                 this[_property] = value;
             },
             enumerable: true,
-            configurable: true,
+            configurable: true
         });
     },
 
@@ -39,36 +63,35 @@ module.exports = {
      * @param [serializer] {Function} Function to serialize value to be stored in memory. Defaults to storing value as is.
      * @param [deserializer] {Function} Function to deserialize value retrieved from memory. Defaults to returning value as is.
      */
-    definePropertyInMemory : function(Class, property, getter, serializer, deserializer) {
-        getter = getter || function() { return null; };
-        serializer = serializer || function(value) { return value; };
-        deserializer = deserializer || function(value) { return value; };
+    definePropertyInMemory: function (Class, property, getter, serializer, deserializer) {
+        getter = getter || function () { return null; };
+        serializer = serializer || function (value) { return value; };
+        deserializer = deserializer || function (value) { return value; };
         let _property = "_" + property;
         Object.defineProperty(Class.prototype, property, {
-            get : function() {
-                //if the property is not defined in cache yet, get it from memory
+            get: function () {
+                // if the property is not defined in cache yet, get it from memory
                 if (!_.has(this, _property)) {
-                    //if the property is not present in the memory either, use the getter function passed to get the value and store in memory
+                    // if the property is not present in the memory either, use the getter function passed to get the value and store in memory
                     if (!_.has(this.memory, property)) {
                         this[_property] = getter.call(this, ...arguments);
                         this.memory[property] = this[_property] && serializer.call(this, this[_property]);
-                    }
-                    else {
+                    } else {
                         this[_property] = deserializer.call(this, this.memory[property]);
                     }
                 }
-                //return from cache
+                // return from cache
                 return this[_property];
             },
-            set : function(value) {
-                //save the serialized value to memory and value to cache
-                if (value != null && value != undefined) {
+            set: function (value) {
+                // save the serialized value to memory and value to cache
+                if (value !== null && value !== undefined) {
                     this.memory[property] = serializer.call(this, value);
                 }
                 this[_property] = value;
             },
             enumerable: true,
-            configurable: true,
+            configurable: true
         });
     },
 
@@ -82,7 +105,7 @@ module.exports = {
      * @param [ClassObject] {Class} Class for the instance. If not specified, Game.getObjectById is used.
      * @param [getter] {Function} Function that returns the initial value for 'property'. Defaults value to empty instance of ClassObject.
      */
-    defineInstancePropertyInMemory : function(Class, property, ClassObject, getter) {
+    defineInstancePropertyInMemory: function (Class, property, ClassObject, getter) {
         this.definePropertyInMemory(Class, property, () => {
             return getter ? getter.call(this) : (ClassObject && new ClassObject());
         }, (instance) => {
@@ -92,8 +115,7 @@ module.exports = {
                 let instance;
                 if (ClassObject) {
                     instance = new ClassObject(instanceId);
-                }
-                else {
+                } else {
                     instance = Game.getObjectById(instanceId);
                 }
                 instance[this.constructor.className] = this;
@@ -111,7 +133,7 @@ module.exports = {
      * @param property {String}
      * @param memoryName {String} memoryName for the class of instance on Game.
      */
-    defineInstancePropertyByNameInMemory : function(Class, property, memoryName) {
+    defineInstancePropertyByNameInMemory: function (Class, property, memoryName) {
         this.definePropertyInMemory(Class, property, null, (instance) => {
             return instance.name;
         }, (instanceId) => {
@@ -128,10 +150,10 @@ module.exports = {
      * @param Class {Class} Class to define the 'property' on.
      * @param property {String}
      */
-    definePosPropertyInMemory : function(Class, property) {
-        this.definePropertyInMemory(Class, property, null, function(pos) {
+    definePosPropertyInMemory: function (Class, property) {
+        this.definePropertyInMemory(Class, property, null, function (pos) {
             return pos.x + ":" + pos.y;
-        }, function(pos) {
+        }, function (pos) {
             if (pos && this.room) {
                 let xy = pos.split(":");
                 return new RoomPosition(Number(xy[0]), Number(xy[1]), this.room.name);
@@ -148,7 +170,7 @@ module.exports = {
      * @param Class {Class} Class to define the 'property' on.
      * @param property {String}
      */
-    definePathPropertyInMemory : function(Class, property) {
+    definePathPropertyInMemory: function (Class, property) {
         this.definePropertyInMemory(Class, property, null, (value) => {
             return Room.serializePath(value);
         }, (value) => {
@@ -164,11 +186,29 @@ module.exports = {
      * @param Class {Class} Class to define the 'property' on.
      * @param property {String}
      */
-    defineCostMatrixPropertyInMemory : function(Class, property) {
+    defineCostMatrixPropertyInMemory: function (Class, property) {
         this.definePropertyInMemory(Class, property, null, (costMatrix) => {
             return costMatrix.serialize();
         }, (costMatrix) => {
             return PathFinder.CostMatrix.deserialize(costMatrix);
+        });
+    },
+
+    /**
+     * Defines Heap property which is stored in memory as array.
+     * And retrieved from memory by creating a new Heap instance.
+     *
+     * @method defineHeapPropertyInMemory
+     * @param Class {Class} Class to define the 'property' on.
+     * @param property {String}
+     */
+    defineHeapPropertyInMemory: function (Class, property) {
+        this.definePropertyInMemory(Class, property, function() {
+            return new Heap();
+        }, (heap) => {
+            return heap.array;
+        }, (array) => {
+            return new Heap(array);
         });
     },
 
@@ -181,45 +221,54 @@ module.exports = {
      * @param [serializer] {Function} Function to serialize value to be stored in memory. Defaults to storing value as is.
      * @param [deserializer] {Function} Function to deserialize value retrieved from memory. Defaults to returning value as is.
      */
-    defineMapPropertyInMemory : function(Class, mapProperty, serializer, deserializer) {
-        serializer = serializer || function(value) { return value; };
-        deserializer = deserializer || function(key, value) { return value; };
+    defineMapPropertyInMemory: function (Class, mapProperty, serializer, deserializer) {
+        serializer = serializer || function (value) { return value; };
+        deserializer = deserializer || function (key, value) { return value; };
         let _mapProperty = "_" + mapProperty;
 
-        let createActualValue = function(memoryValue) {
+        let createActualValue = function (memoryValue) {
             let cacheValue = {}, actualValue = {};
-            //function to add new key
+            // function to add new key
             Object.defineProperty(actualValue, "addKey", {
-                value : function(key, value) {
+                value: function (key, value) {
                     if (value) {
                         cacheValue[key] = value;
                         memoryValue[key] = serializer(value);
                     }
                     Object.defineProperty(actualValue, key, {
-                        get : function() {
-                            //if the cache doesnt have the value, get the value from memory
+                        get: function () {
+                            // if the cache doesnt have the value, get the value from memory
                             if (!_.has(cacheValue, key)) {
-                                //if it is in memory, create a new instance with stored id
+                                // if it is in memory, create a new instance with stored id
                                 if (_.has(memoryValue, key)) {
                                     cacheValue[key] = deserializer(key, memoryValue[key]);
                                 }
                             }
                             return cacheValue[key];
                         },
-                        set : function(newValue) {
-                            //set the instance to cache
+                        set: function (newValue) {
+                            // set the instance to cache
                             cacheValue[key] = newValue;
-                            //and id to memory
+                            // and id to memory
                             memoryValue[key] = serializer(newValue);
                         },
                         enumerable: true,
-                        configurable: true,
+                        configurable: true
                     });
                 },
-                enumerable : false,
+                enumerable: false
             });
 
-            //copy all keys
+            Object.defineProperty(actualValue, "deleteKey", {
+                value: function(key) {
+                    delete actualValue[key];
+                    delete cacheValue[key];
+                    delete memoryValue[key];
+                },
+                enumerable: false
+            });
+
+            // copy all keys
             for (let k in memoryValue) {
                 actualValue.addKey(k, deserializer(k, memoryValue[k]));
             }
@@ -227,12 +276,12 @@ module.exports = {
             return actualValue;
         };
 
-        //define the actual map property
+        // define the actual map property
         Object.defineProperty(Class.prototype, mapProperty, {
-            get : function() {
-                //if map is not cached, assign _mapValue and get the instance for any stored ids in memory
+            get: function () {
+                // if map is not cached, assign _mapValue and get the instance for any stored ids in memory
                 if (!_.has(this, _mapProperty)) {
-                    //if map is not in memory, assign mapValue to memory
+                    // if map is not in memory, assign mapValue to memory
                     if (!_.has(this.memory, mapProperty)) {
                         this.memory[mapProperty] = {};
                     }
@@ -240,11 +289,8 @@ module.exports = {
                 }
                 return this[_mapProperty];
             },
-            set : function(value) {
-                //cannot be written from outside
-            },
             enumerable: true,
-            configurable: true,
+            configurable: true
         });
     },
 
@@ -257,18 +303,18 @@ module.exports = {
      * @param property {String}
      * @param [instanceGetter] {Function/Object} Called to get an instance for key and value. Can also be a map of key and class.
      */
-    defineInstanceMapPropertyInMemory : function(Class, mapProperty, instanceGetter) {
+    defineInstanceMapPropertyInMemory: function (Class, mapProperty, instanceGetter) {
         let _instanceGetter;
         if (instanceGetter.extend) {
-            _instanceGetter = function(key, id) {
+            _instanceGetter = function (key, id) {
+                // eslint-disable-next-line new-cap
                 return new instanceGetter(id);
             };
-        }
-        else if (_.isFunction(instanceGetter)) {
+        } else if (_.isFunction(instanceGetter)) {
             _instanceGetter = instanceGetter;
-        }
-        else {
-            _instanceGetter = function(key, id) {
+        } else {
+            _instanceGetter = function (key, id) {
+                // eslint-disable-next-line new-cap
                 return new instanceGetter[key](id);
             };
         }
@@ -288,7 +334,7 @@ module.exports = {
      * @param Class {Class} Class to define the 'property' on.
      * @param property {String}
      */
-    definePathMapPropertyInMemory : function(Class, mapProperty) {
+    definePathMapPropertyInMemory: function (Class, mapProperty) {
         this.defineMapPropertyInMemory(Class, mapProperty, (value) => {
             return Room.serializePath(value);
         }, (key, value) => {
@@ -296,27 +342,27 @@ module.exports = {
         });
     },
 
-    addMemorySupport : function(Class, memoryName) {
+    addMemorySupport: function (Class, memoryName) {
         Object.defineProperty(Class.prototype, "memory", {
-            get : function() {
+            get: function () {
                 if (!Memory[memoryName]) {
                     Memory[memoryName] = {};
                 }
                 Memory[memoryName][this.id] = Memory[memoryName][this.id] || {};
                 return Memory[memoryName][this.id];
             },
-            set : function(value) {
+            set: function (value) {
                 if (!Memory[memoryName]) {
                     Memory[memoryName] = {};
                 }
                 Memory[memoryName][this.id] = value;
             },
             enumerable: true,
-            configurable: true,
+            configurable: true
         });
     },
 
-    getClosestObject : function(creep, targets, filterFunction = function() { return true; }) {
+    getClosestObject: function (creep, targets, filterFunction = function () { return true; }) {
         return _.minBy(targets.map((targetId) => {
             return Game.getObjectById(targetId);
         }).filter(filterFunction), (target) => {
@@ -324,9 +370,9 @@ module.exports = {
         });
     },
 
-    getClosestEdge : function(edges, filterFunction = function() { return true; }) {
+    getClosestEdge: function (edges, filterFunction = function () { return true; }) {
         return _.minBy(edges.filter(filterFunction), (edge) => {
             return math.getDistanceBetweenPos(edge.pos0, edge.pos1);
         });
-    },
+    }
 };

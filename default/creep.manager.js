@@ -1,31 +1,33 @@
+/* globals Creep, GridPostition */
+
 let utils = require("utils");
 
 utils.definePropertyInMemory(Creep, "role");
 
 utils.definePropertyInMemory(Creep, "task");
 
-utils.definePropertyInMemory(Creep, "pathIdx", function() {
+utils.definePropertyInMemory(Creep, "pathIdx", function () {
     return 0;
 });
-utils.definePropertyInMemory(Creep, "pathPos", function() {
+utils.definePropertyInMemory(Creep, "pathPos", function () {
     return 0;
 });
-//moved away from the path
-utils.definePropertyInMemory(Creep, "movedAway", function() {
+// moved away from the path
+utils.definePropertyInMemory(Creep, "movedAway", function () {
     return 0;
 });
-utils.definePropertyInMemory(Creep, "movingAway", function() {
+utils.definePropertyInMemory(Creep, "movingAway", function () {
     return 0;
 });
-utils.definePropertyInMemory(Creep, "targetPathPos", function() {
+utils.definePropertyInMemory(Creep, "targetPathPos", function () {
     return 0;
 });
 
-//swapPos
-//processed
-//moved
+// swapPos
+// processed
+// moved
 
-utils.defineInstancePropertyInMemory(Creep, "gridPosition", GridPostition, function() {
+utils.defineInstancePropertyInMemory(Creep, "gridPosition", GridPostition, function () {
     return null;
 });
 utils.definePosPropertyInMemory(Creep, "gridMove");

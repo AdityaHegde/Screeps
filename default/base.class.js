@@ -1,15 +1,17 @@
+/* globals Memory */
+
 let utils = require("utils");
 
 Memory.ids = Memory.ids || {};
 
-module.exports = function(className, memoryName) {
+module.exports = function (className, memoryName) {
     Memory.ids[memoryName] = Memory.ids[memoryName] || 0;
 
-    let ClassFunction = function(id) {
+    // TODO write a ClassFunction.create method to reuse instances with same id during a tick
+    let ClassFunction = function (id) {
         if (arguments.length > 0) {
             this.id = id;
-        }
-        else {
+        } else {
             this.id = className + "_" + (++Memory.ids[memoryName]);
         }
     };
@@ -19,8 +21,8 @@ module.exports = function(className, memoryName) {
 
     utils.addMemorySupport(ClassFunction, memoryName);
 
-    ClassFunction.extend = function(members, staticMembers) {
-        let child = function() {
+    ClassFunction.extend = function (members, staticMembers) {
+        let child = function () {
             ClassFunction.call(this, ...arguments);
         };
 
@@ -31,16 +33,16 @@ module.exports = function(className, memoryName) {
         child.extend = this.extend;
 
         if (members) {
-            for(let m in members) {
-                if(members.hasOwnProperty(m)) {
+            for (let m in members) {
+                if (members.hasOwnProperty(m)) {
                     child.prototype[m] = members[m];
                 }
             }
         }
         child.__staticMembers = {};
         if (staticMembers) {
-            for(let sm in staticMembers) {
-                if(staticMembers.hasOwnProperty(sm)) {
+            for (let sm in staticMembers) {
+                if (staticMembers.hasOwnProperty(sm)) {
                     child[sm] = staticMembers[sm];
                     child.__staticMembers[sm] = 1;
                 }

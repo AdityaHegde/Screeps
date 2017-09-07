@@ -1,65 +1,82 @@
-let constants = require("constants");
-let utils = require("utils");
+/* globals _, FIND_HOSTILE_CREEPS, ATTACK, RANGED_ATTACK, HEAL */
+
 let TARGET_TYPE_ORDER = ["healers", "melee", "ranged"];
+let math = require("math");
+let utils = require("utils");
+let BaseClass = require("base.class");
 
 /**
  * Assembles enemy army and returns possbible targets in priority order
  * @module army
  * @submodule enemy
+ * @class EnemyArmy
  */
 
-module.exports = {
-    init : function(room, creeps) {
-        let armyInfo = {
-            melee : [],
-            ranged : [],
-            healers : [],
-            maxX : -1,
-            maxY : -1,
-            minX : 99999,
-            minY : 99999,
-        };
+EnemyArmy = BaseClass("enemyArmy", "enemyArmies");
 
-        creeps = creeps || room.find(FIND_HOSTILE_CREEPS);
+utils.definePropertyInMemory(EnemyArmy, "roomName")
 
-        creeps.forEach(function(creep) {
-            if (creep.getActiveBodyparts(ATTACK)) {
-                armyInfo.melee.push(creep);
-            }
-            if (creep.getActiveBodyparts(RANGED_ATTACK)) {
-                armyInfo.ranged.push(creep);
-            }
-            if (creep.getActiveBodyparts(HEAL)) {
-                armyInfo.healers.push(creep);
-            }
-            if (creep.pos.x > armyInfo.maxX) {
-                armyInfo.maxX = creep.pos.x;
-            }
-            if (creep.pos.y > armyInfo.maxY) {
-                armyInfo.maxY = creep.pos.y;
-            }
-            if (creep.pos.x < armyInfo.minX) {
-                armyInfo.minX = creep.pos.x;
-            }
-            if (creep.pos.y < armyInfo.minY) {
-                armyInfo.minY = creep.pos.y;
-            }
-        });
+utils.definePropertyInMemory(EnemyArmy, "enemyCreepInfo", function () {
+    return {};
+});
 
-        return {
-            targets : _.flatten(
-                TARGET_TYPE_ORDER.map((targetType) => {
-                    return armyInfo[targetType].sort((creep1, creep2) => {
-                        return creep1.maxHits - creep2.maxHits;
-                    }).map(creep => creep.id);
-                })
-            ),
-            area : {
-                left : armyInfo.minX,
-                top : armyInfo.minY,
-                right : armyInfo.maxX,
-                bottom : armyInfo.maxY,
-            },
-        };
-    },
+utils.defineHeapPropertyInMemory(EnemyArmy, "enemyArmy");
+
+EnemyArmy.prototype.tick = function () {
+    let room = Game.rooms[this.roomName];
+    let creeps = room.find(FIND_HOSTILE_CREEPS);
+    let creepByName = {};
+    this.enemyCreeps = [];
+
+    // assign the compareFunction. funcitons cannot be stored in memory.
+    this.enemyArmy.compareFunction = (a, b) => {
+        return this.enemyCreepInfo[a].weight - this.enemyCreepInfo[b].weight;
+    };
+
+    // go through all creeps and
+    creeps.forEach((creep) => {
+        let weight = this.getWeightForCreep(creep);
+        creepByName[creep.name] = creep;
+        if (!this.enemyCreepInfo[creep.name]) {
+            this.enemyCreepInfo[creep.name] = this.getCreepInfo(creep);
+            this.enemyArmy.add(creep.name);
+        } else if (this.enemyCreepInfo[creep.name].weight !== weight) {
+            this.enemyCreepInfo[creep.name].weight = weight;
+            this.enemyArmy.update(creep.name);
+        }
+    });
+
+    let removeCreeps = [];
+
+    this.enemyArmy.array.forEach((creepName) => {
+        if (creepByName[creepName]) {
+            this.enemyCreepInfo[creepName].lastSeen = 0;
+            this.enemyCreeps.push(creepByName[creepName]);
+        } else {
+            this.enemyCreepInfo[creepName].lastSeen++;
+            if (this.enemyCreepInfo[creepName].lastSeen > 5) {
+                removeCreeps.push(creepName);
+            }
+        }
+    });
+
+    removeCreeps.forEach((creepName) => {
+        this.enemyArmy.delete(creepName);
+        delete this.enemyCreepInfo[creepName];
+    });
 };
+
+EnemyArmy.prototype.getWeightForCreep = function(creep) {
+    return creep.hits;
+};
+
+EnemyArmy.prototype.getCreepInfo = function(creep) {
+    let room = Game.rooms[this.roomName];
+    let direction = math.getExitByPos(creep.pos);
+    return {
+        weight : this.getWeightForCreep(creep),
+        lastSeen : 0,
+    };
+};
+
+module.exports = EnemyArmy;

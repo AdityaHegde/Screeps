@@ -1,3 +1,5 @@
+/* globals WORK, CARRY, MOVE */
+
 let BaseRole = require("role.base");
 
 /**
@@ -8,15 +10,15 @@ let BaseRole = require("role.base");
  */
 
 module.exports = BaseRole.extend({
-    getMaxCount : function() {
+    getMaxCount: function () {
         return 1;
-    },
+    }
 }, {
-    PARTS : [WORK, CARRY, CARRY, MOVE],
-    MAIN_PARTS : [WORK],
-    TASKS : [
+    PARTS: [WORK, CARRY, CARRY, MOVE],
+    MAIN_PARTS: [WORK],
+    TASKS: [
         ["withdrawUpgrader"],
-        ["upgrade"],
+        ["upgrade"]
     ],
-    ROLE_NAME : "upgrader",
+    ROLE_NAME: "upgrader"
 });

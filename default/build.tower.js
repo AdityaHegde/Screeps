@@ -1,5 +1,5 @@
-let constants = require("constants");
-let math = require("math");
+/* globals _, STRUCTURE_TOWER */
+
 let containerBuild = require("build.container");
 
 /**
@@ -10,12 +10,12 @@ let containerBuild = require("build.container");
 */
 
 module.exports = _.merge({}, containerBuild, {
-    initForCursorObject : function(buildPlanner, pathInfo, idx) {
+    initForCursorObject: function (buildPlanner, pathInfo, idx) {
         let parallelPath0 = pathInfo.parallelPath0;
         let parallelPath1 = pathInfo.parallelPath1;
         let paths = [];
 
-        //have a buffer of 2 slots for creating extensions
+        // have a buffer of 2 slots for creating extensions
         for (let i = 0; i < parallelPath0.length && i < parallelPath1.length && paths.length < 2; i++) {
             [parallelPath0[i], parallelPath1[i]].forEach((pos) => {
                 if (paths.length < 2) {
@@ -27,5 +27,5 @@ module.exports = _.merge({}, containerBuild, {
         return paths;
     },
 
-    TYPE : STRUCTURE_TOWER,
+    TYPE: STRUCTURE_TOWER
 });

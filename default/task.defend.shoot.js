@@ -1,26 +1,35 @@
-let constants = require("constants");
-let PositionTask = require("task.position");
+let BaseTask = require("task.base");
 
 /**
  * Task for defenders to shoot at enemy
  *
  * @module task
  * @class DefendShootTask
- * @extends PositionTask
+ * @extends BaseTask
  */
 
-module.exports = PositionTask.extend({
-    getTargets : function() {
-        return ((this.room.defence.enemyArmy && this.room.defence.enemyArmy.targets) || []).splice();
+module.exports = BaseTask.extend({
+    getTargets: function () {
+        return this.room.enemyArmy.enemyCreeps;
     },
 
-    doTask : function(creep, target) {
+    doTask: function (creep, target) {
         return creep.rangedAttack(target);
     },
 
-    isTargetValid : function(target) {
+    isTargetValid: function (target) {
         return target.hits <= 0;
     },
+
+    targetIsClaimed : function (creep, target) {
+        this.targetsMap[target.id]++;
+    },
+
+    
+
+    getTargetForMovement : function (creep, target) {
+
+    }
 }, {
-    TASK_NAME : "defendShoot",
+    TASK_NAME: "defendShoot"
 });

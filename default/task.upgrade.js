@@ -9,22 +9,22 @@ let BaseTask = require("task.base");
  */
 
 module.exports = BaseTask.extend({
-    getTarget : function() {
+    getTarget: function () {
         return this.room.controller;
     },
 
-    getTargets : function() {
+    getTargets: function () {
         return [this.room.controller.id];
     },
 
-    doTask : function(creep, target) {
+    doTask: function (creep, target) {
         return creep.upgradeController(target);
     },
 
-    isTargetValid : function(target) {
-        //TODO
+    isTargetValid: function (target) {
+        // TODO
         return true;
-    },
+    }
 }, {
-    TASK_NAME : "upgrade",
+    TASK_NAME: "upgrade"
 });

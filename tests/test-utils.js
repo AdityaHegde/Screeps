@@ -10,7 +10,7 @@ let OFFSETS_BY_DIRECTION = {
 };
 
 module.exports = {
-    getPathFromDirections : function(...directions) {
+    getPathFromDirections : function (...directions) {
         return directions.map((direction) => {
             return {
                 direction : direction,
@@ -18,13 +18,13 @@ module.exports = {
         });
     },
 
-    registerAllowables : function(mockery, ...allowables) {
+    registerAllowables : function (mockery, ...allowables) {
         allowables.forEach((allowable) => {
             mockery.registerSubstitute(allowable, process.cwd() + "/default/" + allowable);
         });
     },
 
-    deserializePath : function(path) {
+    deserializePath : function (path) {
         let result = [];
         let x,y, direction, dx, dy;
 
@@ -36,7 +36,7 @@ module.exports = {
         for (let i = 4; i < path.length; i++) {
             let directions = [];
             direction = parseInt(path.charAt(i));
-            if (path.charAt(i) == "x") {
+            if (path.charAt(i) === "x") {
                 for (let j = 0; j < Number(path.charAt(i+1)) - 1; j++) {
                     directions.push(prevDirection);
                 }
@@ -64,20 +64,20 @@ module.exports = {
         return result;
     },
 
-    visualize : function(...paths) {
+    visualize : function (maxX, maxY, ...paths) {
         let matrix = {};
         paths.forEach((path, idx) => {
             path.forEach((pos) => {
                 matrix[pos.x] = matrix[pos.x] || {};
                 matrix[pos.x][pos.y] = matrix[pos.x][pos.y] || [];
-                matrix[pos.x][pos.y].push(idx+1);
+                matrix[pos.x][pos.y].push(idx);
             });
         });
 
-        for (let j = 0; j < 20; j++) {
+        for (let j = 0; j < maxX; j++) {
             let str = "";
-            for (let i = 0; i < 20; i++) {
-                let chars = (matrix[i] && matrix[i][j] ? matrix[i][j].join(",") : "0");
+            for (let i = 0; i < maxY; i++) {
+                let chars = (matrix[i] && matrix[i][j] ? matrix[i][j].join(",") : "X");
                 str += chars;
                 for (let k = 0; k < 4 - chars.length; k++) {
                     str += " ";
@@ -87,7 +87,11 @@ module.exports = {
         }
     },
 
-    getPathInfo : function(path, math) {
+    deserializeAndVisualize : function (maxX, maxY, ...paths) {
+        this.visualize(maxX, maxY, ...paths.map(path => this.deserializePath(path)));
+    },
+
+    getPathInfo : function (path, math) {
         path = this.deserializePath(path);
         let parallelPaths = math.getParallelPaths(path);
         return {
@@ -101,12 +105,62 @@ module.exports = {
         };
     },
 
-    registerTerrainWalls : function(wallPaths, getTerrainAt) {
+    registerTerrainWalls : function (wallPaths, getTerrainAt) {
         wallPaths.forEach((wallPath) => {
             wallPath = this.deserializePath(wallPath);
             wallPath.forEach((wallPos) => {
                 getTerrainAt.withArgs(wallPos.x, wallPos.y).returns("wall");
             });
-        })
+        });
+        getTerrainAt.returns("plain");
+    },
+
+    jsonify : function (instance) {
+        let json;
+
+        if (_.isArray(instance)) {
+            json = _.map(instance, (element) => {
+                return this.jsonify(element);
+            });
+        }
+        else if (_.isObject(instance)) {
+            json = {};
+            _.forIn(instance, (value, key) => {
+                let newValue = this.jsonify(value);
+                if (newValue !== "__INVALID__") {
+                    json[key] = newValue;
+                }
+            });
+        }
+        else if (_.isFunction(instance)) {
+            json = "__INVALID__";
+        }
+        else {
+            json = instance;
+        }
+
+        return json;
+    },
+
+    correctJSON : function (json) {
+        let correctedJson;
+
+        if (_.isArray(json)) {
+            correctedJson = _.map(json, (element) => {
+                return this.correctJSON(element);
+            });
+        }
+        else if (_.isObject(json)) {
+            correctedJson = {};
+            _.forIn(json, (value, key) => {
+                let correctedKey = key.replace(/^_/, "");
+                correctedJson[correctedKey] = this.correctJSON(value);
+            });
+        }
+        else {
+            correctedJson = json;
+        }
+
+        return correctedJson;
     },
 };

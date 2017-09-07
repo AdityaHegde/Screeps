@@ -1,3 +1,5 @@
+/* globals FIND_STRUCTURES */
+
 let constants = require("constants");
 let BuildTask = require("task.build");
 
@@ -10,31 +12,31 @@ let BuildTask = require("task.build");
  */
 
 module.exports = BuildTask.extend({
-    updateTargetsMap : function() {
+    updateTargetsMap: function () {
         this.getTargets().forEach((target) => {
             this.targetsMap[target] = this.targetsMap[target] || 0;
         });
         this.hasTarget = Object.keys(this.targetsMap).length > 0;
     },
 
-    getTargets : function() {
+    getTargets: function () {
         return this.room.find(FIND_STRUCTURES, {
-            filter : structure => structure.hits < structure.hitsMax / 2
+            filter: structure => structure.hits < structure.hitsMax / 2
         }).map((target) => target.id);
     },
 
-    doTask : function(creep, target) {
+    doTask: function (creep, target) {
         return creep.repair(target);
     },
 
-    isTargetValid : function(target) {
+    isTargetValid: function (target) {
         return target && target.hits >= target.hitsMax;
     },
 
-    isAssignedTargetValid : function(target) {
-        return (target.maxHits - target.hits - this.targetsMap[target.id]) > 0;
-    },
+    isAssignedTargetValid: function (target) {
+        return (target.hitsMax - target.hits - this.targetsMap[target.id]) > 0;
+    }
 }, {
-    UPDATE_TARGET_EVENTS : [constants.PERIODIC_10_TICKS],
-    TASK_NAME : "repair",
+    UPDATE_TARGET_EVENTS: [constants.PERIODIC_10_TICKS],
+    TASK_NAME: "repair"
 });

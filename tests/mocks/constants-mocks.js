@@ -1,4 +1,4 @@
-module.exports = function() {
+module.exports = function () {
     global.TOP = 1;
     global.TOP_RIGHT = 2;
     global.RIGHT = 3;
@@ -30,5 +30,10 @@ module.exports = function() {
     };
 
     global.FIND_CONSTRUCTION_SITES = "findConstructionSites";
+    global.FIND_SOURCES = "findSources";
+    global.FIND_HOSTILE_CREEPS = "findHostileCreeps";
+
+    global.LOOK_STRUCTURES = "lookStructures";
+
     global.ERR_INVALID_TARGET = "errInvalidTarget";
 };

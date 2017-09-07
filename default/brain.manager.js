@@ -1,22 +1,24 @@
+/* globals Game */
+
 let utils = require("utils");
 let BaseClass = require("base.class");
+// eslint-disable-next-line no-unused-vars
 let roomManager = require("room.manager");
 
 let Brain = BaseClass("brain", "brains");
 
-utils.definePropertyInMemory(Brain, "rooms", function() {
+utils.definePropertyInMemory(Brain, "rooms", function () {
     return Object.keys(Game.rooms);
 });
 
-Brain.prototype.tick = function() {
+Brain.prototype.tick = function () {
     this.rooms.forEach((roomName) => {
         let room = Game.rooms[roomName];
 
         if (room.controller.my) {
-            if (room.isInitialized == 2) {
+            if (room.isInitialized === 2) {
                 room.tick();
-            }
-            else {
+            } else {
                 room.init();
             }
 
@@ -26,7 +28,7 @@ Brain.prototype.tick = function() {
             //         pathInfo.paths.forEach((path) => {
             //             if (path.match(/^\d*:\d*$/)) {
             //                 let xy = path.split(":");
-            //                 visual.circle(Number(xy[0]), Number(xy[1]), {fill : (pathInfo.type == "tower" ? "red" : "white")});
+            //                 visual.circle(Number(xy[0]), Number(xy[1]), {fill : (pathInfo.type === "tower" ? "red" : "white")});
             //             }
             //             else {
             //                 path = Room.deserializePath(path);
