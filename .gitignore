@@ -47,6 +47,8 @@ Temporary Items
 .apdisk
 
 
+build
+game-copy
 node_modules
 coverage
 docs

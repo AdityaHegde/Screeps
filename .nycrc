@@ -3,7 +3,7 @@
     "default/**/*.js"
   ],
   "reporter": [
-    "lcov",
+  "lcov",
     "text-summary"
   ]
 }

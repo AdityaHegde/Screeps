@@ -1,11 +1,11 @@
 {
-    "extends": "standard",
-    "rules" : {
-        "indent": ["error", 4],
-        "quotes": ["error", "double"],
-        "semi": ["error", "always"],
+  "extends": "standard",
+  "rules" : {
+    "indent": ["error", 4],
+    "quotes": ["error", "double"],
+    "semi": ["error", "always"],
 
-        "one-var": "off",
-        "node/no-deprecated-api": "off"
-    }
+    "one-var": "off",
+    "node/no-deprecated-api": "off"
+  }
 }

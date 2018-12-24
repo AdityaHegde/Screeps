@@ -1,0 +1,14 @@
+{
+  "api": {
+    "protocol": "https",
+    "hostname": "screeps.com",
+    "port": 443,
+    "path": "/"
+  },
+
+  "memory": {
+    "roomsSegment": 0
+  },
+
+  "shards": 3
+}

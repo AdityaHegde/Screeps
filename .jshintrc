@@ -1,13 +1,13 @@
 {
-    "bitwise"       : false,
-    "curly"         : true,
-    "eqeqeq"        : false,
-    "node"          : true,
-    "esversion"     : 6,
-    "globals"       : {
-        "Game" : true,
-        "Creep" : true,
-        "Memory" : true,
-        "Room" : true
-    }
+  "bitwise"     : false,
+  "curly"     : true,
+  "eqeqeq"    : false,
+  "node"      : true,
+  "esversion"   : 6,
+  "globals"     : {
+    "Game" : true,
+    "Creep" : true,
+    "Memory" : true,
+    "Room" : true
+  }
 }

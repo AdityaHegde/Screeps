@@ -1,7 +1,7 @@
 {
-    "source": "./default",
-    "destination": "./docs",
-    "plugins": [
-        {"name": "esdoc-standard-plugin"}
-    ]
+  "source": "./default",
+  "destination": "./docs",
+  "plugins": [
+    {"name": "esdoc-standard-plugin"}
+  ]
 }
