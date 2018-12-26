@@ -133,7 +133,7 @@ class Decorators {
    * @param [ClassObject] {Class} Class for the instance. If not specified, Game.getObjectById is used.
    * @param [getter] {Function} Function that returns the initial value for 'property'. Defaults value to empty instance of ClassObject.
    */
-  static instanceInMemory(ClassObject, getter: Function = null): any {
+  static instanceInMemory(ClassObject = null, getter: Function = null): any {
     return this.inMemory(() => {
       return getter ? getter.call(this) : (ClassObject && new ClassObject());
     }, (instance) => {

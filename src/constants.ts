@@ -37,6 +37,11 @@ const PERIODIC_5_TICKS = "periodic5Ticks";
 const PERIODIC_10_TICKS = "periodic10Ticks";
 const PERIODIC_20_TICKS = "periodic20Ticks";
 
+const ROOM_STATE_UNOCCUPIED = "unoccupied";
+const ROOM_STATE_UNDEVELOPED = "undeveloped";
+const ROOM_STATE_UNINITIALIZED = "uninitialized";
+const ROOM_STATE_INITIALIZED = "initialized";
+
 export {
   OK,
 
@@ -75,4 +80,9 @@ export {
   PERIODIC_20_TICKS,
 
   PARALLEL_BUILD_COUNT,
+
+  ROOM_STATE_UNOCCUPIED,
+  ROOM_STATE_UNDEVELOPED,
+  ROOM_STATE_UNINITIALIZED,
+  ROOM_STATE_INITIALIZED,
 }

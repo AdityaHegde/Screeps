@@ -14,11 +14,7 @@ class Brain {
       let room: ControllerRoom = ControllerRoom.getRoomByName(roomName);
 
       if (room.controller.my) {
-        if (room.isInitialized === 2) {
-          room.tick();
-        } else {
-          room.init();
-        }
+        room.tick();
 
         // if (this.rooms.length > 0) {
         //   let visual = new RoomVisual(room.name);

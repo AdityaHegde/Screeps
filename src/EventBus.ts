@@ -36,27 +36,19 @@ class EventBus extends BaseClass implements Runnable {
     });
   }
 
-  public fireEvent(eventName, target) {
+  public fireEvent(eventName, target, ...args) {
     this.fireEvents[eventName] = this.fireEvents[eventName] || [];
-    if (_.isArray(target)) {
-      this.fireEvents[eventName].push(...target);
-    } else {
-      this.fireEvents[eventName].push(target);
-    }
+    this.fireEvents[eventName].push(target, ...args);
   }
 
-  public fireDelayedEvent(eventName, target) {
+  public fireDelayedEvent(eventName, target, ...args) {
     this.delayedEvents[eventName] = this.delayedEvents[eventName] || [];
-    if (_.isArray(target)) {
-      this.delayedEvents[eventName].push(...target);
-    } else {
-      this.delayedEvents[eventName].push(target);
-    }
+    this.delayedEvents[eventName].push(target, ...args);
   }
 
   public preTick() {
     for (let eventName in this.delayedEvents) {
-      this.fire(eventName, this, this.delayedEvents[eventName]);
+      this.fire(eventName, this.delayedEvents[eventName]);
       delete this.delayedEvents[eventName];
     }
   }
@@ -67,25 +59,25 @@ class EventBus extends BaseClass implements Runnable {
   
   public postTick() {
     if (Game.time % 5 === 0) {
-      this.fire(PERIODIC_5_TICKS, 1);
+      this.fire(PERIODIC_5_TICKS, [this]);
     }
     if (Game.time % 10 === 0) {
-      this.fire(PERIODIC_10_TICKS, 1);
+      this.fire(PERIODIC_10_TICKS, [this]);
     }
     if (Game.time % 20 === 0) {
-      this.fire(PERIODIC_20_TICKS, 1);
+      this.fire(PERIODIC_20_TICKS, [this]);
     }
 
     for (let eventName in this.fireEvents) {
-      this.fire(eventName, this, this.fireEvents[eventName]);
+      this.fire(eventName, this.fireEvents[eventName]);
     }
   }
 
-  private fire(eventName: string, target: any, ...args) {
+  private fire(eventName: string, eventDetails: Array<any>) {
     if (this.listeners[eventName]) {
       this.listeners[eventName].forEach((listener) => {
-        let context = deepGet(target, listener.contextPath);
-        context[listener.method](...args);
+        let context = deepGet(eventDetails[0], listener.contextPath);
+        context[listener.method](...eventDetails.splice(1));
       });
     }
   }

@@ -19,6 +19,6 @@ export default class Builder extends Worker {
   ];
 
   getMaxCount() {
-    return 2 + this.controllerRoom.tasksInfo.build.hasTarget * 2;
+    return 2 + (this.controllerRoom.tasks.get("build").hasTarget ? 2 : 0);
   }
 }

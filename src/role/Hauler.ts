@@ -22,7 +22,7 @@ export default class Hauler extends Worker {
   getMaxCount() {
     // have a container for each source and one more for controller and another one for towers
     // hauler will haul from each container to other sources
-    return this.controllerRoom.sourceManager.sources.length + 2;
+    return this.controllerRoom.sourceManager.sources.size + 2;
   }
 
   getMaxParts() {

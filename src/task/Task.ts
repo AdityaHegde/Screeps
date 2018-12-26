@@ -5,6 +5,8 @@ import Utils from "../Utils";
 import ControllerRoom from "../ControllerRoom";
 import PathNavigation from "../path/PathNavigation";
 import eventBus from "../EventBus";
+import CreepWrapper from "src/CreepWrapper";
+import MemoryMap from "src/MemoryMap";
 
 @Decorators.memory()
 export abstract class Task extends BaseClass {
@@ -25,21 +27,21 @@ export abstract class Task extends BaseClass {
   }
 
   @Decorators.inMemory()
-  protected targetsMap: any = {};
+  targetsMap: any = {};
 
   @Decorators.inMemory()
-  protected hasTarget: boolean = false;
+  hasTarget: boolean = false;
+
+  @Decorators.instanceMapInMemoryByName(CreepWrapper)
+  creeps: MemoryMap<string, CreepWrapper>;
 
   @Decorators.inMemory()
-  protected creeps: any = {};
-
-  @Decorators.inMemory()
-  protected creepsCount: number = 0;
+  creepsCount: number = 0;
 
   // TODO: hook these up
-  protected pathNavigation: PathNavigation;
+  pathNavigation: PathNavigation;
 
-  protected controllerRoom: ControllerRoom;
+  controllerRoom: ControllerRoom;
 
   abstract init(): void;
 

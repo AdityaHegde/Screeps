@@ -9,6 +9,12 @@ export default class CreepWrapper extends PathPosObject {
 
   creep: Creep;
 
+  @Decorators.inMemory()
+  role: any;
+
+  @Decorators.inMemory()
+  task: any;
+
   constructor(name: string) {
     super();
     this.name = name;

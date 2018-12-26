@@ -4,6 +4,7 @@ import ControllerRoom from "../ControllerRoom";
 import { CREEP_CREATED, ERR_INVALID_TASK } from "../constants";
 import * as _ from "lodash";
 import eventBus from "../EventBus";
+import CreepWrapper from "src/CreepWrapper";
 
 @Decorators.memory()
 export default abstract class Role extends BaseClass {
@@ -54,7 +55,7 @@ export default abstract class Role extends BaseClass {
   validTasksCount: any = {};
 
   abstract init();
-  
+
   tick() {
     this.upgradeParts();
   
@@ -84,7 +85,7 @@ export default abstract class Role extends BaseClass {
       newPart = this.constructor["mainParts"][this.i];
     }
   }
-  
+
   spawnCreeps() {
     // spawn creeps
     if (this.creepsCount < this.getMaxCount() && this.partsCost <= this.controllerRoom.room.energyAvailable) {
@@ -92,7 +93,7 @@ export default abstract class Role extends BaseClass {
       let spawn = _.find(Game.spawns, (spawn) => {
         return !spawn.spawning;
       });
-  
+
       if (spawn) {
         let creepName = spawn.createCreep(parts as any, undefined, {role: { name: this.constructor["className"] }});
         if (_.isString(creepName)) {
@@ -107,22 +108,22 @@ export default abstract class Role extends BaseClass {
   executeCreepsTasks() {
     // execute creeps' tasks
     for (let creepName in this.creeps) {
-      let creep = Game.creeps[creepName];
+      let creep = CreepWrapper.getCreepByName(creepName);
   
       if (creep) {
-        if (!creep.spawning) {
+        if (!creep.creep.spawning) {
           this.executeTask(creep);
         }
       } else if (Memory.creeps[creepName]) {
         // console.log("Creep", creepName, "died");
-        (Memory.creeps[creepName] as Creep).name = creepName;
+        (Memory.creeps[creepName] as any).name = creepName;
         // this.controllerRoom.creepHasDied(Memory.creeps[creepName]);
         delete Memory.creeps[creepName];
       }
     }
   }
-  
-  addCreep(creep) {
+
+  addCreep(creep: CreepWrapper) {
     if (creep.task) {
       creep.task.tasks = {};
       creep.task.tier = 0;
@@ -137,8 +138,8 @@ export default abstract class Role extends BaseClass {
     this.creeps[creep.name] = 1;
     this.creepsCount++;
   }
-  
-  removeCreep(creep) {
+
+  removeCreep(creep: CreepWrapper) {
     if (creep.task) {
       for (let tier in creep.task.tasks) {
         creep.task.tier = tier;
@@ -146,15 +147,15 @@ export default abstract class Role extends BaseClass {
       }
     }
   }
-  
-  executeTask(creep) {
+
+  executeTask(creep: CreepWrapper) {
     // console.log(creep.name, creep.role.name, creep.task);
     if (creep.task) {
       creep.task.targets = creep.task.targets || {};
       let currentTask = this.constructor["creepTasks"][creep.task.tier][creep.task.current];
       // console.log(creep.name, creep.role.name, currentTask);
       if (currentTask) {
-        let returnValue = this.controllerRoom.tasksInfo[currentTask].execute(creep);
+        let returnValue = this.controllerRoom.tasks.get(currentTask).execute(creep);
         switch (returnValue) {
         case ERR_INVALID_TARGET:
         case ERR_NO_BODYPART:
@@ -162,18 +163,18 @@ export default abstract class Role extends BaseClass {
           // console.log("reassignTask");
           this.reassignTask(creep);
           break;
-  
+
         case ERR_NOT_ENOUGH_RESOURCES:
         case ERR_INVALID_TASK:
           // console.log("switchTask");
           this.switchTask(creep);
           break;
-  
+
         case OK:
         case ERR_BUSY:
           // console.log("OK");
           break;
-  
+
         default:
           // console.log(returnValue);
           break;
@@ -185,7 +186,7 @@ export default abstract class Role extends BaseClass {
       this.assignNewTask(creep, true);
     }
   }
-  
+
   getMaxCount() {
     return this.controllerRoom.sourceManager.totalAvailableSpaces * 3 / 2;
   }
@@ -198,7 +199,7 @@ export default abstract class Role extends BaseClass {
     return task.hasTarget;
   }
   
-  assignTask(creep, task, taskIdx) {
+  assignTask(creep: CreepWrapper, task, taskIdx) {
     creep.task = creep.task || {
       tier: 0,
       tasks: {},
@@ -211,13 +212,13 @@ export default abstract class Role extends BaseClass {
     task.execute(creep);
   }
 
-  assignNewTask(creep, isNew = false) {
+  assignNewTask(creep: CreepWrapper, isNew = false) {
     let tier = (isNew ? 0 : creep.task.tier);
     let tasks = this.constructor["creepTasks"][tier];
     let minCreepCount = 99999, minTaskIdx, minTask;
   
     for (let i = 0; i < tasks.length; i++) {
-      let task = this.controllerRoom.tasksInfo[tasks[i]];
+      let task = this.controllerRoom.tasks.get(tasks[i]);
       if (minCreepCount > task.creepsCount) {
         minCreepCount = task.creepsCount;
         minTaskIdx = i;
@@ -230,24 +231,24 @@ export default abstract class Role extends BaseClass {
     }
   }
   
-  clearTask(creep) {
+  clearTask(creep: CreepWrapper) {
     if (creep.task) {
-      let task = this.controllerRoom.tasksInfo[this.constructor["creepTasks"][creep.task.tier][creep.task.current]];
-      if (task && task.creeps[creep.name]) {
+      let task = this.controllerRoom.tasks.get(this.constructor["creepTasks"][creep.task.tier][creep.task.current]);
+      if (task && task.creeps.has(creep.name)) {
         // console.log("Clearing", creep.name, "from", this.constructor["creepTasks"][creep.task.tier][creep.task.current]);
         task.taskEnded(creep);
         task.creepsCount--;
-        delete task.creeps[creep.name];
+        task.creeps.delete(creep.name);
         delete creep.task.targets[creep.task.tier];
       } else {
         // console.log("Trying to clear", creep.name, "of unassigned task");
       }
     }
   }
-  
-  switchTask(creep) {
+
+  switchTask(creep: CreepWrapper) {
     if (this.tasks[creep.task.tier] && this.tasks[creep.task.tier][creep.task.current]) {
-      this.controllerRoom.tasksInfo[this.tasks[creep.task.tier][creep.task.current]].taskEnded(creep);
+      this.controllerRoom.tasks.get(this.tasks[creep.task.tier][creep.task.current]).taskEnded(creep);
     }
     creep.task.tier = (creep.task.tier + 1) % this.constructor["creepTasks"].length;
     creep.task.current = creep.task.tasks[creep.task.tier];
@@ -255,15 +256,15 @@ export default abstract class Role extends BaseClass {
     if (creep.task.current === undefined) {
       this.assignNewTask(creep);
     } else {
-      this.controllerRoom.tasksInfo[this.tasks[creep.task.tier][creep.task.current]].taskStarted(creep);
+      this.controllerRoom.tasks.get(this.tasks[creep.task.tier][creep.task.current]).taskStarted(creep);
     }
   }
 
-  reassignTask(creep) {
+  reassignTask(creep: CreepWrapper) {
     // TODO
   }
   
-  creepHasDied(creep) {
+  creepHasDied(creep: CreepWrapper) {
     this.clearTask(creep);
     if (this.creeps[creep.name]) {
       delete this.creeps[creep.name];

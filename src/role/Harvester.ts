@@ -21,7 +21,7 @@ export default class Harvester extends Role {
   getMaxCount() {
     // have a container for each source and one more for controller
     // hauler will haul from each container to other sources
-    return this.controllerRoom.sourceManager.sources.length;
+    return this.controllerRoom.sourceManager.sources.size;
   }
 
   getMaxParts() {

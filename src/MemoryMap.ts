@@ -44,4 +44,10 @@ export default class MemoryMap<K, T> extends Map {
   keys() {
     return Object.keys(this.memory) as any;
   }
+
+  forEach(method) {
+    for (let key of this.keys()) {
+      method(key, this.get(key));
+    }
+  }
 }
