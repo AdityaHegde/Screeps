@@ -1,13 +1,16 @@
 import BaseClass from "../BaseClass";
 import Decorators from "../Decorators";
-import { CONSTRUCTION_COMPLETED, CONSTRUCTION_SCHEDULED, PARALLEL_BUILD_COUNT } from "src/constants";
+import { PARALLEL_BUILD_COUNT } from "src/constants";
 import BuildingWrapper from "src/building/BuildingWrapper";
-import eventBus from "src/EventBus";
 import BuildPlanner from "src/building/BuildPlanner";
+import ConstructionSiteWrapper from "src/building/ConstructionSiteWrapper";
+import MemorySet from "src/MemorySet";
+import BuildingPlan from "src/building/BuildingPlan";
 
-@Decorators.memory()
+@Decorators.memory("buildings")
 export default abstract class Building extends BaseClass {
   static type: BuildableStructureConstant;
+  static visualColor: string = "white";
   static impassable: boolean = true;
 
   @Decorators.inMemory()
@@ -16,63 +19,154 @@ export default abstract class Building extends BaseClass {
   paths: Array<any> = [];
 
   // TODO: handle rebuild
-  @Decorators.inMemory()
-  planned: Array<Array<number>> = [];
+  @Decorators.instanceSetInMemory(BuildingPlan)
+  planned: MemorySet<BuildingPlan>;
 
-  @Decorators.inMemory()
-  built: Array<BuildingWrapper> = [];
+  @Decorators.instanceSetInMemory(BuildingPlan)
+  buildingScheduled: MemorySet<BuildingPlan>;
 
-  @Decorators.inMemory()
-  repair: Array<BuildingWrapper> = [];
+  @Decorators.instanceSetInMemory(ConstructionSiteWrapper)
+  building: MemorySet<ConstructionSiteWrapper>;
 
-  abstract getPlannedPositions(buildPlanner: BuildPlanner);
+  @Decorators.instanceSetInMemory(BuildingWrapper)
+  built: MemorySet<BuildingWrapper>;
+
+  @Decorators.instanceSetInMemory(BuildingWrapper)
+  repair: MemorySet<BuildingWrapper>;
+
+  abstract getPlannedPositions(buildPlanner: BuildPlanner): Array<BuildingPlan>;
 
   plan(buildPlanner: BuildPlanner) {
-    this.planned = this.getPlannedPositions(buildPlanner);
+    this.logger.log(`Planning: ${this.type}`);
+    this.planned.replace(this.getPlannedPositions(buildPlanner));
     if (this.constructor["impassable"]) {
-      this.planned.forEach((plannedSite) => {
-        buildPlanner.costMatrix.set(plannedSite[0], plannedSite[1], 255);
+      this.planned.forEach((plan: BuildingPlan) => {
+        buildPlanner.costMatrix.set(plan.x, plan.y, 255);
       });
     }
+    this.logger.log(`Planned: ${this.type}. ${this.planned.size} Plans`);
+  }
+
+  addPathPosInfoToPlans(buildPlanner: BuildPlanner, plans: Array<BuildingPlan>): Array<BuildingPlan> {
+    let planMap: Map<string, BuildingPlan>;
+    return plans;
+  }
+
+  addCenterToPlan(buildPlanner: BuildPlanner, plans: Array<BuildingPlan>): Array<BuildingPlan> {
+    plans.forEach((plan: BuildingPlan) => {
+      plan.x += buildPlanner.center.x;
+      plan.y += buildPlanner.center.y;
+    });
+    return plans;
+  }
+
+  formBuildingPlansRawPlans(buildPlanner: BuildPlanner, rawPlans: Array<Array<number>>): Array<BuildingPlan> {
+    return rawPlans.map((rawPlan) => {
+      return new BuildingPlan(`${buildPlanner.controllerRoom.name}_${rawPlan[0]}_${rawPlan[1]}`)
+        // TODO
+        // .setPos()
+        .setXY(rawPlan[0], rawPlan[1]);
+    });
   }
 
   build(buildPlanner: BuildPlanner): boolean {
+    if (Game.time % 5 === 0) {
+      this.checkBuildingsScheduled(buildPlanner);
+    }
+    if (Game.time % 25 === 0) {
+      this.checkConstructionSites(buildPlanner);
+    }
+
     let c = 0;
-    if (this.planned.length === 0) {
+    if (this.planned.size === 0) {
       // return true if this type of structure was finished before
       return true;
     }
 
-    // limit the operations to 5 (?)
-    while (this.planned.length > 0 && c < PARALLEL_BUILD_COUNT) {
-      let pos = this.planned[this.planned.length - 1];
+    let planFulfilled: Array<BuildingPlan> = [];
+    let plansFulfilled = () => {
+      planFulfilled.forEach((plan) => {
+        this.buildingScheduled.add(plan);
+        this.planned.delete(plan);
+      });
+    }
 
-      let returnValue = this.buildAt(buildPlanner, pos[0], pos[1]);
+    for (let plan of this.planned) {
+      let returnValue = this.buildAt(buildPlanner, plan.x, plan.y);
 
       // if max sites has been reached or if RCL is not high enough, return
       if (returnValue === ERR_FULL || returnValue === ERR_RCL_NOT_ENOUGH) {
+        plansFulfilled();
         // return true if RCL is not high enough, used to skip building a type for the current RCL
         return returnValue === ERR_RCL_NOT_ENOUGH;
       }
 
-      eventBus.fireDelayedEvent(CONSTRUCTION_SCHEDULED, buildPlanner.controllerRoom, pos[0], pos[1]);
+      if (returnValue === OK) {
+        planFulfilled.push(plan);
+      }
 
-      this.planned.pop();
+      c++;
+
+      if (c >= PARALLEL_BUILD_COUNT) {
+        break;
+      }
     }
 
-    if (this.planned.length === 0) {
-      eventBus.fireEvent(CONSTRUCTION_COMPLETED, buildPlanner.controllerRoom, this.constructor["type"]);
-    }
+    plansFulfilled();
 
     // build only one type at a time
     return false;
   }
 
-  buildAt(buildPlanner: BuildPlanner, x, y) {
-    return buildPlanner.controllerRoom.room.createConstructionSite(x, y, this.constructor["type"]);
+  checkBuildingsScheduled(buildPlanner: BuildPlanner) {
+    this.logger.log(`Checking ${this.buildingScheduled.size} buildings scheduled`);
+
+    let planPlaced: Array<BuildingPlan> = [];
+    this.buildingScheduled.forEach((plan: BuildingPlan) => {
+      let entitiesAtPlan: Array<any> =
+        buildPlanner.controllerRoom.room.lookForAt(LOOK_CONSTRUCTION_SITES, plan.x, plan.y);
+      if (entitiesAtPlan.length > 0 && entitiesAtPlan[0].structureType === this.constructor["type"]) {
+        let constructionSiteWrapper: ConstructionSiteWrapper =
+          new ConstructionSiteWrapper(entitiesAtPlan[0].id)
+          .setConstructionSite(entitiesAtPlan[0])
+          .setXY(plan.x, plan.y)
+          .setPos(plan.pathIdx, plan.pathPos, plan.direction);
+
+        this.building.add(constructionSiteWrapper);
+        planPlaced.push(plan);
+      }
+    });
+
+    planPlaced.forEach((plan: BuildingPlan) => {
+      this.buildingScheduled.delete(plan);
+    });
   }
 
-  isBuilt(buildPlanner: BuildPlanner, structure) {
-    this.built.push(new BuildingWrapper(structure));
+  checkConstructionSites(buildPlanner: BuildPlanner) {
+    this.logger.log(`Checking ${this.buildingScheduled.size} construction sites`);
+
+    let sitesBuilt: Array<ConstructionSiteWrapper> = [];
+    this.building.forEach((buildingSite: ConstructionSiteWrapper) => {
+      let entitiesAtPlan: Array<any> =
+        buildPlanner.controllerRoom.room.lookForAt(LOOK_STRUCTURES, buildingSite.x, buildingSite.y);
+      if (entitiesAtPlan.length > 0 && entitiesAtPlan[0].structureType === this.constructor["type"]) {
+        let buildingWrapper: BuildingWrapper =
+          new BuildingWrapper(entitiesAtPlan[0].id)
+          .setBuilding(entitiesAtPlan[0])
+          .setXY(buildingSite.x, buildingSite.y)
+          .setPos(buildingSite.pathIdx, buildingSite.pathPos, buildingSite.direction);
+
+        this.built.add(buildingWrapper);
+        sitesBuilt.push(buildingSite);
+      }
+    });
+
+    sitesBuilt.forEach((buildingSite: ConstructionSiteWrapper) => {
+      this.building.delete(buildingSite);
+    });
+  }
+
+  buildAt(buildPlanner: BuildPlanner, x, y) {
+    return buildPlanner.controllerRoom.room.createConstructionSite(x, y, this.constructor["type"]);
   }
 }

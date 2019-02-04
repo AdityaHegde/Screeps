@@ -1,6 +1,6 @@
 //https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20htmlstring%20where%20url%3D%27https%3A%2F%2Fscreeps.com%2Fapi%2Fgame%2Froom-terrain%3Froom%3DW8N8%26encoded%3D1%27&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=
 
-module.exports = {
+export default {
   0 : {
     0  : "wall",
     1  : "wall",
@@ -72,4 +72,4 @@ module.exports = {
     48 : "wall",
     49 : "wall",
   },
-};
+}

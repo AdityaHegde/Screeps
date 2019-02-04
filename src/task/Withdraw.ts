@@ -7,6 +7,8 @@ import {
 } from "../constants";
 import eventBus from "../EventBus";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
+import CreepWrapper from "src/CreepWrapper";
 
 /**
  * Task to withdraw energy from containers
@@ -15,12 +17,14 @@ import Decorators from "src/Decorators";
  * @class Withdraw
  * @extends StoreTask
  */
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Withdraw extends Store {
+  static taskName: string = "withdraw";
   static updateTargetEvents: Array<string> = [ENERGY_STORED, PERIODIC_10_TICKS];
   static updatePotentialTargetEvents: Array<string> = [CONTAINER_BUILT];
   
-  doTask(creep, target) {
+  doTask(creep: CreepWrapper, target) {
     let returnValue = creep.withdraw(target, RESOURCE_ENERGY);
     if (returnValue === OK && target.store && target.store.energy === target.storeCapacity) {
       eventBus.fireEvent(ENERGY_WITHDRAWN, target);
@@ -28,7 +32,7 @@ export default class Withdraw extends Store {
     return returnValue;
   }
 
-  isTaskValid(creep, target) {
+  isTaskValid(creep: CreepWrapper, target) {
     return creep.carry.energy < creep.carryCapacity;
   }
 

@@ -1,7 +1,9 @@
 import Decorators from "../Decorators";
 import BaseClass from "../BaseClass";
+import { Log } from "src/Logger";
 
-@Decorators.memory()
+@Decorators.memory("pathConnections")
+@Log
 class PathConnection extends BaseClass {
   @Decorators.inMemory()
   idx: number;
@@ -12,11 +14,12 @@ class PathConnection extends BaseClass {
   @Decorators.inMemory()
   targetPos: number;
 
-  constructor(idx: number, pos: number, targetPos: number) {
-    super();
+  setPos(idx: number, pos: number, targetPos: number) {
     this.idx = idx;
     this.pos = pos;
     this.targetPos = targetPos;
+
+    return this;
   }
 }
 

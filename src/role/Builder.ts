@@ -1,5 +1,6 @@
-import Worker from "./Worker";
+import WorkerRole from "./WorkerRole";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
 
 /**
  * Builder role.
@@ -7,8 +8,9 @@ import Decorators from "src/Decorators";
  * @class BuilderRole
  * @extends WorkerRole
  */
-@Decorators.memory()
-export default class Builder extends Worker {
+@Decorators.memory("roles")
+@Log
+export default class Builder extends WorkerRole {
   static creepParts: Array<BodyPartConstant> = [WORK, CARRY, MOVE, MOVE];
   static mainParts: Array<BodyPartConstant> = [WORK, CARRY];
   static creepTasks = [
@@ -17,6 +19,7 @@ export default class Builder extends Worker {
     // with auto balancing
     ["build", "repair"],
   ];
+  static roleName: string = "builder";
 
   getMaxCount() {
     return 2 + (this.controllerRoom.tasks.get("build").hasTarget ? 2 : 0);

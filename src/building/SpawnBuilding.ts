@@ -6,16 +6,15 @@ import BuildingPlan from "src/building/BuildingPlan";
 
 @Decorators.memory("buildings")
 @Log
-export default class Extension extends Building {
-  static type: BuildableStructureConstant = STRUCTURE_EXTENSION;
-  static impassable: boolean = true;
-  static visualColor: string = "orange";
+export default class SpawnBuilding extends Building {
+  static type: BuildableStructureConstant = STRUCTURE_SPAWN;
+  static impassable: boolean = false;
 
   @Decorators.inMemory()
-  type: string = "extension";
+  type: string = "spawn";
 
   getPlannedPositions(buildPlanner: BuildPlanner): Array<BuildingPlan> {
     return this.addCenterToPlan(buildPlanner,
-      this.formBuildingPlansRawPlans(buildPlanner, buildPlanner.extensionsPattern.extension));
+      this.formBuildingPlansRawPlans(buildPlanner, buildPlanner.extensionsPattern.spawn));
   }
 }

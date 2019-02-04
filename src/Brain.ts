@@ -1,38 +1,45 @@
 import Decorators from "./Decorators";
 import ControllerRoom from "./ControllerRoom";
+import BaseClass from "src/BaseClass";
+import { Log } from "src/Logger";
+import eventBus from "src/EventBus";
 
-@Decorators.memory()
-class Brain {
+@Decorators.memory("brain")
+@Log
+class Brain extends BaseClass {
   @Decorators.inMemory(function () {
     return Object.keys(Game.rooms);
   })
-
   rooms: Array<string>;
 
   tick() {
-    this.rooms.forEach((roomName) => {
-      let room: ControllerRoom = ControllerRoom.getRoomByName(roomName);
+    eventBus.preTick();
 
-      if (room.controller.my) {
-        room.tick();
+    try {
+      this.rooms.forEach((roomName) => {
+        let room: Room = Game.rooms[roomName];
+  
+        this.logger.log("Room:", room && room.name);
+  
+        if (room && room.controller && room.controller.my) {
+          let controllerRoom: ControllerRoom = new ControllerRoom(room);
+          controllerRoom.tick();
+  
+          // if (controllerRoom.buildManager) {
+          //   let visual = new RoomVisual(room.name);
+          //   controllerRoom.buildManager.buildings.forEach((buildingName, building) => {
+          //     building.planned.forEach((plan) => {
+          //       visual.circle(plan[0], plan[1], {fill : (building.constructor["visualColor"])});
+          //     });
+          //   });
+          // }
+        }
+      });
+    } catch (err) {
+      this.logger.log(err.stack);
+    }
 
-        // if (this.rooms.length > 0) {
-        //   let visual = new RoomVisual(room.name);
-        //   room.buildPlanner.pathsInfo.forEach((pathInfo) => {
-        //     pathInfo.paths.forEach((path) => {
-        //       if (path.match(/^\d*:\d*$/)) {
-        //         let xy = path.split(":");
-        //         visual.circle(Number(xy[0]), Number(xy[1]), {fill : (pathInfo.type === "tower" ? "red" : "white")});
-        //       }
-        //       else {
-        //         path = Room.deserializePath(path);
-        //         visual.poly(path, {lineStyle: "dashed"});
-        //       }
-        //     })
-        //   });
-        // }
-      }
-    });
+    eventBus.postTick();
   }
 }
 

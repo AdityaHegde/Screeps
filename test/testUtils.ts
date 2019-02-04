@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 let OFFSETS_BY_DIRECTION = {
   1: [0,-1],
   2: [1,-1],
@@ -9,7 +11,7 @@ let OFFSETS_BY_DIRECTION = {
   8: [-1,-1],
 };
 
-module.exports = {
+const testUtils = {
   getPathFromDirections : function (...directions) {
     return directions.map((direction) => {
       return {
@@ -164,3 +166,5 @@ module.exports = {
     return correctedJson;
   },
 };
+
+export default testUtils;

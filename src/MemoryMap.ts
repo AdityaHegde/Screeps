@@ -15,6 +15,10 @@ export default class MemoryMap<K, T> extends Map {
     this.deserializer = deserializer;
   }
 
+  get size(): number {
+    return Object.keys(this.memory).length;
+  }
+
   set(key: any, value: T) {
     super.set(key, value);
     this.memory[key] = this.serializer(value);
@@ -29,7 +33,7 @@ export default class MemoryMap<K, T> extends Map {
     if (!super.has(key) && (key in this.memory)) {
       this.set(key, this.deserializer(key, this.memory[key]));
     }
-    return this.get(key);
+    return super.get(key);
   }
 
   delete(key: any) {

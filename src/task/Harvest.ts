@@ -1,5 +1,8 @@
 import Decorators from "src/Decorators";
 import { Task } from "src/task/Task";
+import { Log } from "src/Logger";
+import SourceWrapper from "src/SourceWrapper";
+import CreepWrapper from "src/CreepWrapper";
 
 /**
  * Task to harvest source
@@ -8,19 +11,18 @@ import { Task } from "src/task/Task";
  * @class HarvestTask
  * @extends BaseTask
  */
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Harvest extends Task {
-  init(): void {
-    throw new Error("Method not implemented.");
-  }
+  static taskName: string = "harvest";
 
   tick() {
     this.hasTarget = true;
   }
 
-  getTarget(creep) {
+  getTarget(creep: CreepWrapper) {
     if (!creep.task.source) {
-      // this.controllerRoom.findAndClaimSource(creep);
+      this.controllerRoom.sourceManager.findAndClaimSource(creep);
     }
     return Game.getObjectById(creep.task.source);
   }
@@ -33,28 +35,28 @@ export default class Harvest extends Task {
     return [];
   }
 
-  doTask(creep, target) {
+  doTask(creep: CreepWrapper, target) {
     return creep.harvest(target);
   }
 
-  isTaskValid(creep, target) {
+  isTaskValid(creep: CreepWrapper, target) {
     return creep.carry.energy < creep.carryCapacity;
   }
 
-  targetIsReleased(creep, target) {
-    target.release(creep);
+  targetIsReleased(creep: CreepWrapper, target) {
+    SourceWrapper.getSourceWrapperById(target.id, this.controllerRoom).release(creep);
   }
 
-  getTargetForMovement(creep, target) {
+  getTargetForMovement(creep: CreepWrapper, target) {
     return target.spaces[creep.task.space];
   }
 
-  creepHasDied(creep) {
+  creepHasDied(creep: CreepWrapper) {
     super.creepHasDied(creep);
     if (creep.task) {
-      let source = Game.getObjectById(creep.task.source);
+      let source: Source = Game.getObjectById(creep.task.source);
       if (source) {
-        // source.release(creep);
+        SourceWrapper.getSourceWrapperById(source.id, this.controllerRoom).release(creep);
       }
     }
   }
@@ -63,15 +65,15 @@ export default class Harvest extends Task {
     return true;
   }
 
-  taskExecuted(creep: any, target: any) {}
+  taskExecuted(creep: CreepWrapper, target: any) {}
 
   isTargetValid(target: any): boolean {
     return true;
   }
 
-  targetIsClaimed(creep: any, target: any): void {}
+  targetIsClaimed(creep: CreepWrapper, target: any): void {}
 
-  targetIsInvalid(creep: any, target: any): void {}
+  targetIsInvalid(creep: CreepWrapper, target: any): void {}
 
   isAssignedTargetValid(target: any): boolean {
     return true;

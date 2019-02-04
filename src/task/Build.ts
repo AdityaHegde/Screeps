@@ -3,6 +3,8 @@ import { STRUCURE_BUILT, CONSTRUCTION_SITE_ADDED } from "../constants";
 import Utils from "../Utils";
 import eventBus from "../EventBus";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
+import CreepWrapper from "src/CreepWrapper";
 
 /**
  * Task to drop off energy to spawn, extension or other structures that take energy (TODO)
@@ -11,15 +13,15 @@ import Decorators from "src/Decorators";
  * @class BuildTask
  * @extends BaseTask
  */
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Build extends Task {
   static updateTargetEvents: Array<string> = [CONSTRUCTION_SITE_ADDED];
-
-  init() {}
+  static taskName: string = "build";
 
   tick() {}
 
-  doTask(creep, target) {
+  doTask(creep: CreepWrapper, target) {
     creep.task.targetType = target.structureType;
     creep.task.targetPos = {
       x: target.pos.x,
@@ -28,14 +30,16 @@ export default class Build extends Task {
     return creep.build(target);
   }
 
-  targetIsInvalid(creep, target) {
-    let newTarget = target || this.controllerRoom.room.lookForAt(LOOK_STRUCTURES, creep.task.targetPos.x, creep.task.targetPos.y)[0];
+  targetIsInvalid(creep: CreepWrapper, target) {
+    let newTarget = target ||
+      this.controllerRoom.room.lookForAt(LOOK_STRUCTURES,
+        creep.task.targetPos.x, creep.task.targetPos.y)[0];
     if (newTarget && creep.task.targetType) {
       eventBus.fireEvent(STRUCURE_BUILT, newTarget);
     }
   }
 
-  taskStarted(creep) {
+  taskStarted(creep: CreepWrapper) {
     super.taskStarted(creep);
     let source: Source = Game.getObjectById(creep.task.source);
     if (source) {
@@ -44,16 +48,16 @@ export default class Build extends Task {
     }
   }
 
-  isTaskValid(creep, target) {
+  isTaskValid(creep: CreepWrapper, target) {
     return creep.carry.energy > 0;
   }
 
-  targetIsClaimed(creep, target) {
+  targetIsClaimed(creep: CreepWrapper, target) {
     // TODO consider boosted parts
     this.targetsMap[target.id] += creep.carry.energy;
   }
 
-  targetIsReleased(creep, target) {
+  targetIsReleased(creep: CreepWrapper, target) {
     // TODO consider boosted parts
     this.targetsMap[target.id] -= creep.carry.energy;
   }

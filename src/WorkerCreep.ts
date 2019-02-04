@@ -1,7 +1,10 @@
 import Decorators from "./Decorators";
 import PathPosObject from "./path/PathPosObject";
 import CreepWrapper from "./CreepWrapper";
+import { Log } from "src/Logger";
 
+@Decorators.memory("creeps", "name")
+@Log
 export default class WorkerCreep extends CreepWrapper {
   @Decorators.inMemory()
   task: any;
@@ -16,10 +19,10 @@ export default class WorkerCreep extends CreepWrapper {
   targetPathPos: number;
 
   currentTarget: PathPosObject;
-  hasMoved: boolean;
-  processed: boolean;
-  processing: boolean;
-  swapPos: number;
+  hasMoved: boolean = false;
+  processed: boolean = false;
+  processing: boolean = false;
+  swapPos: number = 0;
 
   @Decorators.alias("creep.pos")
   pos: any;

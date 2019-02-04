@@ -1,5 +1,6 @@
-import Worker from "./Worker";
+import WorkerRole from "./WorkerRole";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
 
 /**
  * Builder role.
@@ -7,17 +8,19 @@ import Decorators from "src/Decorators";
  * @class HaulerRole
  * @extends WorkerRole
  */
-@Decorators.memory()
-export default class Hauler extends Worker {
+@Decorators.memory("roles")
+@Log
+export default class Hauler extends WorkerRole {
   static creepParts: Array<BodyPartConstant> = [CARRY, MOVE];
   static mainParts: Array<BodyPartConstant> = [CARRY];
   static creepTasks = [
     ["withdraw"],
     ["dropoff", "supply"],
   ];
+  static roleName: string = "hauler";
 
-  @Decorators.inMemory()
-  averageHaulDistance: number = 1;
+  @Decorators.inMemory(() => 1)
+  averageHaulDistance: number;
 
   getMaxCount() {
     // have a container for each source and one more for controller and another one for towers

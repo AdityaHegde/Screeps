@@ -1,5 +1,6 @@
 import Role from "./Role";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
 
 /**
  * Builder role.
@@ -7,7 +8,8 @@ import Decorators from "src/Decorators";
  * @class HarvesterRole
  * @extends BaseRole
  */
-@Decorators.memory()
+@Decorators.memory("roles")
+@Log
 export default class Harvester extends Role {
   static creepParts: Array<BodyPartConstant> = [WORK, MOVE];
   static mainParts: Array<BodyPartConstant> = [WORK];
@@ -15,6 +17,7 @@ export default class Harvester extends Role {
   static creepTasks = [
     ["harvestForever"],
   ];
+  static roleName: string = "harvester";
 
   init() {}
 

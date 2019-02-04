@@ -1,6 +1,7 @@
 import Role from "./Role";
 import Decorators from "src/Decorators";
 import CreepWrapper from "src/CreepWrapper";
+import { Log } from "src/Logger";
 
 /**
  * Worker role with dynamic allocation. Used untill the containers are setup.
@@ -8,14 +9,16 @@ import CreepWrapper from "src/CreepWrapper";
  * @class Worker
  * @extends Role
  */
-@Decorators.memory()
-export default class Worker extends Role {
+@Decorators.memory("roles")
+@Log
+export default class WorkerRole extends Role {
   static creepParts: Array<BodyPartConstant> = [WORK, CARRY, MOVE, MOVE];
   static mainParts: Array<BodyPartConstant> = [WORK, CARRY];
   static creepTasks: Array<Array<string>> = [
     ["harvest"],
     ["dropoff", "build", "upgrade", "repair"],
   ];
+  static roleName: string = "worker";
 
   init() {}
 
@@ -25,17 +28,19 @@ export default class Worker extends Role {
     this.freeTasks = {};
     this.hasFreeTasks = {};
     this.validTasksCount = {};
-    this.constructor["workerTasks"].forEach((taskTier, i) => {
+    this.constructor["creepTasks"].forEach((taskTier, i) => {
       this.freeTasks[i] = {};
       this.hasFreeTasks[i] = false;
       this.validTasksCount[i] = 0;
 
       taskTier.forEach((taskName) => {
         let task = this.controllerRoom.tasks.get(taskName);
-        this.validTasksCount[i] += task.hasTarget ? 1 : 0;
-        if (this.isTaskFree(task, this, i)) {
-          this.hasFreeTasks[i] = true;
-          this.freeTasks[i][taskName] = 1;
+        if (task) {
+          this.validTasksCount[i] += task.hasTarget ? 1 : 0;
+          if (this.isTaskFree(task, this, i)) {
+            this.hasFreeTasks[i] = true;
+            this.freeTasks[i][taskName] = 1;
+          }
         }
       });
     });
@@ -64,7 +69,7 @@ export default class Worker extends Role {
     task.creeps[creep.name] = 1;
     task.creepsCount++;
 
-    let taskName = this.constructor["workerTasks"][creep.task.tier][taskIdx];
+    let taskName = this.constructor["creepTasks"][creep.task.tier][taskIdx];
     // clear the task as free if it is not free anymore
     if (this.freeTasks[creep.task.tier][taskName] && !this.isTaskFree(task, this, creep.task.tier)) {
       delete this.freeTasks[creep.task.tier][taskName];
@@ -77,7 +82,7 @@ export default class Worker extends Role {
 
   assignNewTask(creep: CreepWrapper, isNew = false) {
     let tier = (isNew ? 0 : creep.task.tier);
-    let tasks = this.constructor["workerTasks"][tier];
+    let tasks = this.constructor["creepTasks"][tier];
     let lastCurrent = isNew || creep.task.current === undefined ? 0 : ((creep.task.current + 1) % tasks.length);
     let i = lastCurrent;
     let assigned = false, backup = null;
@@ -103,16 +108,16 @@ export default class Worker extends Role {
   }
 
   switchTask(creep: CreepWrapper) {
-    if (this.constructor["workerTasks"][creep.task.tier] && this.constructor["workerTasks"][creep.task.tier][creep.task.current]) {
-      this.controllerRoom.tasks.get(this.constructor["workerTasks"][creep.task.tier][creep.task.current]).taskEnded(creep);
+    if (this.constructor["creepTasks"][creep.task.tier] && this.constructor["creepTasks"][creep.task.tier][creep.task.current]) {
+      this.controllerRoom.tasks.get(this.constructor["creepTasks"][creep.task.tier][creep.task.current]).taskEnded(creep);
     }
-    creep.task.tier = (creep.task.tier + 1) % this.constructor["workerTasks"].length;
+    creep.task.tier = (creep.task.tier + 1) % this.constructor["creepTasks"].length;
     creep.task.current = creep.task.tasks[creep.task.tier];
-    let newTask = this.controllerRoom.tasks.get(this.constructor["workerTasks"][creep.task.tier][creep.task.current]);
+    let newTask = this.controllerRoom.tasks.get(this.constructor["creepTasks"][creep.task.tier][creep.task.current]);
     if (creep.task.current === undefined) {
       this.assignNewTask(creep);
     } else if (this.hasFreeTasks[creep.task.tier] &&
-         !this.freeTasks[creep.task.tier][this.constructor["workerTasks"][creep.task.tier][creep.task.current]] &&
+         !this.freeTasks[creep.task.tier][this.constructor["creepTasks"][creep.task.tier][creep.task.current]] &&
          !this.isTaskFree(newTask, creep.task.tier, 1)) {
       // if there are free tasks and current task is not one of them and reassiging away from crrent task doesnt make it a free task
       this.reassignTask(creep);

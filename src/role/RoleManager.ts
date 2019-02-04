@@ -8,25 +8,42 @@ import MidGameRoleSuite from "src/role/MidGameRoleSuite";
 import ControllerRoom from "src/ControllerRoom";
 import { Task } from "src/task/Task";
 import CreepWrapper from "src/CreepWrapper";
+import { Log } from "src/Logger";
+import Builder from "src/role/Builder";
+import Harvester from "src/role/Harvester";
+import Hauler from "src/role/Hauler";
+import Upgrader from "src/role/Upgrader";
+import WorkerRole from "src/role/WorkerRole";
 
 const ROLES_MAP = {
-
+  [Builder.roleName]: Builder,
+  [Harvester.roleName]: Harvester,
+  [Hauler.roleName]: Hauler,
+  [Upgrader.roleName]: Upgrader,
+  [WorkerRole.roleName]: WorkerRole,
 };
 
-@Decorators.memory()
+for (const roleName in ROLES_MAP) {
+  if (ROLES_MAP.hasOwnProperty(roleName)) {
+    ROLES_MAP[roleName].initClass();
+  }
+}
+
+@Decorators.memory("roleManager")
+@Log
 export default class RoleManager extends BaseClass {
   @Decorators.instancePolymorphMapInMemory(ROLES_MAP)
   roles: MemoryMap<string, Role>;
 
   roleSuites: Array<typeof RoleSuite> = [EarlyGameRoleSuite, MidGameRoleSuite];
 
-  @Decorators.inMemory()
-  curRoleSuite: number = 0;
+  @Decorators.inMemory(() => 0)
+  curRoleSuite: number;
 
   controllerRoom: ControllerRoom;
 
   constructor(controllerRoom: ControllerRoom) {
-    super();
+    super(controllerRoom.name);
 
     this.controllerRoom = controllerRoom;
   }
@@ -36,15 +53,9 @@ export default class RoleManager extends BaseClass {
 
     // if its time to switch to next role
     if (roleSuite.switchRole(this.controllerRoom)) {
-      console.log("Switching role suite");
+      this.logger.log("Switching role suite");
       this.curRoleSuite++;
-      roleSuite = this.roleSuites[this.curRoleSuite];
-      // initialize new roles
-      roleSuite.order.forEach((roleName) => {
-        console.log("New role", roleName);
-        this.roles.set(roleName, new ROLES_MAP[roleName]());
-        this.roles.get(roleName).init();
-      });
+      roleSuite = this.initCurRoles();
 
       // distribute creeps from older roles to new ones
       for (let role in roleSuite.creepDistribution) {
@@ -59,7 +70,7 @@ export default class RoleManager extends BaseClass {
           while (newRole && newRole.creepsCount >= newRole.getMaxCount()) {
             if (i === j) {
               // if the loop has come all the way back to the beginig, suicide the creep as there are no free roles
-              creep.creep.suicide();
+              creep.suicide();
               delete Memory.creeps[creep.name];
               newRole = null;
             } else {
@@ -77,17 +88,30 @@ export default class RoleManager extends BaseClass {
       }
     }
 
-    this.controllerRoom.tasks.forEach((task: Task) => {
+    this.controllerRoom.tasks.forEach((taskName, task: Task) => {
       task.tick();
     });
 
     // execute in specified order to give some roles priority
     roleSuite.order.forEach((roleName) => {
       this.roles.get(roleName).tick();
-      /* console.log(roleName, ":", Object.keys(this.rolesInfo[roleName].creeps).map((creepName) => {
-        let creep = Game.creeps[creepName];
-        return creep.name + " (" + (creep.task ? this.rolesInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
-      }).join("  ")); */
+      // this.logger.log(roleName, ":", Object.keys(this.roles.get(roleName).creeps).map((creepName) => {
+      //   let creep = Game.creeps[creepName];
+      //   return creep.name + " (" + (creep.task ? this.rolesInfo.tasks[creep.task.tier][creep.task.current] : "") + ")";
+      // }).join("  "));
     });
+  }
+
+  initCurRoles() {
+    let roleSuite = this.roleSuites[this.curRoleSuite];
+    // initialize new roles
+    roleSuite.order.forEach((roleName) => {
+      this.logger.log("New role", roleName);
+      this.roles.set(roleName,
+        new ROLES_MAP[roleName](this.controllerRoom.name + "_" + roleName)
+          .setControllerRoom(this.controllerRoom));
+      this.roles.get(roleName).init();
+    });
+    return roleSuite;
   }
 }

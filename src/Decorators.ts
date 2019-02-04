@@ -1,6 +1,15 @@
 import Heap from "./Heap";
 import MemoryMap from "./MemoryMap";
 import * as _ from "lodash";
+import MemorySet from "src/MemorySet";
+
+function getInstanceFromClassObject(ClassObject, value) {
+  if (ClassObject.getInstanceById) {
+    return ClassObject.getInstanceById(value);
+  } else {
+    return new ClassObject(value);
+  }
+}
 
 class Decorators {
   /**
@@ -9,14 +18,13 @@ class Decorators {
    * @method memory
    * @param idProperty {String}
    */
-  static memory(idProperty: string = "id"): any {
+  static memory(memoryName, idProperty: string = "id"): any {
     return function(classObject) {
       let classMatch = classObject.toString().match(/class (\w*)/);
       let functionMatch = classObject.toString().match(/\[Function: (.*)\]/);
       let className: string = (classMatch && classMatch[1]) || (functionMatch && functionMatch[1]);
-      let memoryName = className;
       classObject.className = className.toLowerCase();
-      classObject.memoryName = className;
+      classObject.memoryName = memoryName;
       classObject.idProperty = idProperty;
       Object.defineProperty(classObject.prototype, "memory", {
         get: function () {
@@ -104,7 +112,7 @@ class Decorators {
         if (!_.has(this, _fieldName)) {
           // if the property is not present in the memory either, use the getter function passed to get the value and store in memory
           if (!_.has(this.memory, fieldName)) {
-            this[_fieldName] = getter.call(this, ...arguments);
+            this[_fieldName] = getter.call ? getter.call(this, ...arguments) : getter;
             this.memory[fieldName] = this[_fieldName] && serializer.call(this, this[_fieldName]);
           } else {
             this[_fieldName] = deserializer.call(this, this.memory[fieldName]);
@@ -231,6 +239,65 @@ class Decorators {
   }
 
   /**
+   * Defines a property which acts as a set. Stored serialized but used deserialized.
+   *
+   * @method setInMemory
+   * @param [serializer] {Function} Function to serialize value to be stored in memory. Defaults to storing value as is.
+   * @param [deserializer] {Function} Function to deserialize value retrieved from memory. Defaults to returning value as is.
+   */
+  static setInMemory(
+    serializer = function (value) { return value; },
+    deserializer = function (value) { return value; }
+  ): any {
+    return function(classPrototype, fieldName, descriptor) {
+      let _fieldName = "_" + fieldName;
+      descriptor = descriptor || {};
+
+      descriptor.get = function () {
+        // if set is not cached, assign _mapValue and get the instance for any stored ids in memory
+        if (!_.has(this, _fieldName)) {
+          // if set is not in memory, assign mapValue to memory
+          if (!_.has(this.memory, fieldName)) {
+            this.memory[fieldName] = [];
+          }
+          this[_fieldName] =  new MemorySet(this.memory[fieldName], serializer, deserializer);
+        }
+        return this[_fieldName];
+      };
+
+      return descriptor;
+    }
+  }
+
+  /**
+   * Defines a property which references a set of instances in memory by id.
+   *
+   * @method instanceSetInMemory
+   * @param ClassObject {Class} Class for instance.
+   */
+  static instanceSetInMemory(ClassObject): any {
+    return this.setInMemory(function (value) {
+      return value && value[ClassObject.idProperty];
+    }, function (value) {
+      return getInstanceFromClassObject(ClassObject, value);
+    });
+  }
+
+  /**
+   * Defines a property which references has a set of instances in memory.
+   *
+   * @method instancePolymorphSetInMemory
+   * @param polymorphMap {Object} Map of class to use.
+   */
+  static instancePolymorphSetInMemory(polymorphMap, typeKey: string): any {
+    return this.setInMemory(function (value) {
+      return value && [value[typeKey], value.id];
+    }, function (value) {
+      return getInstanceFromClassObject(polymorphMap[value[0]], value[1]);
+    });
+  }
+
+  /**
    * Defines a property which acts as a map. Stored serialized but used deserialized.
    *
    * @method mapInMemory
@@ -270,9 +337,7 @@ class Decorators {
     return this.mapInMemory(function (value) {
       return value && value[ClassObject.idProperty];
     }, function (key, value) {
-      let instance = new ClassObject(value);
-      // instance[this.constructor.className] = this;
-      return instance;
+      return getInstanceFromClassObject(ClassObject, value);
     });
   }
 
@@ -287,7 +352,6 @@ class Decorators {
       return value && value.name;
     }, function (key, value) {
       let instance = Game[memoryName][value];
-      // instance[this.constructor.className] = this;
       return instance;
     });
   }
@@ -302,9 +366,7 @@ class Decorators {
     return this.mapInMemory(function (value) {
       return value && value.id;
     }, function (key, value) {
-      let instance = new polymorphMap[key](value);
-      // instance[this.constructor.className] = this;
-      return instance;
+      return getInstanceFromClassObject(polymorphMap[key], value);
     });
   }
 
@@ -319,6 +381,22 @@ class Decorators {
     }, (key, value) => {
       return Room.deserializePath(value);
     });
+  }
+
+  static getInstanceById<T extends { new(...args: Array<any>): {} }>(constructor: T) {
+    let instanceByIdMap: Map<string, T> = new Map();
+    return class extends constructor {
+      static getInstanceById(id: string): T {
+        let instance: T;
+        if (instanceByIdMap.has(id)) {
+          instance = instanceByIdMap.get(id);
+        } else {
+          instance = (new constructor(id)) as any;
+          instanceByIdMap.set(id, instance);
+        }
+        return instance;
+      }
+    };
   }
 }
 

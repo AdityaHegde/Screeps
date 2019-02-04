@@ -1,7 +1,5 @@
 import Decorators from "../Decorators";
-import PathPosObject from "../path/PathPosObject";
 
-import { PARALLEL_BUILD_COUNT } from "../constants";
 import MemoryMap from "src/MemoryMap";
 import Building from "src/building/Building";
 import Container from "src/building/Container";
@@ -11,17 +9,26 @@ import Tower from "src/building/Tower";
 import Wall from "src/building/Wall";
 import BuildPlanner from "src/building/BuildPlanner";
 import ControllerRoom from "src/ControllerRoom";
-
-const BUILD_TYPES = {};
+import BaseClass from "src/BaseClass";
+import { Log } from "src/Logger";
+import SpawnBuilding from "src/building/SpawnBuilding";
 
 const BUILDINGS_MAP = {
   "container": Container,
   "extension": Extension,
   "road": Road,
-  "spawn": Spawn,
+  "spawn": SpawnBuilding,
   "tower": Tower,
   "wall": Wall,
 };
+const BUILDING_PLAN_ORDER = [
+  "extension",
+  "spawn",
+  "tower",
+  "wall",
+  "road",
+  "container",
+];
 const BUILD_ORDER = [
   "container",
   "extension",
@@ -31,9 +38,10 @@ const BUILD_ORDER = [
   "wall",
 ];
 
-@Decorators.memory()
-class BuildManager extends PathPosObject {
-  @Decorators.inMemory(() => {})
+@Decorators.memory("buildManager")
+@Log
+class BuildManager extends BaseClass {
+  @Decorators.inMemory(() => {return {}})
   structureData: any;
 
   @Decorators.inMemory(() => [])
@@ -59,13 +67,36 @@ class BuildManager extends PathPosObject {
   controllerRoom: ControllerRoom;
 
   constructor(controllerRoom: ControllerRoom) {
-    super();
+    super(controllerRoom.name);
 
     this.controllerRoom = controllerRoom;
     this.buildPlanner = new BuildPlanner(controllerRoom);
+
+    for (const buildingName in BUILDINGS_MAP) {
+      if (BUILDINGS_MAP.hasOwnProperty(buildingName)) {
+        const BuildingClass = BUILDINGS_MAP[buildingName];
+        this.buildings.set(buildingName, new BuildingClass(controllerRoom.name + "_" + buildingName));
+      }
+    }
+  }
+
+  plan(): boolean {
+    if (!this.buildPlanner.plan()) {
+      return false;
+    }
+
+    this.controllerRoom.sourceManager.addSources();
+
+    BUILDING_PLAN_ORDER.forEach((buildingName) => {
+      let building = this.buildings.get(buildingName);
+      building.plan(this.buildPlanner);
+    });
+
+    return true;
   }
 
   build() {
+    this.logger.log("Building", this.cursor);
     // check if RCL changed or some structures are yet to be built for current RCL
     // or there are some structures are being built
     if (!this.controllerRoom.tasks.get("build").hasTarget &&
@@ -76,6 +107,7 @@ class BuildManager extends PathPosObject {
       }
 
       for (; this.cursor < BUILD_ORDER.length; this.cursor++) {
+        this.logger.log("Building", BUILD_ORDER[this.cursor]);
         if (!this.buildings.get(BUILD_ORDER[this.cursor]).build(this.buildPlanner)) {
           break;
         }

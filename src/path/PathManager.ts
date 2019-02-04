@@ -4,6 +4,8 @@ import * as _ from "lodash";
 import PathInfo from "./PathInfo";
 import MemoryMap from "../MemoryMap";
 import PathConnection from "./PathConnection";
+import { Log } from "src/Logger";
+import PathNavigation from "src/path/PathNavigation";
 
 function getPathIdxs (pathsMatrix, key) {
   return _.map(_.keys(pathsMatrix[key]), (idx) => {
@@ -14,7 +16,8 @@ function getPathIdxs (pathsMatrix, key) {
   });
 }
 
-@Decorators.memory()
+@Decorators.memory("pathManager")
+@Log
 class PathManager extends BaseClass {
   @Decorators.instanceMapInMemory(PathInfo)
   public pathsInfo: MemoryMap<string | number, PathInfo>;
@@ -22,26 +25,36 @@ class PathManager extends BaseClass {
   @Decorators.inMemory()
   private size: number;
 
-  @Decorators.inMemory()
-  private pathsMatrix: Object;
+  @Decorators.inMemory(() => {return {}})
+  private pathsMatrix: any;
 
   @Decorators.inMemory()
-  private pathIdxsByExit: Object;
+  private pathIdxsByExit: any;
 
   @Decorators.inMemory()
-  private wallPathIdxsByExit: Object;
+  private wallPathIdxsByExit: any;
 
-  public addPath(path, findParallelPaths = false) {
+  public pathNavigation: PathNavigation;
+
+  constructor(id: string) {
+    super(id);
+
+    this.pathNavigation = new PathNavigation(id, this);
+  }
+
+  public addPath(path): Array<PathInfo> {
+    this.logger.logJSON(path);
     let dedupedPathParts = this.dedupePathParts(path);
     let pathInfos;
 
     return dedupedPathParts.map((pathPart) => {
-      return this.addPathPart(pathPart, findParallelPaths);
+      return this.addPathPart(pathPart);
     });
   }
 
-  private addPathPart(pathPart, findParallelPaths = false) {
-    let pathInfo = new PathInfo(this.size++, pathPart.path, findParallelPaths);
+  private addPathPart(pathPart): PathInfo {
+    this.logger.logJSON(pathPart);
+    let pathInfo = new PathInfo(this.size++).setPath(pathPart.path);
     let connections = {};
 
     pathInfo.populatePathsMatrix(this.pathsMatrix);
@@ -77,21 +90,20 @@ class PathManager extends BaseClass {
         let pathInfoEntry = this.pathsInfo.get(i);
         if (connections[i]) {
           // TODO find the shorter connection for multiple paths
-          for (let j in pathInfoEntry.connections.keys()) {
-            // eslint-disable-next-line eqeqeq
-            if (pathInfoEntry.connections[j].idx == j) {
+          pathInfoEntry.connections.forEach((j) => {
+            if (pathInfoEntry.connections.get(j).idx === Number(j)) {
               onePathConnection[j] = i;
             }
             else if (!(j in onePathConnection)) {
               onePathConnection[j] = i;
             }
-          }
+          });
 
           pathInfo.connections.set(i,
-            new PathConnection(i, connections[i].toPos, connections[i].fromPos));
+            new PathConnection().setPos(i, connections[i].toPos, connections[i].fromPos));
           pathInfo.directConnections.push(i);
           pathInfoEntry.connections.set(pathInfo.id,
-            new PathConnection(Number(pathInfo.id), connections[i].fromPos, connections[i].toPos));
+            new PathConnection().setPos(Number(pathInfo.id), connections[i].fromPos, connections[i].toPos));
             pathInfoEntry.directConnections.push(pathInfo.id);
         } else {
           noConnections[i] = 1;
@@ -148,7 +160,7 @@ class PathManager extends BaseClass {
     for (let i = 1; i < path.length; i++) {
       let lastKey = path[i-1].x + "__" + path[i-1].y;
       let key = path[i].x + "__" + path[i].y;
-  
+
       if (this.pathsMatrix[lastKey] && this.pathsMatrix[key] && !this.pathsMatrix[key][curPathIdx]) {
         let commonIdxs: Array<any> = _.intersection(
           _.keys(this.pathsMatrix[lastKey]),

@@ -3,40 +3,40 @@ import SourceWrapper from "src/SourceWrapper";
 import Decorators from "src/Decorators";
 import MemoryMap from "src/MemoryMap";
 import ControllerRoom from "src/ControllerRoom";
+import { Log } from "src/Logger";
 
-@Decorators.memory()
+@Decorators.memory("sourceManager")
+@Log
 export default class SourceManager extends BaseClass {
   @Decorators.instanceMapInMemory(SourceWrapper)
   sources: MemoryMap<string, SourceWrapper>;
 
-  @Decorators.inMemory()
-  pointer: number = 0;
+  @Decorators.inMemory(() => 0)
+  pointer: number;
 
-  @Decorators.inMemory()
-  totalAvailableSpaces: number = 0;
+  @Decorators.inMemory(() => 0)
+  totalAvailableSpaces: number;
 
-  // TODO: hook this up
   controllerRoom: ControllerRoom;
 
   constructor(controllerRoom: ControllerRoom) {
-    super();
+    super(controllerRoom.name);
     this.controllerRoom = controllerRoom;
   }
 
   addSources() {
     let sources = this.controllerRoom.room.find(FIND_SOURCES);
     sources.forEach((source, index) => {
-      this.sources.set(index, new SourceWrapper(source));
+      this.sources.set(index,
+        SourceWrapper.getSourceWrapperById(source.id, this.controllerRoom)
+          .setSource(source));
     });
+    this.logger.log("Sources:", this.sources.size);
     this.totalAvailableSpaces = 0;
-    this.sources.forEach((sourceWrapper) => {
-      this.totalAvailableSpaces += sourceWrapper.availableSpaces;
-    });
-  }
-
-  initSources() {
-    this.sources.forEach((source) => {
-      source.init();
+    this.sources.forEach((sourceId, sourceWrapper: SourceWrapper) => {
+      this.logger.log("[addsources] Source:", sourceWrapper.source);
+      sourceWrapper.init();
+      this.totalAvailableSpaces += sourceWrapper.spaces.length;
     });
   }
 
@@ -59,6 +59,6 @@ export default class SourceManager extends BaseClass {
       i = (i + 1) % this.sources.size;
     } while (i !== this.pointer && i < this.sources.size);
 
-    return nowaiting && nowaiting[0].claim(creep, nowaiting[1]);
+    return nowaiting && (nowaiting[0] as SourceWrapper).claim(creep, nowaiting[1]);
   }
 }

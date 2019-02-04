@@ -11,25 +11,55 @@ import {
 } from "src/constants";
 import MemoryMap from "src/MemoryMap";
 import { Task } from "src/task/Task";
+import { Log, Logger } from "src/Logger";
+import RoleManager from "src/role/RoleManager";
+import Build from "src/task/Build";
+import Dropoff from "src/task/Dropoff";
+import Harvest from "src/task/Harvest";
+import Repair from "src/task/Repair";
+import Store from "src/task/Store";
+import Supply from "src/task/Supply";
+import Upgrade from "src/task/Upgrade";
+import Withdraw from "src/task/Withdraw";
+import HarvestForever from "src/task/HarvestForever";
+import WithdrawUpgrader from "src/task/WithdrawUpgrader";
 
 let roomObjects: Map<string, ControllerRoom> = new Map();
 
 const TASKS_MAP = {
-
+  [Build.taskName]: Build,
+  [Dropoff.taskName]: Dropoff,
+  [Harvest.taskName]: Harvest,
+  [HarvestForever.taskName]: HarvestForever,
+  [Repair.taskName]: Repair,
+  [Store.taskName]: Store,
+  [Supply.taskName]: Supply,
+  [Upgrade.taskName]: Upgrade,
+  [Withdraw.taskName]: Withdraw,
+  [WithdrawUpgrader.taskName]: WithdrawUpgrader,
 };
 
-@Decorators.memory("name")
+for (const taskName in TASKS_MAP) {
+  if (TASKS_MAP.hasOwnProperty(taskName)) {
+    TASKS_MAP[taskName].initClass();
+  }
+}
+
+@Decorators.memory("rooms", "name")
+@Log
 class ControllerRoom {
   name: string;
 
+  logger: Logger;
+
   @Decorators.alias("room.controller")
   controller: StructureController;
-  
+
   // TODO: extract this
   mineral: Mineral;
 
-  @Decorators.inMemory()
-  state: string = ROOM_STATE_UNOCCUPIED;
+  @Decorators.inMemory(() => ROOM_STATE_UNOCCUPIED)
+  state: string;
 
   public room: Room;
 
@@ -42,48 +72,66 @@ class ControllerRoom {
 
   public buildManager: BuildManager;
 
-  public buildPlanner: BuildPlanner;
+  public roleManager: RoleManager;
 
-  constructor(name: string) {
-    this.name = name;
+  constructor(room: Room) {
+    this.name = room.name;
+    this.room = room;
 
-    this.room = Game.rooms[name];
+    for (const taskName in TASKS_MAP) {
+      if (TASKS_MAP.hasOwnProperty(taskName)) {
+        const TaskClass = TASKS_MAP[taskName];
+        this.tasks.set(taskName,
+          new TaskClass(this.name + "_" + taskName)
+            .setControllerRoom(this));
+      }
+    }
 
     this.sourceManager = new SourceManager(this);
-    this.pathManager = new PathManager();
+    this.pathManager = new PathManager(this.name);
     this.buildManager = new BuildManager(this);
-    this.buildPlanner = new BuildPlanner(this);
+    this.roleManager = new RoleManager(this);
+    this.roleManager.initCurRoles();
   }
 
   tick() {
+    this.logger.log("State:", this.state);
     switch (this.state) {
       case ROOM_STATE_UNOCCUPIED:
       case ROOM_STATE_UNDEVELOPED:
         this.state = ROOM_STATE_UNINITIALIZED;
       case ROOM_STATE_UNINITIALIZED:
-        if (this.buildPlanner.plan()) {
+        if (this.buildManager.plan()) {
           this.state = ROOM_STATE_INITIALIZED;
-        }
 
-        this.sourceManager.addSources();
-        this.sourceManager.initSources();
+          for (const taskName in TASKS_MAP) {
+            if (TASKS_MAP.hasOwnProperty(taskName)) {
+              this.tasks.get(taskName).init();
+            }
+          }
+        }
         break;
 
       case ROOM_STATE_INITIALIZED:
         this.buildManager.build();
+        this.roleManager.tick();
         break;
     }
   }
 
-  static getRoomByName(roomName: string): ControllerRoom {
-    let room: ControllerRoom;
-    if (roomObjects.has(roomName)) {
-      room = roomObjects.get(roomName);
+  static getRoomByRoomName(roomName: string): ControllerRoom {
+    return this.getRoomByRoomInstance(Game.rooms[roomName]);
+  }
+
+  static getRoomByRoomInstance(room: Room): ControllerRoom {
+    let controllerRoom: ControllerRoom;
+    if (roomObjects.has(room.name)) {
+      controllerRoom = roomObjects.get(room.name);
     } else {
-      room = new ControllerRoom(roomName);
-      roomObjects.set(roomName, room);
+      controllerRoom = new ControllerRoom(room);
+      roomObjects.set(room.name, controllerRoom);
     }
-    return room;
+    return controllerRoom;
   }
 }
 

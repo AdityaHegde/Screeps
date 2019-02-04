@@ -1,7 +1,7 @@
-let Source = require("./Source");
-let StructureController = require("./StructureController");
+import Source from "./Source";
+import StructureController from "./StructureController";
 
-module.exports = function (sandbox, roomData, roomName) {
+export default function (sandbox, roomData, roomName) {
   this.name = roomName;
   this.table = [];
 

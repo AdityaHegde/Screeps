@@ -1,9 +1,12 @@
 import { Task } from "./Task";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
+import CreepWrapper from "src/CreepWrapper";
 
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Upgrade extends Task {
-  init(): void {}
+  static taskName: string = "upgrade";
 
   tick(): void {}
   
@@ -15,7 +18,7 @@ export default class Upgrade extends Task {
     return [this.controllerRoom.controller.id];
   }
 
-  doTask(creep, target) {
+  doTask(creep: CreepWrapper, target) {
     return creep.upgradeController(target);
   }
 
@@ -28,15 +31,19 @@ export default class Upgrade extends Task {
     return true;
   }
 
-  taskExecuted(creep: any, target: any) {}
+  taskExecuted(creep: CreepWrapper, target: any) {}
 
-  targetIsClaimed(creep: any, target: any): void {}
+  targetIsClaimed(creep: CreepWrapper, target: any): void {}
 
-  targetIsReleased(creep: any, target: any): void {}
+  targetIsReleased(creep: CreepWrapper, target: any): void {}
 
-  targetIsInvalid(creep: any, target: any): void {}
+  targetIsInvalid(creep: CreepWrapper, target: any): void {}
   
   isAssignedTargetValid(target: any): boolean {
     return true;
+  }
+
+  isNearTarget(creep: CreepWrapper, target): boolean {
+    return creep.pos.inRangeTo(target, 2);
   }
 }

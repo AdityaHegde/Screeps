@@ -7,9 +7,12 @@ import {
   TOWER_BUILT
 } from "../constants";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
 
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Supply extends Dropoff {
+  static taskName: string = "supply";
   static updateTargetEvents = [ENERGY_WITHDRAWN, TOWER_USED_ENERGY];
   static updatePotentialTargetEvents = [CONTAINER_BUILT, TOWER_BUILT];
 

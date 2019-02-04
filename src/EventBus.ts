@@ -3,6 +3,8 @@ import { PERIODIC_5_TICKS, PERIODIC_10_TICKS, PERIODIC_20_TICKS } from "./consta
 import Decorators from "./Decorators";
 import BaseClass from "./BaseClass";
 import * as _ from "lodash";
+import { Log } from "src/Logger";
+import ControllerRoom from "src/ControllerRoom";
 
 function deepGet(base, path) {
   let paths = path.split(/\./);
@@ -19,13 +21,16 @@ function deepGet(base, path) {
   return ret;
 }
 
-@Decorators.memory()
+@Decorators.memory("events")
+@Log
 class EventBus extends BaseClass implements Runnable {
-  @Decorators.inMemory()
+  // @Decorators.inMemory(() => {return {}})
   private listeners: any = {};
-  @Decorators.inMemory()
+
+  // @Decorators.inMemory(() => {return {}})
   private fireEvents: any = {};
-  @Decorators.inMemory()
+
+  @Decorators.inMemory(() => {return {}})
   private delayedEvents: any = {};
 
   public subscribe(eventName: string, method: string, contextPath: string) {
@@ -36,14 +41,14 @@ class EventBus extends BaseClass implements Runnable {
     });
   }
 
-  public fireEvent(eventName, target, ...args) {
+  public fireEvent(eventName, target: ControllerRoom, ...args) {
     this.fireEvents[eventName] = this.fireEvents[eventName] || [];
-    this.fireEvents[eventName].push(target, ...args);
+    this.fireEvents[eventName].push(target.name, ...args);
   }
 
-  public fireDelayedEvent(eventName, target, ...args) {
+  public fireDelayedEvent(eventName, target: ControllerRoom, ...args) {
     this.delayedEvents[eventName] = this.delayedEvents[eventName] || [];
-    this.delayedEvents[eventName].push(target, ...args);
+    this.delayedEvents[eventName].push(target.name, ...args);
   }
 
   public preTick() {
@@ -52,11 +57,11 @@ class EventBus extends BaseClass implements Runnable {
       delete this.delayedEvents[eventName];
     }
   }
-  
+
   public tick() {
     // nothing to do
   }
-  
+
   public postTick() {
     if (Game.time % 5 === 0) {
       this.fire(PERIODIC_5_TICKS, [this]);
@@ -76,8 +81,13 @@ class EventBus extends BaseClass implements Runnable {
   private fire(eventName: string, eventDetails: Array<any>) {
     if (this.listeners[eventName]) {
       this.listeners[eventName].forEach((listener) => {
-        let context = deepGet(eventDetails[0], listener.contextPath);
-        context[listener.method](...eventDetails.splice(1));
+        let controllerRoom = ControllerRoom.getRoomByRoomName(eventDetails[0]);
+        if (controllerRoom) {
+          let context = deepGet(controllerRoom, listener.contextPath);
+          if (context) {
+            context[listener.method](...eventDetails.splice(1));
+          }
+        }
       });
     }
   }

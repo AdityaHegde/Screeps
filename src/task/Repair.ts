@@ -1,9 +1,13 @@
 import Build from "./Build";
 import { PERIODIC_10_TICKS } from "../constants";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
+import CreepWrapper from "src/CreepWrapper";
 
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Repair extends Build {
+  static taskName: string = "repair";
   static updateTargetEvents: Array<string> = [PERIODIC_10_TICKS];
 
   updateTargetsMap() {
@@ -19,7 +23,7 @@ export default class Repair extends Build {
     }).map((target) => target.id);
   }
 
-  doTask(creep, target) {
+  doTask(creep: CreepWrapper, target) {
     return creep.repair(target);
   }
 

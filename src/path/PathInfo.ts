@@ -4,8 +4,12 @@ import Utils from "../Utils";
 import BaseClass from "../BaseClass";
 import MemoryMap from "../MemoryMap";
 import * as _ from "lodash";
+import { Log } from "src/Logger";
+import WorkerCreep from "src/WorkerCreep";
+import PathPosObject from "src/path/PathPosObject";
 
-@Decorators.memory()
+@Decorators.memory("pathsInfo")
+@Log
 class PathInfo extends BaseClass {
   @Decorators.pathInMemory()
   path;
@@ -13,13 +17,7 @@ class PathInfo extends BaseClass {
   @Decorators.pathInMemory()
   reverse;
 
-  @Decorators.pathInMemory()
-  parallelPath0;
-
-  @Decorators.pathInMemory()
-  parallelPath1;
-
-  @Decorators.inMemory()
+  @Decorators.inMemory(() => {return {}})
   creeps;
 
   @Decorators.instanceMapInMemory(PathConnection)
@@ -28,13 +26,15 @@ class PathInfo extends BaseClass {
   @Decorators.inMemory(() => [])
   directConnections;
 
-  constructor(id, path, findParallelPaths = false) {
+  constructor(id) {
     super(id);
+  }
+
+  setPath(path) {
     this.path = path;
     this.reverse = Utils.getReversedPath(path);
-    if (findParallelPaths) {
-      [this.parallelPath0, this.parallelPath1] = Utils.getParallelPaths(path);
-    }
+
+    return this;
   }
 
   populatePathsMatrix(pathsMatrix) {
@@ -45,12 +45,12 @@ class PathInfo extends BaseClass {
     });
   }
 
-  addCreepToPos(creep, pos = creep.pathPos) {
+  addCreepToPos(creep: WorkerCreep, pos = creep.pathPos) {
     this.creeps[pos] = this.creeps[pos] || [];
     this.creeps[pos].push(creep.name);
   }
 
-  removeCreepFromPos(creep, pos = creep.pathPos) {
+  removeCreepFromPos(creep: WorkerCreep, pos = creep.pathPos) {
     if (this.creeps[pos]) {
       _.pull(this.creeps[pos], creep.name);
       if (this.creeps[pos].length === 0) {
@@ -60,15 +60,8 @@ class PathInfo extends BaseClass {
   }
 
   isAtConnection(targetPathIdx: number, curPos: number) {
-    return this.connections.get(targetPathIdx).pos === curPos;
-  }
-
-  moveToPath(creep, target) {
-    let targetPath = this.connections.get(target.pathIdx);
-    this.removeCreepFromPos(creep);
-    creep.pathPos = targetPath.targetPos;
-    creep.pathIdx = targetPath.idx;
-    this.addCreepToPos(creep);
+    return this.connections.has(targetPathIdx) &&
+      this.connections.get(targetPathIdx).pos === curPos;
   }
 }
 

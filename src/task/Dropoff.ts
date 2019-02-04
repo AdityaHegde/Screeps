@@ -2,6 +2,9 @@ import { Task } from "./Task";
 import { CREEP_CREATED, EXTENSION_BUILT } from "../constants";
 import * as _ from "lodash";
 import Decorators from "src/Decorators";
+import { Log } from "src/Logger";
+import eventBus from "src/EventBus";
+import CreepWrapper from "src/CreepWrapper";
 
 /**
  * Task to drop off energy to spawn, extension or other structures that take energy (TODO)
@@ -10,22 +13,24 @@ import Decorators from "src/Decorators";
  * @class DropOffTask
  * @extends BaseTask
  */
-@Decorators.memory()
+@Decorators.memory("tasks")
+@Log
 export default class Dropoff extends Task {
   static updateTargetEvents: Array<string> = [CREEP_CREATED];
   static updatePotentialTargetEvents: Array<string> = [EXTENSION_BUILT];
+  static taskName: string = "dropoff";
 
-  // static initClass: function (room) {
-  //   BaseTask.init.call(this, room);
-  //   this.UPDATE_POTENTIAL_TARGETS_EVENTS.forEach((eventListener) => {
-  //     eventBus.subscribe(eventListener, "updatePotentialTargets", "tasksInfo." + this.TASK_NAME);
-  //   });
-  // }
-
+  @Decorators.inMemory()
   potentialTargets: any;
 
+  static initClass() {
+    Task.initClass.call(this);
+    this.updatePotentialTargetEvents.forEach((eventListener) => {
+      eventBus.subscribe(eventListener, "updatePotentialTargets", "tasks." + this.taskName);
+    });
+  }
+
   init(): void {
-    // this.room = room;
     this.potentialTargets = this.getPotentialTargets();
     this.updateTargetsMap(1);
   }
@@ -60,28 +65,28 @@ export default class Dropoff extends Task {
     return this.potentialTargetsFilter(structure);
   }
 
-  doTask(creep, target) {
+  doTask(creep: CreepWrapper, target) {
     return creep.transfer(target, RESOURCE_ENERGY);
   }
 
-  isTaskValid(creep, target) {
+  isTaskValid(creep: CreepWrapper, target) {
     return creep.carry.energy > 0;
   }
 
   isTargetValid(target) {
-    return target.canStoreEnergy();
+    return target.energy < target.energyCapacity;
   }
 
-  targetIsClaimed(creep, target) {
+  targetIsClaimed(creep: CreepWrapper, target) {
     this.targetsMap[target.id] += creep.carry.energy;
   }
 
-  targetIsReleased(creep, target) {
+  targetIsReleased(creep: CreepWrapper, target) {
     this.targetsMap[target.id] -= creep.carry.energy;
   }
 
   isAssignedTargetValid(target) {
-    return (target.getRemainingEnergyCapacity() - this.targetsMap[target.id]) > 0;
+    return ((target.energyCapacity - target.energy) - this.targetsMap[target.id]) > 0;
   }
 
   tick(): void {}

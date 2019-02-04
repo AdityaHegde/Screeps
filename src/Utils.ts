@@ -181,11 +181,19 @@ class Utils {
   }
 
   static getClosestObject(creep, targets, filterFunction = (target) => { return true; }) {
-    return _.minBy(targets.map((targetId) => {
+    let _targets = targets.map((targetId) => {
       return Game.getObjectById(targetId);
-    }).filter(filterFunction), (target: any) => {
-      return this.getDistanceBetweenPos(creep.pos, target.pos);
+    }).filter(filterFunction);
+    let min = 9999;
+    let minTarget;
+    _targets.forEach((target) => {
+      let dist = this.getDistanceBetweenPos(creep.pos, target.pos);
+      if (dist < min) {
+        min = dist;
+        minTarget = target;
+      }
     });
+    return minTarget;
   }
 
   static getClosestEdge(edges, filterFunction = (target) => { return true; }) {

@@ -8,7 +8,7 @@ import eventBus from "../EventBus";
 import CreepWrapper from "src/CreepWrapper";
 import MemoryMap from "src/MemoryMap";
 
-@Decorators.memory()
+@Decorators.memory("tasks")
 export abstract class Task extends BaseClass {
   protected static eventListeners: Array<{
     eventName: string,
@@ -17,37 +17,48 @@ export abstract class Task extends BaseClass {
 
   protected static updateTargetEvents: Array<string> = [];
 
+  static taskName: string = "base";
+
   static initClass() {
     this.eventListeners.forEach((eventListener) => {
-      eventBus.subscribe(eventListener.eventName, eventListener.method, "tasksInfo." + this.className);
+      eventBus.subscribe(eventListener.eventName, eventListener.method, "tasks." + this.taskName);
     });
     this.updateTargetEvents.forEach((eventListener) => {
-      eventBus.subscribe(eventListener, "updateTargetsMap", "tasksInfo." + this.className);
+      eventBus.subscribe(eventListener, "updateTargetsMap", "tasks." + this.taskName);
     });
   }
 
-  @Decorators.inMemory()
-  targetsMap: any = {};
+  @Decorators.inMemory(() => {return {}})
+  targetsMap: any;
 
-  @Decorators.inMemory()
-  hasTarget: boolean = false;
+  @Decorators.inMemory(() => false)
+  hasTarget: boolean;
 
   @Decorators.instanceMapInMemoryByName(CreepWrapper)
   creeps: MemoryMap<string, CreepWrapper>;
 
-  @Decorators.inMemory()
-  creepsCount: number = 0;
+  @Decorators.inMemory(() => 0)
+  creepsCount: number;
 
   // TODO: hook these up
   pathNavigation: PathNavigation;
 
+  @Decorators.instanceInMemoryByName(ControllerRoom)
   controllerRoom: ControllerRoom;
 
-  abstract init(): void;
+  init(): void {
+    this.updateTargetsMap();
+    this.hasTarget = Object.keys(this.targetsMap).length > 0;
+  };
 
   abstract tick(): void;
 
-  getTarget(creep) {
+  setControllerRoom(controllerRoom: ControllerRoom) {
+    this.controllerRoom = controllerRoom;
+    return this;
+  }
+
+  getTarget(creep: CreepWrapper) {
     let target;
     if (!creep.task.targets[creep.task.tier]) {
       target = this.assignNewTarget(creep);
@@ -64,7 +75,7 @@ export abstract class Task extends BaseClass {
     return target;
   }
 
-  assignNewTarget(creep) {
+  assignNewTarget(creep: CreepWrapper) {
     // get the closest target
     let target: any = Utils.getClosestObject(creep, Object.keys(this.targetsMap), (target) => {
       // filter out targets that are assgined to other creeps and are not valid for more
@@ -79,7 +90,7 @@ export abstract class Task extends BaseClass {
     return target;
   }
 
-  updateTargetsMap(newTargets) {
+  updateTargetsMap(newTargets = null) {
     if (!newTargets || newTargets === 1) {
       // force updating targets
       this.targetsMap = this.getTargetsMap();
@@ -106,10 +117,12 @@ export abstract class Task extends BaseClass {
 
   abstract targetsFilter(target): boolean;
 
-  execute(creep) {
+  execute(creep: CreepWrapper) {
     creep.processed = true;
     let target = this.getTarget(creep);
-    // console.log(creep.name, target);
+
+    this.logger.log(`Creep: ${creep.name} has target: ${target && target.id}`);
+  
     // if there was no target found for this task
     if (!target) {
       return ERR_INVALID_TARGET;
@@ -119,22 +132,37 @@ export abstract class Task extends BaseClass {
       return ERR_INVALID_TASK;
     }
     // if the creep has already reached target or it will in this tick, do the task
-    if (this.pathNavigation.moveCreep(creep,
-      this.getTargetForMovement(creep, target)) === CREEP_REACHED_TARGET) {
+    // if (this.pathNavigation.moveCreep(creep,
+    //   this.getTargetForMovement(creep, target)) === CREEP_REACHED_TARGET) {
+    if (this.isNearTarget(creep, target)) {
+      this.logger.log(`Creep ${creep.name} is at target: ${target && target.id}`);
       let returnValue = this.doTask(creep, target);
       if (returnValue === OK) {
         this.taskExecuted(creep, target);
       }
       return returnValue;
+    } else {
+      this.logger.log(`Creep ${creep.name} is moving to target: ${target && target.id}`);
+      creep.moveTo(target, {
+        reusePath: 0,
+        // serializeMemory: true,
+        visualizePathStyle: {
+          fill: 'transparent',
+          stroke: '#fff',
+          lineStyle: 'dashed',
+          strokeWidth: .15,
+          opacity: .1,
+        },
+      });
     }
     return OK;
   }
 
-  abstract doTask(creep, target);
+  abstract doTask(creep: CreepWrapper, target);
 
-  abstract taskExecuted(creep, target);
+  abstract taskExecuted(creep: CreepWrapper, target);
 
-  taskStarted(creep) {
+  taskStarted(creep: CreepWrapper) {
     if (creep.task && creep.task.targets && creep.task.targets[creep.task.tier]) {
       let target = Game.getObjectById(creep.task.targets[creep.task.tier]);
       if (target) {
@@ -147,37 +175,42 @@ export abstract class Task extends BaseClass {
     }
   }
 
-  taskEnded(creep) {
+  taskEnded(creep: CreepWrapper) {
     if (creep.task && creep.task.targets && creep.task.targets[creep.task.tier]) {
       let target: any = Game.getObjectById(creep.task.targets[creep.task.tier]);
-      if (target.direction) {
-        this.pathNavigation.moveCreepTowards(creep, target, false);
-      }
+      // if (target.direction) {
+      //   this.pathNavigation.moveCreepTowards(creep, target, false);
+      // }
       if (target) {
         this.targetIsReleased(creep, target);
       }
     }
   }
 
-  isTaskValid(creep, target): boolean {
+  isTaskValid(creep: CreepWrapper, target): boolean {
     return this.isTargetValid(target);
+  }
+
+  isNearTarget(creep: CreepWrapper, target): boolean {
+    this.logger.log(`isNearTarget? ${creep.pos.x},${creep.pos.y} : ${target.pos.x},${target.pos.y}`);
+    return creep.pos.isNearTo(target);
   }
 
   abstract isTargetValid(target): boolean;
 
-  abstract targetIsClaimed(creep, target): void;
+  abstract targetIsClaimed(creep: CreepWrapper, target): void;
 
-  abstract targetIsReleased(creep, target): void;
+  abstract targetIsReleased(creep: CreepWrapper, target): void;
 
-  abstract targetIsInvalid(creep, target): void;
+  abstract targetIsInvalid(creep: CreepWrapper, target): void;
 
   abstract isAssignedTargetValid(target): boolean;
 
-  getTargetForMovement(creep, target) {
+  getTargetForMovement(creep: CreepWrapper, target) {
     return target;
   }
 
-  creepHasDied(creep) {
+  creepHasDied(creep: CreepWrapper) {
     this.taskEnded(creep);
   }
 }

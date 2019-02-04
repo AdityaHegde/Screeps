@@ -6,11 +6,18 @@ import PathPosObject from "./PathPosObject";
 import { OK, CREEP_REACHED_TARGET, ERR_COULDNT_MOVE } from "../constants";
 import Utils from "../Utils";
 import PathManager from "./PathManager";
+import { Log } from "src/Logger";
 
-@Decorators.memory()
+@Decorators.memory("pathNavigation")
+@Log
 export default class PathNavigation extends BaseClass {
-  @Decorators.instanceInMemory(PathManager)
-  pathManager: PathManager = new PathManager();
+  pathManager: PathManager;
+
+  constructor(id: string, pathManager: PathManager) {
+    super(id);
+
+    this.pathManager = pathManager;
+  }
 
   moveCreep(creep: WorkerCreep, target: PathPosObject) {
     creep.currentTarget = target;
@@ -19,10 +26,12 @@ export default class PathNavigation extends BaseClass {
     }
     creep.hasMoved = false;
     if (this.hasReachedTarget(creep, target)) {
+      creep.processed = true;
       return CREEP_REACHED_TARGET;
     }
     // if creep has reached its current target pos, find the next path
-    if (creep.pathPos === creep.targetPathPos && target && target.pathIdx !== undefined) {
+    if (creep.pathPos === creep.targetPathPos && creep.swapPos === 0 &&
+      target && target.pathIdx !== undefined) {
       // if creep was already on the target path,
       if (creep.pathIdx === target.pathIdx) {
         // if the creep has reached target pos, return CREEP_REACHED_TARGET
@@ -31,7 +40,11 @@ export default class PathNavigation extends BaseClass {
         }
       } else if (this.pathManager.pathsInfo.get(creep.pathIdx).isAtConnection(target.pathIdx, creep.pathPos)) {
         // else if creep has reached the pos for its connection to next path, go through next path
-        this.pathManager.pathsInfo.get(creep.pathIdx).moveToPath(creep, target);
+        let targetPath = this.pathManager.pathsInfo.get(creep.pathIdx).connections.get(target.pathIdx);
+        this.pathManager.pathsInfo.get(creep.pathIdx).removeCreepFromPos(creep);
+        creep.pathPos = targetPath.targetPos;
+        creep.pathIdx = targetPath.idx;
+        this.pathManager.pathsInfo.get(creep.pathIdx).addCreepToPos(creep);
 
         // if switching path reached the target, return CREEP_REACHED_TARGET
         // can happen when target on the intersection
@@ -60,7 +73,7 @@ export default class PathNavigation extends BaseClass {
     let oldPos = creep.pathPos;
     let moveDir;
     let canMove = false;
-    if (dir === 0 && creep.swapPos) {
+    if (dir === 0 && creep.swapPos !== 0) {
       dir = creep.swapPos;
     }
     if (creep.movedAway) {
@@ -101,6 +114,7 @@ export default class PathNavigation extends BaseClass {
       creep.hasMoved = true;
       creep.movedAway = 0;
       creep.movingAway = 0;
+      creep.swapPos = 0;
       return creep.move(moveDir);
     }
     return ERR_COULDNT_MOVE;
@@ -114,6 +128,7 @@ export default class PathNavigation extends BaseClass {
       creep.hasMoved = true;
       creep.movedAway = towards ? 0 : creep.currentTarget.direction;
       creep.movingAway = 0;
+      creep.swapPos = 0;
       return creep.move(creep.movedAway);
     } else {
       creep.movingAway = towards ? 0 : creep.currentTarget.direction;
@@ -151,7 +166,8 @@ export default class PathNavigation extends BaseClass {
       // if _creep has already moved in this tick and took the target pos then another creep cannot be there
       if (_creep.hasMoved) {
         // if, _creep has not moved away and creep is not moving away,
-        //   or _creep has moved to the same direction as creep is trying to move to
+        //   or _creep has moved to the same direction as creep is trying to move to,
+        //   creep cannot move.
         if ((!_creep.movedAway && !movingAway) ||
           (_creep.movedAway === creep.currentTarget.direction)) {
           return false;
@@ -161,7 +177,8 @@ export default class PathNavigation extends BaseClass {
         }
       }
 
-      if (_creep.pathPos === _creep.targetPathPos && !_creep.swapPos) {
+      // if _creep is a stationary creep. swapPos denotes _creep is sawpping position with another creep.
+      if (_creep.pathPos === _creep.targetPathPos && _creep.swapPos === 0) {
         // if there is a stationary creep moved away from path in the same direction, dont move this creep
         if (movingAway && _creep.movedAway === creep.currentTarget.direction) {
           return false;
@@ -169,11 +186,14 @@ export default class PathNavigation extends BaseClass {
           // else if moving towards and another creep is moving away in the same direction, swap positions
           // or if not movingTowards, ie just moving along the path, swap positions
           _creep.swapPos = creep.pathPos - creep.targetPathPos;
+
           // if the creep is in another path, ie at the intersection
           if (_creep.pathIdx !== creep.pathIdx) {
             _creep.pathIdx = creep.pathIdx;
             _creep.pathPos = _creep.targetPathPos = pathPos;
           }
+
+          _creep.processing = true;
 
           // if the creep was already processed, move it right now
           if (_creep.processed) {
@@ -198,7 +218,7 @@ export default class PathNavigation extends BaseClass {
   }
 
   hasReachedTarget(creep: WorkerCreep, target: PathPosObject) {
-    if (this.hasReachedTargetPos(creep, target)) {
+    if (creep.swapPos === 0 && this.hasReachedTargetPathPos(creep, target)) {
       if (target.direction && !creep.pos.isEqualTo(target.pathPos) && !creep.hasMoved) {
         return this.moveCreepTowards(creep, false) === OK;
       }
@@ -207,7 +227,7 @@ export default class PathNavigation extends BaseClass {
     return false;
   }
 
-  hasReachedTargetPos(creep: WorkerCreep, target: PathPosObject) {
+  hasReachedTargetPathPos(creep: WorkerCreep, target: PathPosObject) {
     return creep.pathIdx === target.pathIdx && creep.pathPos === target.pathPos;
   }
 
