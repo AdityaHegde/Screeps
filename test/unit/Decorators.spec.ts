@@ -1,7 +1,7 @@
 import "mocha";
 
-import * as sinon from "sinon";
-import * as should from "should";
+import sinon from "sinon";
+import should from "should";
 
 import testUtils from "test/testUtils";
 import Decorators from "src/Decorators";

@@ -3,7 +3,7 @@ import PathConnection from "./PathConnection";
 import Utils from "../Utils";
 import BaseClass from "../BaseClass";
 import MemoryMap from "../MemoryMap";
-import * as _ from "lodash";
+import _ from "lodash";
 import { Log } from "src/Logger";
 import WorkerCreep from "src/WorkerCreep";
 import PathPosObject from "src/path/PathPosObject";

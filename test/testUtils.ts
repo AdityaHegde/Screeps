@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import _ from "lodash";
 
 let OFFSETS_BY_DIRECTION = {
   1: [0,-1],

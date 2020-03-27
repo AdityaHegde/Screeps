@@ -1,6 +1,6 @@
 import Heap from "./Heap";
 import MemoryMap from "./MemoryMap";
-import * as _ from "lodash";
+import _ from "lodash";
 import MemorySet from "src/MemorySet";
 
 function getInstanceFromClassObject(ClassObject, value) {

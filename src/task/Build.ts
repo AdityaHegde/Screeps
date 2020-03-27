@@ -68,7 +68,7 @@ export default class Build extends Task {
     return target && (target.progressTotal - this.targetsMap[target.id]) > 0;
   }
 
-  getTargets() {
+  getTargets(): Array<any> {
     return this.controllerRoom.room.find(FIND_CONSTRUCTION_SITES).map((target) => target.id);
   }
 

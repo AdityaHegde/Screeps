@@ -1,6 +1,8 @@
 (function (_) {
 'use strict';
 
+_ = _ && _.hasOwnProperty('default') ? _['default'] : _;
+
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
@@ -590,13 +592,14 @@ class Decorators {
 class BaseClass {
     constructor(id = "") {
         if (id === "") {
+            const ids = Memory.ids || {};
             if (!Memory.ids) {
-                Memory.ids = {};
+                Memory.ids = ids;
             }
-            if (!Memory.ids[this.constructor["memoryName"]]) {
-                Memory.ids[this.constructor["memoryName"]] = 0;
+            if (!ids[this.constructor["memoryName"]]) {
+                ids[this.constructor["memoryName"]] = 0;
             }
-            id = "" + ++Memory.ids[this.constructor["memoryName"]];
+            id = "" + ++ids[this.constructor["memoryName"]];
         }
         this.id = id;
     }
@@ -1461,11 +1464,11 @@ let PathManager = class PathManager extends BaseClass {
                 toPos: pathPart.path.length - 1
             };
         });
-        pathPart.intersections.forEach((intersection$$1) => {
-            connections[intersection$$1.idx] = {
-                idx: intersection$$1.idx,
-                fromPos: intersection$$1.pos,
-                toPos: intersection$$1.from
+        pathPart.intersections.forEach((intersection) => {
+            connections[intersection.idx] = {
+                idx: intersection.idx,
+                fromPos: intersection.pos,
+                toPos: intersection.from
             };
         });
         let noConnections = {};

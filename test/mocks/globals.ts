@@ -2,7 +2,7 @@
 // let _ = require("lodash");
 // let PathFinder = require("./PathFinder");
 
-import * as _ from "lodash";
+import _ from "lodash";
 import PathFinder from "./PathFinder";
 import constants from "./constants-mocks";
 

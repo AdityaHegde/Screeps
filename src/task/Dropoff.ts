@@ -1,6 +1,6 @@
 import { Task } from "./Task";
 import { CREEP_CREATED, EXTENSION_BUILT } from "../constants";
-import * as _ from "lodash";
+import _ from "lodash";
 import Decorators from "src/Decorators";
 import { Log } from "src/Logger";
 import eventBus from "src/EventBus";

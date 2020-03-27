@@ -2,7 +2,7 @@ import BaseClass from "../BaseClass";
 import Decorators from "../Decorators";
 import ControllerRoom from "../ControllerRoom";
 import { CREEP_CREATED, ERR_INVALID_TASK } from "../constants";
-import * as _ from "lodash";
+import _ from "lodash";
 import eventBus from "../EventBus";
 import CreepWrapper from "src/CreepWrapper";
 import { Task } from "src/task/Task";

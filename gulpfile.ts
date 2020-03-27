@@ -1,12 +1,12 @@
-import * as gulp from "gulp";
-import * as mocha from "gulp-mocha";
-import * as del from "del";
+import gulp from "gulp";
+import mocha from "gulp-mocha";
+import del from "del";
 
-import * as rollup from "rollup-stream";
-import * as source from "vinyl-source-stream";
-import * as buffer from "vinyl-buffer";
+import rollup from "rollup-stream";
+import source from "vinyl-source-stream";
+import buffer from "vinyl-buffer";
 
-import * as path from "path";
+import path from "path";
 
 const typescript = require("rollup-plugin-typescript2");
 

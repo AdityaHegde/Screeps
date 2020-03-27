@@ -10,13 +10,14 @@ abstract class BaseClass {
 
   constructor(id = "") {
     if (id === "") {
-      if (!Memory.ids) {
-        Memory.ids = {};
+      const ids = (Memory as any).ids || {};
+      if (!(Memory as any).ids) {
+        (Memory as any).ids = ids;
       }
-      if (!Memory.ids[this.constructor["memoryName"]]) {
-        Memory.ids[this.constructor["memoryName"]] = 0;
+      if (!ids[this.constructor["memoryName"]]) {
+        ids[this.constructor["memoryName"]] = 0;
       }
-      id = "" + ++Memory.ids[this.constructor["memoryName"]];
+      id = "" + ++ids[this.constructor["memoryName"]];
     }
 
     this.id = id;

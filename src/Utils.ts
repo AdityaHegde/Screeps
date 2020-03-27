@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import _ from "lodash";
 
 const DIRECTION_TO_OFFSET = {
   [TOP]: [0, -1],

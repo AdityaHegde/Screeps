@@ -1,6 +1,6 @@
 import Decorators from "../Decorators";
 import BaseClass from "../BaseClass";
-import * as _ from "lodash";
+import _ from "lodash";
 import PathInfo from "./PathInfo";
 import MemoryMap from "../MemoryMap";
 import PathConnection from "./PathConnection";

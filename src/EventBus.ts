@@ -2,7 +2,7 @@ import Runnable from "./Runnable";
 import { PERIODIC_5_TICKS, PERIODIC_10_TICKS, PERIODIC_20_TICKS } from "./constants";
 import Decorators from "./Decorators";
 import BaseClass from "./BaseClass";
-import * as _ from "lodash";
+import _ from "lodash";
 import { Log } from "src/Logger";
 import ControllerRoom from "src/ControllerRoom";
 
