@@ -1,0 +1,11 @@
+{
+  "extends": "standard",
+  "rules" : {
+    "indent": ["error", 4],
+    "quotes": ["error", "double"],
+    "semi": ["error", "always"],
+
+    "one-var": "off",
+    "node/no-deprecated-api": "off"
+  }
+}
