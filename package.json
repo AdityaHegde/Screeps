@@ -36,7 +36,7 @@
     "gulp-mocha": "^7.0.2",
     "gulp-tslint": "^8.1.4",
     "gulp-typescript": "^5.0.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mocha": "^7.1.1",
     "mocha-junit-reporter": "^1.23.3",
     "mockery": "^2.1.0",
